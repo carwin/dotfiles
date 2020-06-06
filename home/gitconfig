@@ -1,0 +1,48 @@
+[core]
+  editor = vim
+[user]
+  name = Carwin Young
+  email = carwin@mobomo.com
+  signingkey = D6FA5A05B721CCDE
+[color]
+  ui = auto
+[color "branch"]
+  current = yellow reverse
+  local = yellow
+  remote = green
+[color "diff"]
+  frag = cyan bold
+  meta = yellow bold
+  new = green bold
+  old = red bold
+[color "status"]
+  added = yellow
+  changed = green
+  untracked = cyan
+[merge]
+  log = true
+[url "git@github.com:"]
+  insteadOf = "gh:"
+  pushInsteadOf = "github:"
+  pushInsteadOf = "git://github.com/"
+[url "git://github.com/"]
+  insteadOf = "github:"
+[url "git@gist.github.com:"]
+  insteadOf = "gst:"
+  pushInsteadOf = "gist:"
+  pushInsteadOf = "git://gist.github.com/"
+[url "git://gist.github.com"]
+  insteadOf = "gist:"
+[url "git@heroku.com:"]
+  insteadOf = "heroku:"
+[alias]
+  br = branch
+  st = status
+  co = checkout
+  df = diff
+  g  = grep -I
+  rc = rank-contributors
+  pr = pull --rebase
+  lgp = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --
+  lg = log --show-signature
+  cm = commit -S

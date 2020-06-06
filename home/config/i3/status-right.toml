@@ -1,0 +1,37 @@
+icons = "awesome"
+
+[theme]
+name = "solarized-dark"
+[theme.overrides]
+idle_bg = "#333333"
+idle_fg = "#ffffff"
+info_bg = "#05eafa"
+info_fg = "#490e61"
+good_bg = "#fa056f"
+good_fg = "#ffffff"
+warning_bg = "#fa056f"
+warning_fg = "#ffffff"
+critical_bg = "#fa1505"
+critical_fg = "#ffffff"
+separator = ""
+
+[[block]]
+block = "pacman"
+interval = 10
+
+[[block]]
+block = "nvidia_gpu"
+label = "GTX 1070"
+show_memory = false
+show_clocks = true
+interval = 1
+
+[[block]]
+block = "speedtest"
+bytes = true
+interval = 1800
+
+[[block]]
+block = "time"
+interval = 60
+format = "%a %R"

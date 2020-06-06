@@ -1,0 +1,7 @@
+# Vi / Vim
+.netrwhist
+home/vim/autoload/*
+home/vim/backups/*
+home/vim/plugged/*
+home/vim/swaps/*
+home/vim/undo/*

@@ -1,0 +1,63 @@
+icons = "awesome"
+
+[theme]
+name = "solarized-dark"
+[theme.overrides]
+idle_bg = "#333333"
+idle_fg = "#ffffff"
+info_bg = "#05eafa"
+info_fg = "#490e61"
+good_bg = "#fa056f"
+good_fg = "#ffffff"
+warning_bg = "#fa056f"
+warning_fg = "#ffffff"
+critical_bg = "#fa1505"
+critical_fg = "#ffffff"
+separator = ""
+
+[[block]]
+block = "disk_space"
+path = "/"
+alias = "/"
+info_type = "available"
+unit = "GB"
+interval = 20
+warning = 10.0
+alert = 5.0
+
+[[block]]
+block = "disk_space"
+path = "/home"
+alias = "Home"
+info_type = "available"
+unit = "GB"
+interval = 20
+warning = 20.0
+alert = 10.0
+
+[[block]]
+block = "memory"
+display_type = "memory"
+format_mem = "{Mup}%"
+format_swap = "{SUp}%"
+
+[[block]]
+block = "cpu"
+interval = 1
+
+[[block]]
+block = "load"
+interval = 1
+format = "{1m}"
+
+[[block]]
+block = "bluetooth"
+mac = "DC:AF:68:92:05:08"
+
+[[block]]
+block = "sound"
+
+[[block]]
+block = "time"
+interval = 60
+format = "%a %m/%d %R"
