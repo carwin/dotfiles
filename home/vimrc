@@ -55,6 +55,7 @@ map <leader>tn :tabnew<cr> " Tab only map <leader>to :tabonly<cr>
 map <leader>tm :tabmove<cr>
 " Tab next
 nnoremap <leader>. :tabnext<CR>
+" Tab previous
 nnoremap <leader>' :tabprevious<CR>
 " Toggle Paste mode (,p)
 set pastetoggle=<leader>p
