@@ -5,3 +5,6 @@ home/vim/backups/*
 home/vim/plugged/*
 home/vim/swaps/*
 home/vim/undo/*
+
+# Systemd aliases
+config/systemd/user/timers.target.wants/*

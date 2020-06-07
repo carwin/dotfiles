@@ -1,0 +1,8 @@
+[Unit]
+Description=Syncs OneDrive
+
+[Service]
+ExecStart=/usr/bin/onedrive --synchronize
+
+[Install]
+WantedBy=default.target
