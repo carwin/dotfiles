@@ -45,4 +45,4 @@
   pr = pull --rebase
   lgp = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --
   lg = log --show-signature
-  cm = commit -S
+  cm = commit -S -m
