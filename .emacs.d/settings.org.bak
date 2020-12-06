@@ -1,0 +1,916 @@
+#+TITLE:   Carwin's Emacs settings file
+#+AUTHOR:  Carwin Young
+#+EMAIL:   carwinyoung@gmail.com
+
+* Configuration
+This file has configuration.
+
+Make ESC quit prompts
+#+begin_src emacs-lisp
+(global-set-key (kbd "<escape>") 'keyboad-escape-quit)
+#+end_src
+* Themes
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+#+END_SRC
+
+* Packages to install
+
+#+begin_src emacs-lisp
+(require 'package)
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                         ("org" . "https://orgmode.org/elpa/")
+                         ("elpa" . "https://elpa.gnu.org/packages")))
+
+(package-initialize)
+(unless package-archive-contents
+  (package-refresh-contents))
+
+;; Initialize use-package for non-Linux platforms
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+
+(require 'use-package)
+(setq use-package-always-ensure t)
+#+end_src
+
+#+BEGIN_SRC emacs-lisp
+(defvar my/install-packages
+  '(
+      ;; package management
+      use-package auto-package-update
+
+      ;; Basics
+      evil evil-leader evil-collection evil-smartparens smartparens org-evil which-key
+
+      ;; Tree
+      ;neotree
+      treemacs treemacs-evil treemacs-projectile
+
+      ;; Completes
+      ivy helm
+
+      ;; Notes
+      org-roam org-roam-protocol org-roam-server deft
+
+      ;; Fonts and Icons
+      ; all-the-icons org-bullets
+      org-superstar-mode
+
+      ;; Visual Enhancements
+      smart-mode-line smart-mode-line-atom-one-dark-theme doom-themes
+
+      ;; Writing
+      olivetti
+
+      ;; Dashboard and it's dependencies
+      page-break-lines dashboard
+
+      ;; Browsing
+      eww
+
+      ;; Code
+      php-mode web-mode yaml-mode flycheck js2-mode
+
+      ;; JSON
+      json-mode
+
+      ;; JavaScript / Node
+      js2-mode xref-js2
+      company company-lsp helm-lsp
+      lsp-mode lsp-ui lsp-treemacs
+      helm-xref
+      ;; Debugging JavaScript (maybe others?)
+      dap-mode
+
+      ;; Other
+      projectile
+  ))
+
+  (defvar packages-refreshed? nil)
+
+  (dolist (pack my/install-packages)
+    (unless (package-installed-p pack)
+      (unless packages-refreshed?
+ (package-refresh-contents)
+ (setq packages-refreshed? t))
+    (unwind-protect
+        (condition-case ex
+            (package-install pack)
+          ('error (message "Failed to install package [%s], caught exception: [%s]"
+                           pack ex)))
+      (message "Installed %s" pack))))
+  ;; Load use-package, used for loading packages everywhere else
+  (require 'use-package)
+  ;; Set to t to debug package loading or nil to disable
+  (setq use-package-verbose nil)
+#+END_SRC
+
+** Auto-update packages
+#+BEGIN_SRC emacs-lisp
+(use-package auto-package-update
+   :ensure t
+   :config
+   (setq auto-package-update-delete-old-versions t
+         auto-package-update-interval 4)
+   (auto-package-update-maybe))
+#+END_SRC
+
+* Evil Configuration
+** Turn on Evil mode
+#+BEGIN_SRC emacs-lisp
+(use-package evil
+  :ensure t
+  :init
+  (setq evil-want-keybinding nil)
+  :config
+  (evil-mode 1))
+(use-package evil-collection
+  :after evil
+  :ensure t
+  :config
+  (evil-collection-init 'dashboard))
+(use-package org-evil
+  :after evil
+  :ensure t)
+  ;; (require 'evil)
+  ;; (evil-mode 1)
+#+END_SRC
+** Fix the CTRL-U key
+#+BEGIN_SRC emacs-lisp
+(define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
+(define-key evil-visual-state-map (kbd "C-u") 'evil-scroll-up)
+#+END_SRC
+
+** Enable and configure Evil Leader
+#+BEGIN_SRC emacs-lisp
+(global-evil-leader-mode)
+(evil-leader/set-leader ",")
+
+(evil-leader/set-key
+  "e" 'find-file
+  "t" 'treemacs
+)
+#+END_SRC
+
+
+** Start the server on first launch
+#+BEGIN_SRC emacs-lisp
+(require 'server)
+(unless (server-running-p)
+  (server-start))
+(setq org-image-actual-width nil)
+#+END_SRC
+
+** Winner Mode
+
+#+BEGIN_SRC emacs-lisp
+(winner-mode +1)
+(define-key winner-mode-map (kbd "<M-left>") #'winner-undo)
+(define-key winner-mode-map (kbd "<M-right>") #'winner-redo)
+#+END_SRC
+
+** Use UTF-8 for everything
+#+BEGIN_SRC emacs-lisp
+(prefer-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(setq default-buffer-file-coding-system 'utf-8)
+#+END_SRC
+
+** Hide Scroll, Tools, and Menu
+#+BEGIN_SRC emacs-lisp
+(menu-bar-mode -1)
+(tool-bar-mode -1)
+(toggle-scroll-bar -1)
+#+END_SRC
+** Turn on syntax highlighting for all buffers:
+
+#+BEGIN_SRC emacs-lisp
+(global-font-lock-mode t)
+#+END_SRC
+
+** Fill Column
+#+BEGIN_SRC emacs-lisp
+(setq-default fill-column 80)
+#+END_SRC
+
+** Neotree
+#+BEGIN_SRC emacs-lisp
+;(use-package neotree
+;    :config
+;    (setq neo-theme (if (display-graphic-p) 'icons 'arrow)))
+#+END_SRC
+
+** Visual Enhancement
+
+*** Main Theme
+
+#+BEGIN_SRC emacs-lisp
+(use-package doom-themes
+    :config
+    (setq doom-themes-enable-bold t
+          doom-themes-enable-italic t)
+    ;; (load-theme 'doom-vibrant t)
+    (load-theme 'doom-city-lights t)
+
+    (doom-themes-org-config))
+#+END_SRC
+
+*** Smart Mode Line
+#+BEGIN_SRC emacs-lisp
+(use-package smart-mode-line-atom-one-dark-theme
+    :ensure t)
+(use-package smart-mode-line
+  :config
+  (setq sml/theme 'atom-one-dark)
+  (sml/setup))
+#+END_SRC
+
+*** Font
+#+BEGIN_SRC emacs-lisp
+(set-face-attribute 'default nil
+                    :family "M+ 1mn"
+                    :height 110
+                    :weight 'normal
+                    :width 'normal)
+#+END_SRC
+
+
+** Compilation window output
+#+BEGIN_SRC emacs-lisp
+;(setq compilation-window-height 15)
+#+END_SRC
+
+** Avoid creating backup files
+   I really dislike the litter, and I haven't yet needed a backup file. Here's hoping I don't regret this.
+
+#+BEGIN_SRC emacs-lisp
+;; Avoid #file.org#
+(auto-save-visited-mode)
+(setq create-lockfiles nil)
+;; Avoid filename.ext~
+(setq make-backup-files nil)
+#+END_SRC
+
+
+
+** Turn on line numbers everywhere
+
+#+BEGIN_SRC emacs-lisp
+; Turn it on for everything
+;(require 'display-line-numbers)
+;(defcustom display-line-numbers-exempt-modes '(org-mode olivetti-mode deft org-roam-mode)
+;    "Major modes on which to disable the linum mode, exempts them from global requirement"
+;    :group 'display-line-numbers
+;    :type 'list
+;    :version "green")
+;
+;(defun display-line-numbers--turn-on()
+;"Turn on line numbers but exempt certain major modes defined in `display-line-numbers-exempt-modes`."
+;    (if (and
+;	(not (member major-mode display-line-numbers-exempt-modes))
+;    (not (minibufferp)))
+;    (display-line-numbers-mode)))
+
+(global-display-line-numbers-mode t)
+(dolist (mode ('(org-mode-hook
+                 term-mode-hook
+                 eshell-mode-hook))
+  (add-hook-mode (lambda () (display-line-numbers-mode 0)))))
+#+END_SRC
+
+** Tree
+#+BEGIN_SRC emacs-lisp
+(use-package treemacs
+  :ensure t
+  :defer t
+  :init
+  (with-eval-after-load 'winum
+    (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+  :config
+  (progn
+    (setq treemacs-collapse-dirs               (if treemacs-python-executable 3 0)
+          treemacs-deferred-git-apply-delay    0.5
+          treemacs-display-in-side-window      t
+          treemacs-indentation                 2
+          treemacs-indentation-string          " "
+          treemacs-no-delete-other-windows     t
+          treemacs-position                    'left
+          treemacs-width                       35
+          ; treemacs-resize-icons 44
+          treemacs-follow-mode                 t
+          treemacs-filewatch-mode              t
+          treemacs-fringe-indicator-mode       t)
+          (pcase (cons (not (null (executable-find "git")))
+                       (not (null treemacs-python-executable)))
+            (`(t . t)
+              (treemacs-git-mode 'deferred))
+            (`(t . _)
+              (treemacs-git-mode 'simple))))
+  :bind
+  (:map global-map
+        ("M-0"       . treemacs-select-window)
+        ("C-x t 1"   . treemacs-delete-other-windows)
+        ("C-x t t"   . treemacs)
+        ("C-x t B"   . treemacs-bookmark)
+        ("C-x t C-t" . treemacs-find-file)
+        ("C-x t M-t" . treemacs-find-tag)))
+#+END_SRC
+
+*** Evil Tree
+#+BEGIN_SRC emacs-lisp
+(use-package treemacs-evil
+  :after treemacs evil
+  :ensure t)
+#+END_SRC
+
+*** Projectile Tree
+#+BEGIN_SRC emacs-lisp
+(use-package treemacs-projectile
+  :after treemacs projectile
+  :ensure t)
+#+END_SRC
+
+*** Icons Tree
+#+BEGIN_SRC emacs-lisp
+(use-package treemacs-icons-dired
+  :after treemacs dired
+  :ensure t
+  :config (treemacs-icons-dired-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+;(use-package treemacs-magit
+;  :after treemacs-magit
+;  :ensure t)
+#+END_SRC
+
+** Tabs and Indention
+#+BEGIN_SRC emacs-lisp
+;; Preferred Tab width
+(setq custom-tab-width 2)
+
+;; Shift width for evil-mode usage.
+;; For vim-like motions of ">>" and "<<".
+(setq-default evil-shift-width custom-tab-width)
+
+;; Globally make TAB self-insert-command
+(global-set-key (kbd "TAB") 'self-insert-command)
+;; Always use spaces
+(setq-default indent-tabs-mode nil)
+(global-set-key "\t" (lambda () (interactive) (insert-char 32 2))) ;; [tab] inserts two spaces
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(setq c-basic-offset 2)
+(setq tab-width 2)
+(setq-default indent-tabs-mode-nil)
+#+END_SRC
+
+** Fix conflicts with Neotree
+#+BEGIN_SRC emacs-lisp
+(add-hook 'neotree-mode-hook
+              (lambda ()
+                (define-key evil-normal-state-local-map (kbd "TAB") 'neotree-enter)
+                (define-key evil-normal-state-local-map (kbd "SPC") 'neotree-quick-look)
+                (define-key evil-normal-state-local-map (kbd "q") 'neotree-hide)
+                (define-key evil-normal-state-local-map (kbd "RET") 'neotree-enter)
+                (define-key evil-normal-state-local-map (kbd "g") 'neotree-refresh)
+                (define-key evil-normal-state-local-map (kbd "n") 'neotree-next-line)
+                (define-key evil-normal-state-local-map (kbd "p") 'neotree-previous-line)
+                (define-key evil-normal-state-local-map (kbd "A") 'neotree-stretch-toggle)
+                (define-key evil-normal-state-local-map (kbd "H") 'neotree-hidden-file-toggle)))
+#+END_SRC
+
+* Org Configuration
+
+** Set Org Indentation
+#+BEGIN_SRC emacs-lisp
+;;; package --- Org mode basic setup.
+;;; Commentary:
+;;; Tries to normalize the src block indentation.  Also hides leading stars.
+;;; Code:
+(use-package org
+  :config
+  (setq org-edit-src-content-indentation 0
+        org-src-tab-acts-natively t
+        org-src-preserve-indentation t
+        org-adapt-indentation nil)
+  (add-hook 'org-mode-hook 'org-indent-mode))
+#+END_SRC
+
+** Babel
+
+#+BEGIN_SRC emacs-lisp
+;(setq org-src-window-setup 'other-window)
+#+END_SRC
+
+** Auto-tangle Configuration Files
+#+begin_src emacs-lisp
+;; Automatically tangle Settings.org when saved
+(defun efs/org-babel-tangle-config ()
+  (when (string-equal (file-name-directory (buffer-file-name))
+                      (expand-file-name user-emacs-directory))
+    ;; Dynamic scoping to the rescue
+    (let ((org-confirm-babel-evaluate nil))
+      (org-babel-tangle))))
+
+(add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'efs/org-babel-tangle-config)))
+#+end_src
+
+
+** Highlight and indent source code blocks
+#+BEGIN_SRC emacs-lisp
+(setq org-src-fontify-natively t)
+#+END_SRC
+
+** Highlight quotes
+
+This doesn't seem to actually do anything.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-fontify-quote-and-verse-blocks t)
+#+END_SRC
+
+** Customize newlines
+#+BEGIN_SRC emacs-lisp
+(customize-set-variable 'org-blank-before-new-entry
+                        '((heading . nil)
+                          (plain-list-item . nil)))
+(setq org-cycle-separator-lines 1)
+#+END_SRC
+
+** Headlines
+#+BEGIN_SRC emacs-lisp
+(custom-set-faces
+  '(org-level-8 ((t (:family "M+ 1mn" :weight bold :height 1.15 :foreground "#539afc"))))
+  '(org-level-7 ((t (:family "M+ 1mn" :weight bold :height 1.15 :foreground "#5ec4ff"))))
+  '(org-level-6 ((t (:family "M+ 1mn" :weight bold :height 1.15 :foreground "#d95468"))))
+  '(org-level-5 ((t (:family "M+ 1mn" :weight bold :height 1.25 :foreground "#ebbf83"))))
+  '(org-level-4 ((t (:family "M+ 1mn" :weight bold :height 1.25 :foreground "#8bd49c"))))
+  '(org-level-3 ((t (:family "M+ 1mn" :weight bold :height 1.50 :foreground "#33ccdd"))))
+  '(org-level-2 ((t (:family "M+ 1mn" :weight bold :height 1.75 :foreground "#ee7788"))))
+  '(org-level-1 ((t (:family "M+ 1mn" :weight bold :height 1.9 :foreground "#bb2266"))))
+)
+#+END_SRC
+
+** Hide/Show emphasis markers
+
+#+BEGIN_SRC emacs-lisp
+(setq org-hide-emphasis-markers nil)
+#+END_SRC
+** Clean Bullets
+
+#+BEGIN_SRC emacs-lisp
+(setq org-indent-indention-per-level 1)
+(setq org-hide-leading-stars t)
+#+END_SRC
+** Display Images
+
+#+BEGIN_SRC emacs-lisp
+(setq org-startup-with-inline-images t)
+(add-hook
+  'org-babel-after-execute-hook
+  (lambda ()
+    (when org-inline-image-overlays
+      (org-redisplay-inline-images))))
+#+END_SRC
+
+** Enable Auto-fill mode
+
+#+BEGIN_SRC
+;(add-hook
+;  'org-mode-hook
+;  (lambda ()
+;    (auto-fill-mode)))
+#+END_SRC
+
+** Org Roam
+#+BEGIN_SRC emacs-lisp
+  (use-package org-roam
+    :ensure t
+    :hook
+    (after-init . org-roam-mode)
+    :custom
+    (org-roam-directory "~/OneDrive/Notes/org-roam")
+    (org-roam-index "~/OneDrive/Notes/org-roam/Index.org")
+    (org-roam-graph-executable "neato")
+    (org-roam-buffer-window-parameters '((no-delete-other-windows . t)))
+    (org-roam-dailies-directory "daily/")
+    (org-roam-dailies-capture-templates
+      '(("l" "lab" entry
+          #'org-roam-capture--get-point
+          "* %?"
+          :file-name "daily/%<%Y-%m-%d>"
+          :head "#+title: %<%Y-%m-%d>\n"
+          :olp ("Lab notes"))
+
+        ("j" "journal" entry
+          #'org-roam-capture--get-point
+          "* %?"
+          :file-name "daily/%<%Y-%m-%d>"
+          :head "#+title: %<%Y-%m-%d>\n"
+          :olp ("Journal"))))
+
+    (org-roam-graph-exclude-matcher '("dailies"))
+    ; (org-roam-graph-viewer 'eww-open-file)
+    :bind (:map org-roam-mode-map
+        (("C-c n l" . org-roam)
+         ("C-c n f" . org-roam-find-file)
+         ("C-c n g" . org-roam-graph-show))
+        :map org-mode-map
+        (("C-c n i" . org-roam-insert))
+        (("C-c n I" . org-roam-insert-immediate))))
+    ;; Leader shortcuts
+    (evil-leader/set-key
+      "arl" 'org-roam
+      "ardt" 'org-roam-today
+      "ardct" 'org-roam-dailies-capture-today
+      "ardT" 'org-roam-dailies-find-tomorrow
+      "ardcT" 'org-roam-dailies-capture-tomorrow
+      "ardy" 'org-roam-dailies-find-yesterday
+      "arf" 'org-roam-find-file
+      "arg" 'org-roam-show-graph-show
+      "ari" 'org-roam-insert)
+#+END_SRC
+
+** Org Roam Server
+#+BEGIN_SRC emacs-lisp
+(use-package org-roam-server
+  :ensure t
+  :config
+  (setq org-roam-server-host "127.0.0.1"
+        org-roam-server-port 8080
+        org-roam-server-authenticate nil
+ org-roam-server-export-inline-images t
+ org-roam-server-serve-files nil
+ org-roam-server-served-file-extensions '("pdf" "mp4" "ogv")
+        org-roam-server-network-poll t
+        org-roam-server-network-arrows nil
+        org-roam-server-network-label-truncate t
+        org-roam-server-network-label-truncate-length 60
+        org-roam-server-network-label-wrap-length 20))
+#+END_SRC
+
+** Org Roam Protocol
+#+BEGIN_SRC emacs-lisp
+(use-package org-roam-protocol)
+#+END_SRC
+
+** Org Agenda
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-custom-commands
+  '(("e" "todos in nearby notes"
+     ((todo "" ((org-agenda-files
+                 (org-roam-db--links-with-max-distance
+    buffer-file-name
+    3))))))))
+#+END_SRC
+** Org Todo
+#+BEGIN_SRC emacs-lisp
+;(setq org-todo-keywords
+;    '((sequence "TODO(t)" "|" "DONE(d!)")))
+(setq org-log-done 'time)
+#+END_SRC
+** Org Superstar Mode
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-superstar
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-superstar-mode 1)))
+  (setq org-superstar-headline-bullets-list '("☰" "☷" "☵" "☲"  "☳" "☴"  "☶"  "☱" ))
+)
+#+END_SRC
+
+** Org Bullets
+#+BEGIN_SRC emacs-lisp
+;(require 'org-bullets)
+;(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+#+END_SRC
+
+* Note taking
+
+** Deft
+
+A nice way to browse files, specifically installed for org-roam. If this ever gets super slow, look into installing the Notdeft fork.
+
+#+BEGIN_SRC emacs-lisp
+(use-package deft
+  :after org
+  :bind
+  ("C-c n d" . deft)
+  :custom
+  (deft-recursive t)
+  (deft-use-filter-string-for-filename t)
+  (deft-default-extension "org")
+  (deft-directory "~/OneDrive/Notes/"))
+  (evil-leader/set-key
+    "d" 'deft)
+#+END_SRC
+
+* Dashboard
+
+** Set page break line mode globally
+#+BEGIN_SRC emacs-lisp
+(global-page-break-lines-mode)
+#+END_SRC
+
+** Enable the dashboard
+#+BEGIN_SRC emacs-lisp
+(use-package dashboard
+  :ensure t
+  ;;:mode ("\\*dashboard*\\" . dashboard-mode)
+  ;;:interpreter ("dashboard" . dashboard-mode)
+  :config
+  ;; Set the title
+  (setq dashboard-banner-logo-title "Carwin's Dashboard")
+  ;; Show the logo in the banner
+  (setq dashboard-startup-banner 'logo)
+  ;; Show package load / init time
+  (setq dashboard-set-init-info t)
+  ;; Icons
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+  (setq dashboard-items '((recents . 5)
+                          (bookmarks . 5)
+                          (projects . 5)
+                          (agenda . 5)))
+  (dashboard-setup-startup-hook))
+#+END_SRC
+
+** Emacs Daemon
+#+BEGIN_SRC emacs-lisp
+(setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
+#+END_SRC
+
+* Eww
+#+BEGIN_SRC emacs-lisp
+(use-package eww
+  :commands eww eww-follow-link
+  :init
+  (setq browse-url-browser-function 'eww-browse-url)
+  (setq eww-search-prefix "http://www.google.com/search?q=")
+  :config
+  (add-hook 'eww-after-render-hook 'ha/eww-rerender-pages)
+  (add-hook 'eww-mode 'ace-link-mode)
+  :bind (("C-c w w" . eww)
+         ("C-c w l" . eww-follow-link)))
+#+END_SRC
+
+* Writing
+
+** Olivetti
+#+BEGIN_SRC emacs-lisp
+  (use-package olivetti
+     :config
+     (add-hook 'text-mode-hook 'olivetti-mode)
+     ;(add-hook 'text-mode-hook (lambda () (setq indent-line-function #'indent-relative)))
+     (setq-default olivetti-body-width 120))
+#+END_SRC
+
+* Syntax Highlighting
+
+** Systemd Files
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.service\\'" . conf-unix-mode))
+(add-to-list 'auto-mode-alist '("\\.timer\\'" . conf-unix-mode))
+(add-to-list 'auto-mode-alist '("\\.target\\'" . conf-unix-mode))
+(add-to-list 'auto-mode-alist '("\\.mount\\'" . conf-unix-mode))
+(add-to-list 'auto-mode-alist '("\\.automount\\'" . conf-unix-mode))
+(add-to-list 'auto-mode-alist '("\\.slice\\'" . conf-unix-mode))
+(add-to-list 'auto-mode-alist '("\\.socket\\'" . conf-unix-mode))
+(add-to-list 'auto-mode-alist '("\\.path\\'" . conf-unix-mode))
+(add-to-list 'auto-mode-alist '("\\.netdev\\'" . conf-unix-mode))
+(add-to-list 'auto-mode-alist '("\\.network\\'" . conf-unix-mode))
+(add-to-list 'auto-mode-alist '("\\.link\\'" . conf-unix-mode))
+#+END_SRC
+
+* LaTeX / PDFs 
+
+** Force a page break after table of contents
+#+BEGIN_SRC emacs-lisp
+(setq org-latex-toc-command "\\tableofcontents \\clearpage")
+#+END_SRC
+
+** Keep numbering beyond SubSubSection
+#+BEGIN_SRC emacs-lisp
+
+#+END_SRC
+* Helm
+#+BEGIN_SRC emacs-lisp
+(use-package helm
+  :config
+    (helm-mode 1))
+#+END_SRC
+
+
+* Code 
+
+** LSP
+#+BEGIN_SRC emacs-lisp
+;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+(setq lsp-keymap-prefix "C-c l")
+
+(use-package lsp-mode
+    :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+            (js2-mode . lsp-deferred)
+            (prog-mode . lsp-deferred)
+            ;; if you want which-key integration
+            (lsp-mode . lsp-enable-which-key-integration))
+    :commands lsp lsp-deferred
+    :config (setq lsp-headerline-breadcrumb-enable t
+                  lsp-enable-on-type-formatting nil
+                  lsp-enable-indentation nil
+                  lsp-enable-semantic-highlighting t ; experimental
+                  lsp-keep-workspace-alive t
+                  lsp-enable-completion-at-point
+                  lsp-enable-xref))
+
+;; optionally
+(use-package lsp-ui :commands lsp-ui-mode)
+;; if you are helm user
+(use-package helm-lsp :commands helm-lsp-workspace-symbol)
+;; if you are ivy user
+;(use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
+(use-package lsp-treemacs
+  :commands lsp-treemacs-errors-list
+            lsp-treemacs-symbols
+            lsp-treemacs-references
+            lsp-treemacs-implementations
+  :config
+    (lsp-treemacs-sync-mode 1))
+
+;; optionally if you want to use debugger
+;(use-package dap-mode)
+;; (use-package dap-LANGUAGE) to load the dap adapter for your language
+
+;; optional if you want which-key integration
+(use-package which-key
+    :config
+    (which-key-mode))
+#+END_SRC
+** DAP (Debug Adapter Protocol)
+#+BEGIN_SRC  emacs-lisp
+(use-package dap-mode)
+;(use-package dap-mode
+;  :config
+;  (dap-mode 1)
+;  (dap-ui-mode 1)
+;  (dap-tooltip-mode 1)
+;  (tooltip-mode 1)
+;  (dap-ui-controls-mode 1))
+;
+;(use-package dap-php)
+;(use-package dap-node)
+;(use-package dap-firefox)
+;(use-package dap-chrome
+;  :config
+;  (setq browse-url-chrome-program "/usr/bin/google-chrome-stable"
+;        browse-url-chrome-arguments "--profile-directory=Default"))
+#+END_SRC
+
+
+** JavaScript
+
+
+#+BEGIN_SRC emacs-lisp
+(use-package js2-mode
+  :config
+  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+  (add-hook 'js2-mode-hook #'js2-imenu-extras-mode)
+  (require 'dap-chrome)
+  (dap-chrome-setup))
+#+END_SRC
+
+*** Company
+#+BEGIN_SRC emacs-lisp
+(use-package company
+  :ensure t
+  :defer t
+  :init (global-company-mode)
+  :bind (:map company-active-map
+          ("C-n" . company-select-next)
+          ("C-p" . company-select-previous))
+  :config (setq company-idle-delay 0.0
+            company-tooltip-align-annotations t
+            company-minimum-prefix-length 1
+            create-lockfiles nil
+            ;; Easy navigation to candidates with M-<n>
+            company-show-numbers t
+            company-dabbrev-downcase nil)
+  :diminish company-mode)
+#+END_SRC
+
+**** LSP Completion
+#+BEGIN_SRC emacs-lisp
+;(add-to-list 'company-backends 'company-lsp)
+(use-package company-lsp
+  :config (setq company-lsp-cache-candidates 'auto
+                company-lsp-async nil
+                company-lsp-enable-snippet nil ; Set to non-nil if you want snippet expansion on completion.
+                company-lsp-enable-recompletion nil))
+;(add-hook 'js2-mode-hook (lambda ()
+;                            (tern-mode)
+;                            (company-mode)))
+#+END_SRC
+
+** JSON
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.json\\'" . json-mode))
+(add-to-list 'auto-mode-alist '("\\.esdoc\\.json\\'" . json-mode))
+#+END_SRC
+
+** PHP
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.html\\.twig\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.php\\'" . php-mode))
+(add-to-list 'auto-mode-alist '("\\.module\\'" . php-mode))
+
+(add-hook 'php-mode-hook '(lambda ()
+                            (setq c-basic-offset 2)))
+(add-hook 'php-mode-hook '(lambda ()
+                            (setq display-line-numbers 'absolute)))
+#+END_SRC
+
+** Turn on highlighting the pair of parenthesis when cursor is on one of the pair
+#+BEGIN_SRC emacs-lisp
+(show-paren-mode 1)
+#+END_SRC
+
+** Better Braces
+#+BEGIN_SRC emacs-lisp
+;(require 'smartparens-config)
+;(add-hook 'smartparens-enabled-hook #'evil-smartparens-mode)
+;(add-hook 'prog-mode-hook 'turn-on-smartparens-mode)
+;(define-key smartparens-mode-map (kbd "M-f") 'sp-forward-slurp-sexp)
+;(define-key smartparens-mode-map (kbd "M-b") 'sp-backward-slurp-sexp)
+;(define-key smartparens-mode-map (kbd "M-F") 'sp-forward-barf-sexp)
+;(define-key smartparens-mode-map (kbd "M-B") 'sp-backward-barf-sexp)
+;(define-key smartparens-mode-map (kbd "M-s") 'sp-splice-sexp)
+;(define-key smartparens-mode-map (kbd "C-k") 'sp-kill-sexp)
+#+END_SRC
+
+** Whitespace
+#+BEGIN_SRC emacs-lisp
+(setq require-final-newline t)
+#+END_SRC
+* Ivy
+#+BEGIN_SRC emacs-lisp
+;(use-package ivy
+;  :config
+;    (ivy-mode 1)
+;    (setq ivy-use-virtual-buffers nil ; show recentf and bookmarks?
+;          ;enable-recursive-minibuffers t
+;          ;ivy-count-format "(%d/%d) "
+;          ;ivy-height 20
+;          ;ivy-truncate-lines t  ; truncate or wrap
+;          ;ivy-wrap t            ; cycle
+;    ))
+
+#+END_SRC
+* Which Key
+Displays a small buffer to show the list of features you can do next after starting a command.
+
+#+BEGIN_SRC emacs-lisp
+(use-package which-key
+  :ensure t
+  :init
+  (setq which-key-separator " ")
+  (setq which-key-prefix-prefix "+")
+  :config
+  (which-key-mode))
+#+END_SRC
+
+* Flycheck
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck
+ :ensure t 
+ :init (global-flycheck-mode))
+#+END_SRC
+
+* Projectile
+#+BEGIN_SRC emacs-lisp
+(projectile-mode +1)
+(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+#+END_SRC
+
+* Markdown
+
+#+begin_src emacs-lisp
+      (use-package markdown-mode
+        :ensure t
+        :commands (markdown-mode gfm-mode)
+      :mode (("README\\.md\\'" . gfm-mode)
+             ("\\.md\\'" . gfm-mode)
+             ("\\.markdown\\'" . markdown-mode))
+      :init (setq markdown-command "multimarkdown"))
+#+END_SRC
+
+

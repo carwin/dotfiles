@@ -1,0 +1,15 @@
+;;;; Emacs Bookmark Format Version 1 ;;;; -*- coding: utf-8-emacs -*-
+;;; This format is meant to be slightly human-readable;
+;;; nevertheless, you probably don't want to edit it.
+;;; -*- End Of Bookmark File Format Version Stamp -*-
+(("org-capture-last-stored"
+ (filename . "~/OneDrive/Notes/Inbox.org")
+ (front-context-string . "****** TODO This")
+ (rear-context-string . "0-12-06 Sunday\n\n")
+ (position . 208))
+("index.org"
+ (filename . "~/OneDrive/Notes/worldbuilding/index.org")
+ (front-context-string . "\n* Cosmology\n\n**")
+ (rear-context-string . "e Worldbuilding\n")
+ (position . 23))
+)

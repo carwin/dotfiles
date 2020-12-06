@@ -1,0 +1,2 @@
+;;; Generated package description from /home/narwic/.emacs.d/elpa/treemacs-evil-20200716.2041/treemacs-evil.el  -*- no-byte-compile: t -*-
+(define-package "treemacs-evil" "20200716.2041" "Evil mode integration for treemacs" '((emacs "25") (evil "1.2.12") (treemacs "0.0")) :commit "389bca1c3bdd4c4cf8245d6c4bdf8aa875e40d14" :authors '(("Alexander Miller" . "alexanderm@web.de")) :maintainer '("Alexander Miller" . "alexanderm@web.de") :url "https://github.com/Alexander-Miller/treemacs")
