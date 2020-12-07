@@ -7,7 +7,7 @@
 This is Carwin's Emacs configuration. The goal is that it's portable enough to be moved around between machines.
 
 #+begin_src emacs-lisp
-(setq debug-on-error t)
+;; (setq debug-on-error t)
   (defvar cy/default-font-size 110)
   (defvar cy/default-variable-font-size 110)
   (defvar cy/frame-transparency '(95 . 95))
@@ -84,7 +84,7 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 
 ** Rebind C-u
 
-Since I prefer the `vim` binding of <C-u>, the original binding for `universal-agreement` needs to be rebound to something.
+Since I prefer the =vim= binding of <C-u>, the original binding for `universal-agreement` needs to be rebound to something.
 
 #+begin_src emacs-lisp
 (global-set-key (kbd "C-M-u") 'universal-argument)
@@ -150,6 +150,28 @@ I don't remember what org-evil does, but I've had it in my config since I starte
     :config
     (evil-collection-init 'dashboard)) ;Make sure Evil bindings work on the Dashboard.
 
+#+end_src
+
+** Rebind Evil's q
+
+By default, the normal =:q= and =:wq= expressions actually quit Emacs entirely. This binding change ensures it only quits the current buffer.
+
+I keep =:quit= acting as it normally does in case I really want to quit.
+
+#+begin_src emacs-lisp
+(defun cy/ex-kill-buffer-and-close ()
+  (interactive)
+  (unless (char-equal (elt (buffer-name) 0) ?*)
+    (kill-this-buffer)))
+
+(defun cy/ex-save-kill-buffer-and-close ()
+  (interactive)
+  (save-buffer)
+  (kill-this-buffer))
+
+(evil-ex-define-cmd "q" 'cy/ex-kill-buffer-and-close )
+(evil-ex-define-cmd "wq" 'cy/ex-save-kill-buffer-and-close)
+(evil-ex-define-cmd "quit" 'evil-quit)
 #+end_src
 
 ** Which Key
@@ -253,7 +275,7 @@ I keep themes I like in here and just uncomment or eval whichever one I'm /feeli
 
 *** Set the font
 
-Dank Mono is really interesting, but I've been mostly using the really excellent [[https://mplus-fonts.osdn.jp/about-en.html][M+]] font set as it has full support for Latin and Japanese glyphs in with half-width, full-width, and proportional options.
+Dank Mono is really interesting, but I've been mostly using the really excellent [[https://mplus-fonts.osdn.jp/about-en.html][M+]] font set as it has full support for Latin and Japanese glyphs  in with half-width, full-width, and proportional options.
 
 #+BEGIN_SRC emacs-lisp
 (set-face-attribute 'default nil
@@ -996,6 +1018,7 @@ Uses org-superstar. I switch between this and org-bullets mode. org-bullets some
 
 ;; Make sure org-indent face is available.
 (require 'org-indent)
+;; '(org-indent ((t (:inherit (org-hide fixed-pitch)))))
 
 ;; Ensure that anything that should be fixed-pitch in Org files appears that way.
 (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
@@ -1005,6 +1028,9 @@ Uses org-superstar. I switch between this and org-bullets mode. org-bullets some
 (set-face-attribute 'org-special-keyword nil :foreground nil :inherit '(font-lock-comment-face fixed-pitch))
 (set-face-attribute 'org-meta-line nil :foreground nil :inherit '(font-lock-comment-face fixed-pitch))
 (set-face-attribute 'org-checkbox nil :foreground nil :inherit 'fixed-pitch)
+;; Technically this belongs with the rest of the face attributes above. But
+;; I actually sort of like having some more breating room in my text.
+;; (set-face-attribute 'org-indent nil :foreground nil :inherit '(org-hide variable-pitch))
 
 ;; @todo: Others to consider
 ;; '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
