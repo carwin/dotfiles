@@ -22,6 +22,17 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 (setq org-image-actual-width nil)
 #+end_src
 
+* Configure Emacs paths
+
+** Ensure Emacs' PATH is the same as my shell's
+
+#+begin_src emacs-lisp
+(use-package exec-path-from-shell
+  :init
+  (when (daemonp)
+    (exec-path-from-shell-initialize)))
+#+end_src
+
 * Keep .emacs.d Clean
 
 #+begin_src emacs-lisp
@@ -36,12 +47,12 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 
 ** Start the Emacs server on first launch
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (require 'server)
 (unless (server-running-p)
   (server-start))
 (setq org-image-actual-width nil)
-#+END_SRC
+#+end_src
 
 * Package Management
 
@@ -64,15 +75,24 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 (setq use-package-always-ensure t)
 #+end_src
 
+
+
 ** Auto-update packages
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package auto-package-update
    :ensure t
    :config
    (setq auto-package-update-delete-old-versions t
          auto-package-update-interval 4)
    (auto-package-update-maybe))
-#+END_SRC
+#+end_src
+
+** Extend use-package
+
+#+begin_src emacs-lisp
+(use-package use-package-ensure-system-package
+  :ensure t)
+#+end_src
 
 * Keyboard Bindings
 
@@ -98,7 +118,7 @@ I've been using the comma (,) key as my leader key for almost a decade in vim. T
 (use-package general
   :config
   (general-create-definer cy/leader-key-def
-    :keymaps `(normal insert visual emacs org-roam)
+    :keymaps `(normal insert visual emacs org-roam org-agenda)
     :prefix ","
     :global-prefix "C-,"))
 #+end_src
@@ -117,10 +137,10 @@ I don't remember what org-evil does, but I've had it in my config since I starte
   (interactive)
   (message "Arrow keys are bad, m'kay?"))
 
+(setq evil-want-keybinding nil)
 (use-package evil
   :init
   (setq evil-want-integration t)
-  (setq evil-want-keybinding nil)
   (setq evil-want-C-u-scroll t)
   ;(setq evil-want-C-i-jump t)
   :config
@@ -169,7 +189,7 @@ I keep =:quit= acting as it normally does in case I really want to quit.
   (save-buffer)
   (kill-this-buffer))
 
-(evil-ex-define-cmd "q" 'cy/ex-kill-buffer-and-close )
+(evil-ex-define-cmd "q" 'cy/ex-kill-buffer-and-close)
 (evil-ex-define-cmd "wq" 'cy/ex-save-kill-buffer-and-close)
 (evil-ex-define-cmd "quit" 'evil-quit)
 #+end_src
@@ -259,7 +279,7 @@ Make it pretty. Lots of good things on the doom-themes repo.
 
 I keep themes I like in here and just uncomment or eval whichever one I'm /feelin'/.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package doom-themes
   :config
   (setq doom-themes-enable-bold t
@@ -269,7 +289,7 @@ I keep themes I like in here and just uncomment or eval whichever one I'm /feeli
   ;;(load-theme 'doom-city-lights t)
 
   (doom-themes-org-config))
-#+END_SRC
+#+end_src
 
 ** Font
 
@@ -277,10 +297,10 @@ I keep themes I like in here and just uncomment or eval whichever one I'm /feeli
 
 Dank Mono is really interesting, but I've been mostly using the really excellent [[https://mplus-fonts.osdn.jp/about-en.html][M+]] font set as it has full support for Latin and Japanese glyphs  in with half-width, full-width, and proportional options.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (set-face-attribute 'default nil
-                    ;; :family "M+ 1mn"
-                    :family "Dank Mono"
+                    :family "M+ 1mn"
+                    ;; :family "Dank Mono"
                     :height cy/default-font-size
                     ;; :height 100
                     :weight 'normal
@@ -291,7 +311,7 @@ Dank Mono is really interesting, but I've been mostly using the really excellent
 ;; (set-face-attribute 'fixed-pitch nil :font "Monoid" :height cy/default-font-size :weight 'regular)
 
 (set-face-attribute 'variable-pitch nil :font "M+ 1c" :height cy/default-variable-font-size :weight 'regular)
-#+END_SRC
+#+end_src
 
 *** Use UTF-8 for everything
 
@@ -523,9 +543,9 @@ Keep it clean, automatically remove excess whitespace.
 
 This is important for projects tracked with Git.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq require-final-newline t)
-#+END_SRC
+#+end_src
 
 * Configuration Files
 
@@ -559,9 +579,9 @@ This is where I define keybindings to quickly jump to settings files.
 #+begin_src emacs-lisp
   (cy/leader-key-def
     "fd" '(:ignore t :which-key "dotfiles")
-    "fde" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/dotfiles/Emacs.org"))) :which-key "edit config")
-    "fdE" '((lambda () (interactive) (cy/org-file-show-headings "~/Projects/dotfiles/Emacs.org")) :which-key "edit config")
-    "fdW" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/dotfiles/Workflow.org"))) :which-key "workflow"))
+    "fde" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/dotfiles/Emacs.org"))) :which-key "edit config")
+    "fdE" '((lambda () (interactive) (cy/org-file-show-headings "~/Projects/Home/dotfiles/Emacs.org")) :which-key "edit config")
+    "fdW" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/dotfiles/Workflow.org"))) :which-key "workflow"))
 #+end_src
 
 * Stateful Keymaps with Hydra
@@ -591,7 +611,7 @@ Ivy provides a more minimal (but still powerful) selection menu that appears whe
 
 ivy-rich adds extra columns to some Counsel commands to provide more information.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package ivy
   :diminish
   :bind (("C-s" . swiper)
@@ -714,7 +734,7 @@ ivy-rich adds extra columns to some Counsel commands to provide more information
   "fR"  '(revert-buffer :which-key "revert file")
   "fj"  '(counsel-file-jump :which-key "jump to file"))
 
-#+END_SRC
+#+end_src
 
 * Window Management
 
@@ -850,11 +870,12 @@ This is a really great selection tool. Basically it starts at the pointer then /
   "d"   '(:ignore t :which-key "dired")
   "dd"  '(dired :which-key "Here")
   "dh"  `(,(cy/dired-link "~") :which-key "Home")
-  "dn"  `(,(cy/dired-link "~/Notes") :which-key "Notes")
+  "di"  `(,(cy/dired-link "~/OneDrive/Notes/Inbox.org") :which-key "Inbox")
+  "dn"  `(,(cy/dired-link "~/OneDrive/Notes") :which-key "Notes")
   "do"  `(,(cy/dired-link "~/Downloads") :which-key "Downloads")
   "dp"  `(,(cy/dired-link "~/Pictures") :which-key "Pictures")
   "dv"  `(,(cy/dired-link "~/Videos") :which-key "Videos")
-  "d."  `(,(cy/dired-link "~/.dotfiles") :which-key "dotfiles")
+  "d."  `(,(cy/dired-link "~/Projects/Home/dotfiles") :which-key "dotfiles")
   "de"  `(,(cy/dired-link "~/.emacs.d") :which-key ".emacs.d"))
 #+end_src
 
@@ -889,7 +910,7 @@ This is a really great selection tool. Basically it starts at the pointer then /
 
 A nice way to browse files, specifically installed for org-roam. If this ever gets super slow, look into installing the Notdeft fork.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 ;(use-package deft
 ;  :after org
 ;  :bind
@@ -901,7 +922,7 @@ A nice way to browse files, specifically installed for org-roam. If this ever ge
 ;  (deft-directory "~/OneDrive/Notes/"))
 ;  (evil-leader/set-key
 ;    "d" 'deft)
-#+END_SRC
+#+end_src
 
 * Org Mode
 
@@ -969,7 +990,7 @@ I don't have a workflow configuration yet, but, if I did - I'd define it in a se
 
 #+begin_src emacs-lisp
   ;(require 'cy-org)
-  (require 'cy-workflow "~/Projects/dotfiles/.emacs.d/elisp/cy-workflow.el")
+  (require 'cy-workflow "~/Projects/Home/dotfiles/.emacs.d/elisp/cy-workflow.el")
 #+end_src
 
 ** Automatically "Tangle" on Save
@@ -1023,7 +1044,8 @@ Uses org-superstar. I switch between this and org-bullets mode. org-bullets some
 ;; Ensure that anything that should be fixed-pitch in Org files appears that way.
 (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
 (set-face-attribute 'org-code nil :foreground nil :inherit '(shadow fixed-pitch))
-(set-face-attribute 'org-table nil :foreground nil :inherit '(shadow-fixed-pitch))
+;; (set-face-attribute 'org-table nil :foreground nil :inherit '(fixed-pitch))
+(set-face-attribute 'org-table nil :inherit 'fixed-pitch :foreground "#83a598")
 (set-face-attribute 'org-verbatim nil :foreground nil :inherit '(shadow-fixed-pitch))
 (set-face-attribute 'org-special-keyword nil :foreground nil :inherit '(font-lock-comment-face fixed-pitch))
 (set-face-attribute 'org-meta-line nil :foreground nil :inherit '(font-lock-comment-face fixed-pitch))
@@ -1037,7 +1059,7 @@ Uses org-superstar. I switch between this and org-bullets mode. org-bullets some
 ;; '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
 ;; '(org-property-value ((t (:inherit fixed-pitch))) t)
 ;; '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
-;; '(org-table ((t (:inherit fixed-pitch :foreground "#83a598"))))
+;; (set-face-attribute '(org-table ((t (:inherit fixed-pitch :foreground "#83a598")))))
 ;; '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
 ;; '(org-verbatim ((t (:inherit (shadow fixed-pitch))))))
 
@@ -1156,29 +1178,29 @@ It's nice to have a table of contents section for long literate config files (li
 
 I really dislike the litter, and I haven't yet needed a backup file. Here's hoping I don't regret this.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 ;; Avoid #file.org#
 (auto-save-visited-mode)
 (setq create-lockfiles nil)
 ;; Avoid filename.ext~
 (setq make-backup-files nil)
-#+END_SRC
+#+end_src
 
 ** Display Images
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq org-startup-with-inline-images t)
 (add-hook
   'org-babel-after-execute-hook
   (lambda ()
     (when org-inline-image-overlays
       (org-redisplay-inline-images))))
-#+END_SRC
+#+end_src
 
 ** Highlight and indent source code blocks
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq org-src-fontify-natively t)
-#+END_SRC
+#+end_src
 
 ** Roam
 
@@ -1234,13 +1256,13 @@ This is the interface I use primarily for notes in a Zettelkasten style.
     "org"   'org-roam-show-graph-show
     "ori"   'org-roam-insert
     "orf"   'org-roam-find-file)
-#+END_SRC
+#+end_src
 
 *** Org Roam Server
 
 @todo needs a description. Roam server lets me preview my files and see the big map of connected concepts in a browser.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package org-roam-server
   :ensure t
   :config
@@ -1255,15 +1277,15 @@ This is the interface I use primarily for notes in a Zettelkasten style.
         org-roam-server-network-label-truncate t
         org-roam-server-network-label-truncate-length 60
         org-roam-server-network-label-wrap-length 20))
-#+END_SRC
+#+end_src
 
 *** Org Roam Protocol
 
 Allows opening notes from external applications in Emacs.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (require 'org-roam-protocol)
-#+END_SRC
+#+end_src
 
 * Development
 
@@ -1410,7 +1432,7 @@ Projectile is a project management library for Emacs.
 
 Many other packages integrate with Projectile.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package projectile
   :diminish projectile-mode
   :config (projectile-mode)
@@ -1438,7 +1460,7 @@ Many other packages integrate with Projectile.
 ;(projectile-mode +1)
 ;(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
 ;(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-#+END_SRC
+#+end_src
 
 *** Project Configurations
 
@@ -1465,7 +1487,7 @@ lsp-keymap-prefix setting enables the ability to define a prefix for where lsp-m
 
 which-key integration is important.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package ivy-xref
   :init (if (< emacs-major-version 27)
           (setq xref-show-xrefs-function #'ivy-xref-show-xrefs )
@@ -1473,7 +1495,8 @@ which-key integration is important.
 
 (use-package lsp-mode
   :commands lsp
-  :hook ((typescript-mode js2-mode web-mode) . lsp)
+  :hook
+  ((typescript-mode js2-mode web-mode) . lsp)
   :bind (:map lsp-mode-map
          ("TAB" . completion-at-point))
   :config (setq lsp-headerline-breadcrumb-enable t
@@ -1521,7 +1544,7 @@ Integrates lsp-mode and Ivy.
 #+end_src
 
 **** LSP Company Completion
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 ;(add-to-list 'company-backends 'company-lsp)
 (use-package company-lsp
   :config (setq company-lsp-cache-candidates 'auto
@@ -1531,7 +1554,7 @@ Integrates lsp-mode and Ivy.
 ;(add-hook 'js2-mode-hook (lambda ()
 ;                            (tern-mode)
 ;                            (company-mode)))
-#+END_SRC
+#+end_src
 
 *** Debugging with dap-mode
 DAP (Debug Adapter Protocol). This is some thing that I guess comes from VSCode but seems like the de facto way to debug code using Language Servers.
@@ -1683,20 +1706,20 @@ This will install the typescript-language-server and the TypeScript compiler pac
          ("\\.md\\'" . gfm-mode)
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "multimarkdown"))
-#+END_SRC
+#+end_src
 
 *** JSON
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (add-to-list 'auto-mode-alist '("\\.json\\'" . json-mode))
 (add-to-list 'auto-mode-alist '("\\.esdoc\\.json\\'" . json-mode))
 (add-to-list 'auto-mode-alist '("\\.*\\.json\\'" . json-mode))
-#+END_SRC
+#+end_src
 
 *** PHP
 
 I do a ton of PHP work, but oddly don't have much configuration for it here. I still fall back to IntelliJ, but it would be nice to some day move entirely into Emacs.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.html\\.twig\\'" . web-mode))
@@ -1708,7 +1731,7 @@ I do a ton of PHP work, but oddly don't have much configuration for it here. I s
                             (setq c-basic-offset 2)))
 (add-hook 'php-mode-hook '(lambda ()
                             (setq display-line-numbers 'absolute)))
-#+END_SRC
+#+end_src
 
 *** Python
 
@@ -1741,6 +1764,28 @@ You can use pyvenv package to use virtualenv environments in Emacs. The pyvenv-a
 ;(use-package pyvenv
 ;  :config
 ;  (pyvenv-mode 1))
+#+end_src
+
+*** Golang
+
+#+begin_src emacs-lisp
+(defun cy/lsp-go-install-save-hooks()
+  (add-hook 'before-save-hook #'lsp-format-buffer t t)
+  (add-hook 'before-save-hook #'lsp-organize-imports t t))
+
+;; (use-package golint
+;;   :requires go-mode
+;;   :hook go-mode
+;;   :init
+;;   (add-to-list 'load-path (expand-file-name "~/go/src/golang.org/x/lint/misc/emacs")))
+
+(use-package go-mode
+  :init
+  (add-to-list 'exec-path (expand-file-name "~/go/bin"))
+  (add-to-list 'exec-path (expand-file-name "~/go/src/golang.org/x/lint/misc/emacs"))
+(add-hook 'go-mode-hook 'lsp-deferred) ;; Do this for golang support, it's built-in to lsp.
+(add-hook 'go-mode-hook #'cy/lsp-go-install-save-hooks))
+
 #+end_src
 
 *** HTML
@@ -1788,7 +1833,7 @@ Useful packages across different Lisp and Scheme implementations
 
 Really useful for editing Systemd  timers and configurations.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (add-to-list 'auto-mode-alist '("\\.service\\'" . conf-unix-mode))
 (add-to-list 'auto-mode-alist '("\\.timer\\'" . conf-unix-mode))
 (add-to-list 'auto-mode-alist '("\\.target\\'" . conf-unix-mode))
@@ -1800,17 +1845,17 @@ Really useful for editing Systemd  timers and configurations.
 (add-to-list 'auto-mode-alist '("\\.netdev\\'" . conf-unix-mode))
 (add-to-list 'auto-mode-alist '("\\.network\\'" . conf-unix-mode))
 (add-to-list 'auto-mode-alist '("\\.link\\'" . conf-unix-mode))
-#+END_SRC
+#+end_src
 
 ** Productivity
 
 *** Flycheck
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package flycheck
  :ensure t
  :init (global-flycheck-mode))
-#+END_SRC
+#+end_src
 
 *** Snippets
 
@@ -1830,9 +1875,9 @@ Really useful for editing Systemd  timers and configurations.
 
 *** Parenthesis Match Highlighting
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (show-paren-mode 1)
-#+END_SRC
+#+end_src
 
 *** Rainbow Delimiters
 
@@ -1865,7 +1910,7 @@ Company Mode provides a nice in-buffer completion interface, makes Emacs feel mo
 
 Company Box enhances the look with icons and stuff.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package company
   :ensure t
   :after lsp-mode
@@ -1885,14 +1930,14 @@ Company Box enhances the look with icons and stuff.
 
 (use-package company-box
   :hook (company-mode . company-box-mode))
-#+END_SRC
+#+end_src
 
 
 *** Tree
 
 Like NeoVim but Emacs-y-er.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package treemacs
   :ensure t
   :init
@@ -1908,6 +1953,7 @@ Like NeoVim but Emacs-y-er.
           treemacs-no-delete-other-windows     t
           treemacs-position                    'left
           treemacs-width                       35
+          treemacs-sorting                     'alphabetic-asc
           treemacs-resize-icons 44
           treemacs-follow-mode
           treemacs-filewatch-mode              t
@@ -1926,35 +1972,35 @@ Like NeoVim but Emacs-y-er.
         ("C-x t B"   . treemacs-bookmark)
         ("C-x t C-t" . treemacs-find-file)
         ("C-x t M-t" . treemacs-find-tag)))
-#+END_SRC
+#+end_src
 
 **** Evil Tree
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package treemacs-evil
   :after treemacs evil
   :ensure t)
-#+END_SRC
+#+end_src
 
 **** Projectile Tree
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package treemacs-projectile
   :after treemacs projectile
   :ensure t)
-#+END_SRC
+#+end_src
 
 **** Icons Tree
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package treemacs-icons-dired
   :after treemacs dired
   :ensure t
   :config (treemacs-icons-dired-mode))
-#+END_SRC
+#+end_src
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 ;(use-package treemacs-magit
 ;  :after treemacs-magit
 ;  :ensure t)
-#+END_SRC
+#+end_src
 
 
 ** Reference
@@ -1971,21 +2017,21 @@ This is a really nice package that helps when you need to get to some HTTP docum
 * Writing
 
 ** Olivetti
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package olivetti
    :config
    (add-hook 'text-mode-hook 'olivetti-mode)
    ;(add-hook 'text-mode-hook (lambda () (setq indent-line-function #'indent-relative)))
    (setq-default olivetti-body-width 120))
-#+END_SRC
+#+end_src
 
 ** LaTeX / PDFs
 
 *** Force a page break after table of contents
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq org-latex-toc-command "\\tableofcontents \\clearpage")
-#+END_SRC
+#+end_src
 
 * Applications
 
@@ -1993,13 +2039,13 @@ This is a really nice package that helps when you need to get to some HTTP docum
 
 *** Set page break line mode globally
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (global-page-break-lines-mode)
-#+END_SRC
+#+end_src
 
 *** Enable the dashboard
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package dashboard
   :ensure t
   ;;:mode ("\\*dashboard*\\" . dashboard-mode)
@@ -2019,15 +2065,15 @@ This is a really nice package that helps when you need to get to some HTTP docum
                           (projects . 5)
                           (agenda . 5)))
   (dashboard-setup-startup-hook))
-#+END_SRC
+#+end_src
 
 *** Set the initial buffer to the Dashboard.
 
 This is useful if you start Emacs as a server and connect through /emacsclient/.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
-#+END_SRC
+#+end_src
 
 ** term-mode
 

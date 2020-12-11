@@ -1,9 +1,0 @@
-* Default
-** .emacs.d
- - path :: ~/.emacs.d
-** esdoc-webpack-plugin
- - path :: ~/Projects/Home/node_module_projects/esdoc-webpack-plugin
-** flag-generator
- - path :: ~/Projects/Home/flag-generator
-** generators
- - path :: ~/Projects/Home/generators
