@@ -2135,10 +2135,9 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
 
 This block pulls in all the =:noweb-ref= references to =symlinks= and outputs them all into a =symlinks.sh= file. This block will normally be empty, if only this file is tangled out. The =:noweb-ref= references are stored in different files.
 
-#+begin_src shell :noweb yes :exports none :mkdirp yes :tangle /home/narwic/Projects/Home/dotfiles/tangled/symlinks.sh
+#+begin_src shell :noweb yes :mkdirp yes :tangle /home/narwic/Projects/Home/dotfiles/tangled/symlinks.sh
 <<symlinks>>
 #+end_src
-
 
 This block is tangled out into a script called =concat.sh=, the purpose of which is to concatenate all the org files in my dotfiles directory together temporarily into a single =concat.org= file. After that process, the script looks through the concatenated Org for the =symlinks.sh= block above and tangles it out (overwriting the original empty output). After tangling out the =symlinks.sh= block (complete with references), the symlinks script is run, creating symlinks around the system. The script then removes the concatenated Org file.
 
@@ -2148,7 +2147,7 @@ This process is necessary because the actual symlink references are spread acros
 catFile="/home/narwic/Projects/Home/dotfiles/tangled/concat.org"
 symlinkFile="/home/narwic/Projects/Home/dotfiles/tangled/symlinks.sh"
 
-cat <(cat ../*.org) > $catFile
+cat <(cat /home/narwic/Projects/Home/dotfiles/*.org) > $catFile
 
 emacs --batch --eval="\
   (progn (require 'org)
@@ -2157,12 +2156,11 @@ emacs --batch --eval="\
            (search-forward \":tangle $symlinkFile\")
            (org-babel-tangle \"/home/narwic/Projects/Home/dotfiles/tangled/symlinks.sh\")))"
 
-
 chmod +x $symlinkFile
 
 $symlinkFile
 
-rm $catFile
+# rm $catFile
 #+end_src
 
 This after-save-hook runs the above =concat.sh= script to do the concatenation and symlinking.
