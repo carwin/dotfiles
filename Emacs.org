@@ -11,15 +11,28 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
   (defvar cy/default-font-size 110)
   (defvar cy/default-variable-font-size 110)
   (defvar cy/frame-transparency '(95 . 95))
+  (setq evil-want-keybinding nil)
 #+end_src
 
-* Start the server on launch
+* Package Management
 
 #+begin_src emacs-lisp
-(use-package server)
-(unless (server-running-p)
-  (server-start))
-(setq org-image-actual-width nil)
+(require 'package)
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                         ;;("melpa-stable" . "https://stable.melpa.org/packages/")
+                         ("org" . "https://orgmode.org/elpa/")
+                         ("elpa" . "https://elpa.gnu.org/packages/")))
+
+(package-initialize)
+(unless package-archive-contents
+  (package-refresh-contents))
+
+;; Initialize use-package for non-Linux platforms
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+
+(require 'use-package)
+(setq use-package-always-ensure t)
 #+end_src
 
 * Configure Emacs paths
@@ -31,6 +44,15 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
   :init
   (when (daemonp)
     (exec-path-from-shell-initialize)))
+#+end_src
+
+* Start the server on launch
+
+#+begin_src emacs-lisp
+    (use-package server)
+    (unless (server-running-p)
+      (server-start))
+    (setq org-image-actual-width nil)
 #+end_src
 
 * Keep .emacs.d Clean
@@ -53,28 +75,6 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
   (server-start))
 (setq org-image-actual-width nil)
 #+end_src
-
-* Package Management
-
-#+begin_src emacs-lisp
-(require 'package)
-(setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                         ("melpa-stable" . "https://stable.melpa.org/packages/")
-                         ("org" . "https://orgmode.org/elpa/")
-                         ("elpa" . "https://elpa.gnu.org/packages/")))
-
-(package-initialize)
-(unless package-archive-contents
-  (package-refresh-contents))
-
-;; Initialize use-package for non-Linux platforms
-(unless (package-installed-p 'use-package)
-  (package-install 'use-package))
-
-(require 'use-package)
-(setq use-package-always-ensure t)
-#+end_src
-
 
 
 ** Auto-update packages
@@ -137,7 +137,6 @@ I don't remember what org-evil does, but I've had it in my config since I starte
   (interactive)
   (message "Arrow keys are bad, m'kay?"))
 
-(setq evil-want-keybinding nil)
 (use-package evil
   :init
   (setq evil-want-integration t)
@@ -168,7 +167,7 @@ I don't remember what org-evil does, but I've had it in my config since I starte
     :after evil
     :ensure t
     :config
-    (evil-collection-init 'dashboard)) ;Make sure Evil bindings work on the Dashboard.
+    (evil-collection-init 'dashboard)) ;;Make sure Evil bindings work on the Dashboard.
 
 #+end_src
 
@@ -807,18 +806,18 @@ This is a really great selection tool. Basically it starts at the pointer then /
        (all-the-icons-dired-mode 1)
        (hl-line-mode 1)))
 
-  ; @todo Had to run this once to get the icons.
-  ;(use-package all-the-icons-dired
-  ;  :hook (dired-mode . all-the-icons-dired-mode))
+ ;; @todo Had to run this once to get the icons.
+ (use-package all-the-icons-dired
+   :hook (dired-mode . all-the-icons-dired-mode))
 
-  ;(add-hook 'dired-mode-hook
-  ;  (lambda ()
-  ;   (interactive)
-  ;   (dired-omit-mode 1)
-  ;   (unless
-  ;         (s-equals? "/gnu/store/" (expand-file-name default-directory))
-  ;         (all-the-icons-dired-mode 1))
-  ;   (hl-line-mode 1)))
+ (add-hook 'dired-mode-hook
+   (lambda ()
+    (interactive)
+    (dired-omit-mode 1)
+    (unless
+          (s-equals? "/gnu/store/" (expand-file-name default-directory))
+          (all-the-icons-dired-mode 1))
+    (hl-line-mode 1)))
 
   (use-package dired-rainbow
     :defer 2
@@ -860,7 +859,7 @@ This is a really great selection tool. Basically it starts at the pointer then /
     "l" 'dired-single-buffer
     "y" 'dired-ranger-copy
     "X" 'dired-ranger-move
-    "p" 'dired-ranger-paste)) ; End of use-package dired
+    "p" 'dired-ranger-paste)) ;; End of use-package dired
 
 (defun cy/dired-link (path)
   (lexical-let ((target path))
@@ -911,17 +910,17 @@ This is a really great selection tool. Basically it starts at the pointer then /
 A nice way to browse files, specifically installed for org-roam. If this ever gets super slow, look into installing the Notdeft fork.
 
 #+begin_src emacs-lisp
-;(use-package deft
-;  :after org
-;  :bind
-;  ("C-c n d" . deft)
-;  :custom
-;  (deft-recursive t)
-;  (deft-use-filter-string-for-filename t)
-;  (deft-default-extension "org")
-;  (deft-directory "~/OneDrive/Notes/"))
-;  (evil-leader/set-key
-;    "d" 'deft)
+;;(use-package deft
+;;  :after org
+;;  :bind
+;;  ("C-c n d" . deft)
+;;  :custom
+;;  (deft-recursive t)
+;;  (deft-use-filter-string-for-filename t)
+;;  (deft-default-extension "org")
+;;  (deft-directory "~/OneDrive/Notes/"))
+;;  (evil-leader/set-key
+;;    "d" 'deft)
 #+end_src
 
 * Org Mode
@@ -979,6 +978,7 @@ To execute or export code in org-mode code blocks, you'll need to set up org-bab
   (org-babel-do-load-languages
     'org-babel-load-languages
     '((emacs-lisp . t)
+      (shell .t)
       (python .t)
       (ledger . t))) ; @todo: Ledger for accounting, forgot about that program.
   (push '("conf-unix" . conf-unix) org-src-lang-modes)
@@ -1218,19 +1218,18 @@ This is the interface I use primarily for notes in a Zettelkasten style.
   (org-roam-buffer-window-parameters '((no-delete-other-windows . t)))
   (org-roam-dailies-directory "daily/")
   (org-roam-dailies-capture-templates
-    '(("l" "lab" entry
-        #'org-roam-capture--get-point
-        "* %?"
-        :file-name "daily/%<%Y-%m-%d>"
-        :head "#+title: %<%Y-%m-%d>\n"
-        :olp ("Lab notes"))
-
-      ("j" "journal" entry
-        #'org-roam-capture--get-point
-        "* %?"
-        :file-name "daily/%<%Y-%m-%d>"
-        :head "#+title: %<%Y-%m-%d>\n"
-        :olp ("Journal"))))
+      '(("d" "default" entry
+         #'org-roam-capture--get-point
+         "* %?"
+         :file-name "daily/%<%Y-%m-%d>"
+         :head "#+title: %<%Y-%m-%d>\n"
+         :olp ("%<%Y>"))
+        ("j" "journal" entry
+         #'org-roam-capture--get-point
+         "* %?"
+         :file-name "daily/%<%Y-%m-%d>"
+         :head "#+title: %<%Y-%m-%d>\n"
+         :olp ("Journal"))))
 
   (org-roam-graph-exclude-matcher '("dailies"))
   ; (org-roam-graph-viewer 'eww-open-file)
@@ -1246,7 +1245,7 @@ This is the interface I use primarily for notes in a Zettelkasten style.
     "or"    '(:ignore t :which-key "roam")
     "orl"   '(org-roam :which-key "backlinks window")
     "ord"   '(:ignore t :which-key "dailies")
-    "ordt"  'org-roam-dailies-today
+    "ordt"  'org-roam-dailies-find-today
     "ordT"  'org-roam-dailies-find-tomorrow
     "ordy"  'org-roam-dailies-find-yesterday
     "ordc"  '(:ignore t :which-key "capture")
@@ -1710,6 +1709,7 @@ This will install the typescript-language-server and the TypeScript compiler pac
 
 *** JSON
 #+begin_src emacs-lisp
+(use-package json-mode)
 (add-to-list 'auto-mode-alist '("\\.json\\'" . json-mode))
 (add-to-list 'auto-mode-alist '("\\.esdoc\\.json\\'" . json-mode))
 (add-to-list 'auto-mode-alist '("\\.*\\.json\\'" . json-mode))
@@ -2040,6 +2040,7 @@ This is a really nice package that helps when you need to get to some HTTP docum
 *** Set page break line mode globally
 
 #+begin_src emacs-lisp
+(use-package page-break-lines)
 (global-page-break-lines-mode)
 #+end_src
 
@@ -2128,4 +2129,48 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
 
 (cy/leader-key-def
   "cc"  '(cfw:open-org-calendar :which-key "calendar"))
+#+end_src
+
+* Symlinker Tanglifier
+
+This block pulls in all the =:noweb-ref= references to =symlinks= and outputs them all into a =symlinks.sh= file. This block will normally be empty, if only this file is tangled out. The =:noweb-ref= references are stored in different files.
+
+#+begin_src shell :noweb yes :exports none :mkdirp yes :tangle /home/narwic/Projects/Home/dotfiles/tangled/symlinks.sh
+<<symlinks>>
+#+end_src
+
+
+This block is tangled out into a script called =concat.sh=, the purpose of which is to concatenate all the org files in my dotfiles directory together temporarily into a single =concat.org= file. After that process, the script looks through the concatenated Org for the =symlinks.sh= block above and tangles it out (overwriting the original empty output). After tangling out the =symlinks.sh= block (complete with references), the symlinks script is run, creating symlinks around the system. The script then removes the concatenated Org file.
+
+This process is necessary because the actual symlink references are spread across multiple files, so the primary block above, if left on its own, will be empty. Only with a single, concactenated Org file can it find the references it wants.
+
+#+begin_src shell :tangle /home/narwic/Projects/Home/dotfiles/tangled/concat.sh :shebang "#!/bin/bash" :output yes
+catFile="/home/narwic/Projects/Home/dotfiles/tangled/concat.org"
+symlinkFile="/home/narwic/Projects/Home/dotfiles/tangled/symlinks.sh"
+
+cat <(cat ../*.org) > $catFile
+
+emacs --batch --eval="\
+  (progn (require 'org)
+         (let ((org-confirm-babel-evaluate nil))
+           (find-file \"$catFile\")
+           (search-forward \":tangle $symlinkFile\")
+           (org-babel-tangle \"/home/narwic/Projects/Home/dotfiles/tangled/symlinks.sh\")))"
+
+
+chmod +x $symlinkFile
+
+$symlinkFile
+
+rm $catFile
+#+end_src
+
+This after-save-hook runs the above =concat.sh= script to do the concatenation and symlinking.
+
+#+begin_src emacs-lisp
+(defun cy/concat-org-configs ()
+  (when (eq major-mode 'org-mode)
+    (shell-command-to-string (format "~/Projects/Home/dotfiles/tangled/concat.sh %s" buffer-file-name))))
+
+(add-hook 'after-save-hook 'cy/concat-org-configs)
 #+end_src
