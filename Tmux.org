@@ -1,8 +1,6 @@
 #+title: Tmux Configuration
 #+property: header-args:conf :tangle /home/narwic/Projects/Home/dotfiles/tangled/tmux.conf :mkdirp yes :results silent
 
-
-
 #+begin_src conf
 
 # Key bindings

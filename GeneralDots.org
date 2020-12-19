@@ -2,7 +2,7 @@
 
 * Xresources
 
-#+begin_src conf :tangle ~/.Xresources
+#+begin_src conf :tangle ./tangled/Xresources
 !emacs*Background: DarkSlateGray
 !emacs*Foreground: Wheat
 !emacs*pointerColor: Orchid
@@ -147,11 +147,18 @@ dmenu.foreground:         #d8dee9
 
 #+end_src
 
+Describe the symlink to be created for this file.
+
+#+begin_src sh :noweb-ref symlinks
+ln -sfv ~/Projects/Home/dotfiles/tangled/Xresources ~/.Xresources
+xrdb ~/.Xresources
+#+end_src
+
 * Gitconfig
 
 Writes out a ~/.gitconfig file for global configuration.
 
-#+begin_src shell :tangle ~/.gitconfig
+#+begin_src shell :tangle ./tangled/gitconfig
 [core]
   editor = vim
 [user]
@@ -201,4 +208,10 @@ Writes out a ~/.gitconfig file for global configuration.
   lg = log --show-signature
   cm = commit -S -m
 	change-commits = "!f() { VAR=$1; OLD=$2; NEW=$3; shift 3; git filter-branch -f --env-filter \"if [[ \\\"$`echo $VAR`\\\" = '$OLD' ]]; then export $VAR='$NEW'; fi\" $@; }; f"
+#+end_src
+
+Describe the symlink to be created for this file.
+
+#+begin_src sh :noweb-ref symlinks
+ln -sfv ~/Projects/Home/dotfiles/tangled/gitconfig ~/.gitconfig
 #+end_src
