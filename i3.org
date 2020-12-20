@@ -1,7 +1,0 @@
-#+title: I3 Configuration
-
-This file stores all the configuration I use for i3.
-
-These settings will get tangled out to =~/.config/i3/config=.
-
-* TODO Put it all in here dude.
