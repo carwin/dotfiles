@@ -13,8 +13,8 @@ RANGER_LOAD_DEFAULT_RC=false
 
 # Ensure 256 colors
 [[ "$TERM" == "xterm" ]] && export TERM=xterm-256-color
-[[ "$TERM" == "rxvt" ]] && export TERM=rxvt-unicode-256-color
-[[ "$TERM" == "rxvt-256color" ]] && export TERM=rxvt-unicode-256-color
+# [[ "$TERM" == "rxvt" ]] && export TERM=rxvt-unicode-256-color
+# [[ "$TERM" == "rxvt-256color" ]] && export TERM=rxvt-unicode-256-color
 
 # Add Ruby gems into path
 if which ruby >/dev/null && which gem >/dev/null; then
@@ -127,7 +127,9 @@ Enable the onedrive-sync timer.
 systemctl --user enable onedrive-sync.timer
 #+end_src
 
-* Xresources
+* X
+
+** Xresources
 
 #+begin_src conf :tangle ./tangled/Xresources
 !emacs*Background: DarkSlateGray
@@ -274,7 +276,7 @@ dmenu.foreground:         #d8dee9
 
 #+end_src
 
-** Post-tangle actions
+*** Post-tangle actions
 
 Describe the symlink to be created for this file.
 
@@ -286,6 +288,21 @@ Source the Xresources file.
 
 #+begin_src sh :noweb-ref symlinks
 xrdb ~/.Xresources
+#+end_src
+
+** Xsettings
+This is primarily for font prettifying.
+#+begin_src conf :tangle ./tangled/xsettingsd
+Xft/Hinting 1
+Xft/RGBA "rgb"
+Xft/HintStyle "hintslight"
+Xft/Antialias 1
+#+end_src
+
+*** Post-tangle actions
+
+#+begin_src sh :noweb-ref symlinks
+ln -sfv $(pwd)/tangled/xsettingsd ~/.xsettingsd
 #+end_src
 
 * Gitconfig
@@ -2378,4 +2395,53 @@ Symlink the mpd configuration directory.
 
 #+begin_src sh :noweb-ref symlinks
 ln -sfv $(pwd)/tangled/mpd ~/.config/mpd
+#+end_src
+
+* Taskwarrior
+
+#+begin_src conf :tangle ./tangled/taskrc
+# [Created by task 2.5.1 6/3/2020 15:38:53]
+# Taskwarrior program configuration file.
+# For more documentation, see http://taskwarrior.org or try 'man task', 'man task-color',
+# 'man task-sync' or 'man taskrc'
+
+# Here is an example of entries that use the default, override and blank values
+#   variable=foo   -- By specifying a value, this overrides the default
+#   variable=      -- By specifying no value, this means no default
+#   #variable=foo  -- By commenting out the line, or deleting it, this uses the default
+
+# Use the command 'task show' to see all defaults and overrides
+
+# Files
+data.location=~/.task
+
+# Color theme (uncomment one to use)
+#include /usr/share/doc/task/rc/light-16.theme
+#include /usr/share/doc/task/rc/light-256.theme
+#include /usr/share/doc/task/rc/dark-16.theme
+#include /usr/share/doc/task/rc/dark-256.theme
+#include /usr/share/doc/task/rc/dark-red-256.theme
+#include /usr/share/doc/task/rc/dark-green-256.theme
+#include /usr/share/doc/task/rc/dark-blue-256.theme
+#include /usr/share/doc/task/rc/dark-violets-256.theme
+#include /usr/share/doc/task/rc/dark-yellow-green.theme
+#include /usr/share/doc/task/rc/dark-gray-256.theme
+#include /usr/share/doc/task/rc/dark-gray-blue-256.theme
+#include /usr/share/doc/task/rc/solarized-dark-256.theme
+#include /usr/share/doc/task/rc/solarized-light-256.theme
+#include /usr/share/doc/task/rc/no-color.theme
+
+taskd.certificate=\/home\/narwic\/.task\/narwic.cert.pem
+taskd.key=\/home\/narwic\/.task\/narwic.key.pem
+taskd.ca=\/home\/narwic\/.task\/ca.cert.pem
+taskd.server=sector6.1000needles.net:53589
+# taskd.credentials=Personal\/narwic\/c8101054-0d12-4c41-995a-693230b96085
+taskd.credentials=Personal\/narwic\/0b7a353e-8137-4c9e-8621-699471e2ec95
+taskd.trust=ignore hostname
+#+end_src
+
+** Post-tangle actions
+
+#+begin_src sh :noweb-ref symlinks
+ln -sfv $(pwd)/tangled/taskrc ~/.taskrc
 #+end_src
