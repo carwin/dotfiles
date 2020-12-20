@@ -14,6 +14,7 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
   (setq evil-want-keybinding nil)
 #+end_src
 
+
 * Package Management
 
 #+begin_src emacs-lisp
@@ -978,6 +979,7 @@ To execute or export code in org-mode code blocks, you'll need to set up org-bab
   (org-babel-do-load-languages
     'org-babel-load-languages
     '((emacs-lisp . t)
+      (vimscript . t)
       (shell .t)
       (python .t)
       (ledger . t))) ; @todo: Ledger for accounting, forgot about that program.
@@ -2146,6 +2148,7 @@ This process is necessary because the actual symlink references are spread acros
 #+begin_src shell :tangle /home/narwic/Projects/Home/dotfiles/tangled/concat.sh :shebang "#!/bin/bash" :output yes
 catFile="/home/narwic/Projects/Home/dotfiles/tangled/concat.org"
 symlinkFile="/home/narwic/Projects/Home/dotfiles/tangled/symlinks.sh"
+self="/home/narwic/Projects/Home/dotfiles/tangled/concat.sh"
 
 cat <(cat /home/narwic/Projects/Home/dotfiles/*.org) > $catFile
 
@@ -2157,10 +2160,11 @@ emacs --batch --eval="\
            (org-babel-tangle \"/home/narwic/Projects/Home/dotfiles/tangled/symlinks.sh\")))"
 
 chmod +x $symlinkFile
+chmod +x $self
 
 $symlinkFile
 
-# rm $catFile
+rm $catFile
 #+end_src
 
 This after-save-hook runs the above =concat.sh= script to do the concatenation and symlinking.
