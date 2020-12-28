@@ -979,7 +979,6 @@ To execute or export code in org-mode code blocks, you'll need to set up org-bab
   (org-babel-do-load-languages
     'org-babel-load-languages
     '((emacs-lisp . t)
-      (vimscript . t)
       (shell .t)
       (python .t)
       (ledger . t))) ; @todo: Ledger for accounting, forgot about that program.
@@ -1480,6 +1479,7 @@ Below is an example.
 
 ** Languages
 
+
 *** Language Server Support
 
 LSP is "Language Server Protocol"
@@ -1775,12 +1775,6 @@ You can use pyvenv package to use virtualenv environments in Emacs. The pyvenv-a
   (add-hook 'before-save-hook #'lsp-format-buffer t t)
   (add-hook 'before-save-hook #'lsp-organize-imports t t))
 
-;; (use-package golint
-;;   :requires go-mode
-;;   :hook go-mode
-;;   :init
-;;   (add-to-list 'load-path (expand-file-name "~/go/src/golang.org/x/lint/misc/emacs")))
-
 (use-package go-mode
   :init
   (add-to-list 'exec-path (expand-file-name "~/go/bin"))
@@ -1947,7 +1941,7 @@ Like NeoVim but Emacs-y-er.
     (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
   :config
   (progn
-    (setq treemacs-collapse-dirs               (if treemacs-python-executable 3 0)
+    (setq treemacs-collapse-dirs               3
           treemacs-deferred-git-apply-delay    0.5
           treemacs-display-in-side-window      t
           treemacs-indentation                 2
@@ -1956,8 +1950,8 @@ Like NeoVim but Emacs-y-er.
           treemacs-position                    'left
           treemacs-width                       35
           treemacs-sorting                     'alphabetic-asc
-          treemacs-resize-icons 44
-          treemacs-follow-mode
+          treemacs-resize-icons                44
+          treemacs-follow-mode                 t
           treemacs-filewatch-mode              t
           treemacs-fringe-indicator-mode       t)
           (pcase (cons (not (null (executable-find "git")))

@@ -3,12 +3,13 @@
 
 * Environment Variables
 
-#+begin_src sh :tangle ./tangled/profile :mkdirp yes
+#+begin_src sh :tangle ~/Projects/Home/dotfiles/tangled/profile :mkdirp yes
 EDITOR='vim'
 VISUAL='vim'
 DIFFPROG='vim'
 LANG=en_US.UTF-8
 LC_ALL=en_US.UTF-8
+LC_COLLATE=C
 RANGER_LOAD_DEFAULT_RC=false
 
 # Ensure 256 colors
@@ -26,6 +27,9 @@ if which nvm >/dev/null; then
   source /usr/share/nvm/init-nvm.sh
 fi
 
+# LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
+LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
+
 # Add personal binaries into PATH.
 PATH="$HOME/.local/bin:$PATH"
 
@@ -33,18 +37,19 @@ PATH="$HOME/.local/bin:$PATH"
 XDG_CONFIG_HOME="$HOME/.config"
 XDG_DATA_HOME="$HOME/.local/share"
 XDG_CACHE_HOME="$HOME/.cache"
+ZDOTDIR="$HOME/.zsh"
 #+end_src
 
 ** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv $(pwd)/tangled/profile $HOME/.profile
+ln sv $(pwd)/tangled/profile $HOME/.profile
 source $HOME/.profile
 #+end_src
 
 * XDG User Directories
 
-#+begin_src conf :tangle ./tangled/user-dirs.dirs
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/user-dirs.dirs
 XDG_DESKTOP_DIR="$HOME/"
 XDG_DOWNLOAD_DIR="$HOME/Downloads"
 XDG_TEMPLATES_DIR="$HOME/Templates"
@@ -56,8 +61,75 @@ XDG_VIDEOS_DIR="$HOME/Videos"
 #+end_src
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv $(pwd)/tangled/user-dirs.dirs $HOME/.config/user-dirs.dirs
+ln sv $(pwd)/tangled/user-dirs.dirs $HOME/.config/user-dirs.dirs
 xdg-user-dirs-update
+#+end_src
+
+* Shell
+** Zsh
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/zshrc
+source ~/.profile
+source ${ZDOTDIR:-$HOME}/prompt
+
+setopt AUTO_CD # Don't make me use `cd`. You know what I wanted.
+setopt NO_CASE_GLOB # Case insensitive globbing.
+
+# Save history
+HISTFILE=${ZDOTDIR:-$HOME}/.zhistory
+setopt EXTENDED_HISTORY # timestamp history lines
+SAVEHIST=5000
+HISTSIZE=2000
+setopt SHARE_HISTORY # share history across sessions
+setopt APPEND_HISTORY # just keep adding to history
+setopt INC_APPEND_HISTORY # write all the time, don't wait for shell to close
+setopt HIST_EXPIRE_DUPS_FIRST # expire duplicates first
+setopt HIST_IGNORE_DUPS # do not store duplicates
+setopt HIST_FIND_NO_DUPS # ignore duplicates when searching
+setopt HIST_REDUCE_BLANKS # remove blank lines from history
+setopt HIST_VERIFY # be really sure when using !!
+
+# Correction
+setopt CORRECT
+setopt CORRECT_ALL # Correct when using AUTO_CD
+
+# Autocompletion
+autoload -Uz compinit && compinit
+
+# Fragment completion.
+zstyle ':completion:*' list-suffixes zstyle ':completion:*' expand prefix suffix
+
+# Tab completion
+setopt MENU_COMPLETE
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}' # Autocomplete, case insensitive
+zstyle ':completion:*' menu select  # Highlight on tab
+
+# Color dirs
+export LS_COLORS # I don't know why this is necessary here, but colors don't work without it.
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+alias ls='ls --color=auto'
+
+#+end_src
+
+⟿ ⟴ ➟
+
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/zsh/prompt
+# Left prompt
+export PS1="%F{223}%n%F{224}@%F{211}%m %F{179}%~%b%F{255} › "
+
+# Right prompt
+autoload -Uz vcs_info
+precmd_vcs_info() { vcs_info }
+precmd_functions+=( precmd_vcs_info )
+setopt prompt_subst
+RPROMPT=\$vcs_info_msg_0_
+zstyle ':vcs_info:git:*' formats '%F{223}%b|%F{211}%r%f'
+zstyle ':vcs_info:*' enable git
+#+end_src
+
+*** Post-tangle actions
+#+begin_src sh :noweb-ref symlinks
+ln sv ~/Projects/Home/dotfiles/tangled/zsh/ ~/.zsh
+ln sv ~/Projects/Home/dotfiles/tangled/zshrc ~/.zshrc
 #+end_src
 
 * Systemd
@@ -85,7 +157,7 @@ emacsclient -d
 
 First set up a service we can run as needed.
 
-#+begin_src conf :tangle ./tangled/onedrive-sync.service
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/onedrive-sync.service
 [Unit]
 Description=Syncs OneDrive
 
@@ -98,7 +170,7 @@ WantedBy=default.target
 
 Now set up a timer to do it hourly.
 
-#+begin_src conf :tangle ./tangled/onedrive-sync.timer
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/onedrive-sync.timer
 [Unit]
 Description=Run OneDrive synchronization hourly
 
@@ -116,9 +188,9 @@ WantedBy=timers.target
 Describe the symlink to be created for this section and any actions that should be taken after the symlinks are created.
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv $(pwd)/tangled/onedrive-sync.timer ~/.config/systemd/user/onedrive-sync.timer
+ln sv $(pwd)/tangled/onedrive-sync.timer ~/.config/systemd/user/onedrive-sync.timer
 
-ln -sfv $(pwd)/tangled/onedrive-sync.service ~/.config/systemd/user/onedrive-sync.service
+ln sv $(pwd)/tangled/onedrive-sync.service ~/.config/systemd/user/onedrive-sync.service
 #+end_src
 
 Enable the onedrive-sync timer.
@@ -131,7 +203,7 @@ systemctl --user enable onedrive-sync.timer
 
 ** Xresources
 
-#+begin_src conf :tangle ./tangled/Xresources
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/Xresources
 !emacs*Background: DarkSlateGray
 !emacs*Foreground: Wheat
 !emacs*pointerColor: Orchid
@@ -281,7 +353,7 @@ dmenu.foreground:         #d8dee9
 Describe the symlink to be created for this file.
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv ~/Projects/Home/dotfiles/tangled/Xresources ~/.Xresources
+ln sv ~/Projects/Home/dotfiles/tangled/Xresources ~/.Xresources
 #+end_src
 
 Source the Xresources file.
@@ -292,7 +364,7 @@ xrdb ~/.Xresources
 
 ** Xsettings
 This is primarily for font prettifying.
-#+begin_src conf :tangle ./tangled/xsettingsd
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/xsettingsd
 Xft/Hinting 1
 Xft/RGBA "rgb"
 Xft/HintStyle "hintslight"
@@ -302,14 +374,14 @@ Xft/Antialias 1
 *** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv $(pwd)/tangled/xsettingsd ~/.xsettingsd
+ln sv $(pwd)/tangled/xsettingsd ~/.xsettingsd
 #+end_src
 
 * Gitconfig
 
 Writes out a ~/.gitconfig file for global configuration.
 
-#+begin_src shell :tangle ./tangled/gitconfig
+#+begin_src shell :tangle ~/Projects/Home/dotfiles/tangled/gitconfig
 [core]
   editor = vim
 [user]
@@ -364,14 +436,14 @@ Writes out a ~/.gitconfig file for global configuration.
 Describe the symlink to be created for this file.
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv ~/Projects/Home/dotfiles/tangled/gitconfig ~/.gitconfig
+ln sv ~/Projects/Home/dotfiles/tangled/gitconfig ~/.gitconfig
 #+end_src
 
 * i3
 
 ** Main i3 config
 
-#+begin_src conf :tangle ./tangled/i3/config :mkdirp yes
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/i3/config :mkdirp yes
 
 # This file has been auto-generated by i3-config-wizard(1).
 # It will not be overwritten, so edit it as you like.
@@ -618,7 +690,7 @@ client.background           #2f343f
 
 ** i3status
 
-#+begin_src conf :tangle ./tangled/i3status/config :mkdirp yes
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/i3status/config :mkdirp yes
 general {
         output_format = "i3bar"
         colors = false
@@ -698,83 +770,22 @@ general {
         color_good = '#2f343f'
     color_degraded = '#ebcb8b'
     color_bad = '#ba5e57'
-}
-
-order += "load"
-order += "cpu_temperature 0"
-order += "disk /"
-order += "disk /home"
-order += "ethernet eno1"
-# order += "wireless wlp5s0"
-order += "volume master"
-# order += "battery 1"
-order += "tztime local"
-
-load {
-        format = "<span background='#f59335'>  %5min Load </span>"
-}
-
-cpu_temperature 0 {
-        format = "<span background='#bf616a'>  %degrees °C </span>"
-        path = "/sys/class/thermal/thermal_zone0/temp"
-}
-
-disk "/" {
-        format = "<span background='#fec7cd'>  %free Free </span>"
-}
-
-disk "/home" {
-        format = "<span background='#a1d569'>  %free Free </span>"
-}
-
-ethernet eno1 {
-        format_up = "<span background='#88c0d0'>  %ip </span>"
-        format_down = "<span background='#88c0d0'>  Disconnected </span>"
-}
-
-wireless wlp5s0 {
-        format_up = "<span background='#b48ead'>  %essid </span>"
-        format_down = "<span background='#b48ead'>  Disconnected </span>"
-}
-
-volume master {
-        format = "<span background='#ebcb8b'>  %volume </span>"
-        format_muted = "<span background='#ebcb8b'>  Muted </span>"
-        device = "default"
-        mixer = "Master"
-        mixer_idx = 0
-}
-
-battery 1 {
-  last_full_capacity = true
-        format = "<span background='#a3be8c'>  %status %percentage </span>"
-        format_down = "No Battery"
-        status_chr = "Charging"
-        status_bat = "Battery"
-        status_unk = "Unknown"
-        status_full = "Charged"
-        path = "/sys/class/power_supply/BAT%d/uevent"
-        low_threshold = 10
-}
-
-tztime local {
-    format = "<span background='#81a1c1'> %time </span>"
-    format_time = " %a %-d %b %H:%M"
 }
 
 #+end_src
 
+
 ** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv $(pwd)/tangled/i3status ~/.config/i3status
-ln -sfv $(pwd)/tangled/i3 ~/.config/i3
+ln sv ~/Projects/Home/dotfiles/tangled/i3status/ ~/.config/i3status
+ln sv ~/Projects/Home/dotfiles/tangled/i3/ ~/.config/i3
 #+end_src
 
 * Tmux
 #+description: @todo I think tmux now supports using XDG_CONFIG_HOME so it can be stored in ~/.config/tmux/.
 
-#+begin_src conf :tangle ./tangled/tmux.conf
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/tmux.conf
 
 # Key bindings
 # ------------------------------------------------------------------------------
@@ -845,14 +856,14 @@ set -g status-right '#[fg=yellow]#(curl "wttr.in/?format=3")#[default] #[fg=whit
 Describe the symlink to be created for this file.
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv ~/Projects/Home/dotfiles/tangled/tmux.conf ~/.tmux.conf
+ln sv ~/Projects/Home/dotfiles/tangled/tmux.conf ~/.tmux.conf
 #+end_src
 
 * Dunst
 
 Dunst is the notification system I use.
 
-#+begin_src conf :tangle ./tangled/dunst/dunstrc
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/dunst/dunstrc
 
 [global]
 monitor = 0
@@ -914,15 +925,14 @@ timeout = 0
 Describe the symlink to be created for this file.
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv $(pwd)/tangled/dunst ~/.config/dunst
+ln sv $(pwd)/tangled/dunst ~/.config/dunst
 #+end_src
-
 
 * Mutt
 
 Email with mutt.
 
-#+begin_src conf :tangle ./tangled/mutt/muttrc
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/mutt/muttrc
 
 # Paths ------------------------------------------------------------------------
 set folder 						= ~/.mail												# mailbox location
@@ -1168,7 +1178,7 @@ folder-hook 'carwin-mobomo.com'  set from="carwin@mobomo.com"
 
 ** Secret Management
 
-#+begin_src python :tangle ./tangled/mutt/offlineimap.py
+#+begin_src python :tangle ~/Projects/Home/dotfiles/tangled/mutt/offlineimap.py
 
 '''
 gkgetsecret.py
@@ -1326,7 +1336,7 @@ def get_val_from_attrs(attr, *attr_val_pairs) :
 
 ** Mailcap
 
-#+begin_src conf :tangle ./tangled/mutt/mailcap
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/mutt/mailcap
 # MS Word documents
 #application/msword; ~/.config/mutt/view_attachment.sh %s "-" 'document-viewer'
 
@@ -1350,7 +1360,7 @@ application/octet-stream; ~/.mutt/view_attachment.sh %s "-"
 
 ** View Attachments
 
-#+begin_src sh :tangle ./tangled/mutt/view_attachment.sh
+#+begin_src sh :tangle ~/Projects/Home/dotfiles/tangled/mutt/view_attachment.sh
 #!/bin/bash
 #
 # Author:  Eric Gebhart
@@ -1482,11 +1492,11 @@ fi
 ** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv $(pwd)/tangled/mutt ~/.config/mutt
+ln sv $(pwd)/tangled/mutt ~/.config/mutt
 #+end_src
 
 * OfflineImap
-#+begin_src conf :tangle ./tangled/offlineimap/config
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/offlineimap/config
 [general]
 ui = ttyui
 accounts = CarwinYoung, Mobomo
@@ -1573,7 +1583,7 @@ folderfilter = lambda folder: folder not in ['[Gmail]/Trash',
 ** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv $(pwd)/tangled/offlineimap $HOME/.config/offlineimap
+ln sv $(pwd)/tangled/offlineimap $HOME/.config/offlineimap
 #+end_src
 
 * ncmpcpp
@@ -1582,7 +1592,7 @@ Music player interface.
 
 ** Primary configuration
 
-#+begin_src conf :tangle ./tangled/ncmpcpp/config
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/ncmpcpp/config
 browser_sort_mode = name
 browser_sort_format = {%A - }{%t}|{%f} {(%l)}
 song_columns_list_format = (6f)[green]{NE} (30)[]{a} (30)[white]{t} (30)[cyan]{b} (7f)[magenta]{l}
@@ -1632,7 +1642,7 @@ execute_on_song_change = "~/.config/ncmpcpp/art.sh"
 This only sort of works and pretty much sucks. I wish there was a better way.
 
 
-#+begin_src sh :tangle ./tangled/ncmpcpp/art.sh
+#+begin_src sh :tangle ~/Projects/Home/dotfiles/tangled/ncmpcpp/art.sh
 #!/usr/bin/env sh
 
 #-------------------------------#
@@ -1687,7 +1697,7 @@ printf "\e]20;/tmp/cover.png;20x20+0+10:op=keep-aspect\a"
 
 Vim configuration. Ol' trusty.
 
-#+begin_src conf :tangle ./tangled/vimrc
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/vimrc
 " Plugin Management
 " ------------------------------------------------------------------------------
 " Check for a plugin manager, and if it doesn't exist, go get it.
@@ -1896,14 +1906,14 @@ mkdir $(pwd)/tangled/vim/swaps
 Create symlinks.
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv $(pwd)/tangled/vim $HOME/.vim
-ln -sfv $(pwd)/tangled/vimrc $HOME/.vimrc
+ln sv $(pwd)/tangled/vim $HOME/.vim
+ln sv $(pwd)/tangled/vimrc $HOME/.vimrc
 #+end_src
 * Rofi
 
 This is my dmenu replacement.
 
-#+begin_src conf :tangle ./tangled/rofi/config.rasi
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/rofi/config.rasi
 configuration {
 	theme: "~/.config/rofi/themes/slate.rasi";
 }
@@ -1911,7 +1921,7 @@ configuration {
 
 ** Theme
 
-#+begin_src css :tangle ./tangled/rofi/themes/slate.rasi
+#+begin_src css :tangle ~/Projects/Home/dotfiles/tangled/rofi/themes/slate.rasi
  * {
   background-color: #282C33;
   border-color: #2e343f;
@@ -1960,14 +1970,14 @@ element selected {
 ** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv $(pwd)/tangled/rofi ~/.config/rofi
+ln sv $(pwd)/tangled/rofi ~/.config/rofi
 #+end_src
 
 * mpd
 
 Music player daemon configuration.
 
-#+begin_src conf :tangle ./tangled/mpd/mpd.conf
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/mpd/mpd.conf
 
 # An example configuration file for MPD.
 # Read the user manual for documentation: http://www.musicpd.org/doc/user/
@@ -2394,12 +2404,12 @@ mkdir $(pwd)/tangled/mpd/playlists
 Symlink the mpd configuration directory.
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv $(pwd)/tangled/mpd ~/.config/mpd
+ln sv $(pwd)/tangled/mpd ~/.config/mpd
 #+end_src
 
 * Taskwarrior
 
-#+begin_src conf :tangle ./tangled/taskrc
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/taskrc
 # [Created by task 2.5.1 6/3/2020 15:38:53]
 # Taskwarrior program configuration file.
 # For more documentation, see http://taskwarrior.org or try 'man task', 'man task-color',
@@ -2443,5 +2453,5 @@ taskd.trust=ignore hostname
 ** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln -sfv $(pwd)/tangled/taskrc ~/.taskrc
+ln sv $(pwd)/tangled/taskrc ~/.taskrc
 #+end_src
