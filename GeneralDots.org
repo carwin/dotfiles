@@ -43,7 +43,7 @@ ZDOTDIR="$HOME/.zsh"
 ** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln sv $(pwd)/tangled/profile $HOME/.profile
+ln -sfvn $(pwd)/tangled/profile $HOME/.profile
 source $HOME/.profile
 #+end_src
 
@@ -61,7 +61,7 @@ XDG_VIDEOS_DIR="$HOME/Videos"
 #+end_src
 
 #+begin_src sh :noweb-ref symlinks
-ln sv $(pwd)/tangled/user-dirs.dirs $HOME/.config/user-dirs.dirs
+ln -sfvn $(pwd)/tangled/user-dirs.dirs $HOME/.config/user-dirs.dirs
 xdg-user-dirs-update
 #+end_src
 
@@ -70,6 +70,7 @@ xdg-user-dirs-update
 #+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/zshrc
 source ~/.profile
 source ${ZDOTDIR:-$HOME}/prompt
+
 
 setopt AUTO_CD # Don't make me use `cd`. You know what I wanted.
 setopt NO_CASE_GLOB # Case insensitive globbing.
@@ -107,7 +108,6 @@ zstyle ':completion:*' menu select  # Highlight on tab
 export LS_COLORS # I don't know why this is necessary here, but colors don't work without it.
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 alias ls='ls --color=auto'
-
 #+end_src
 
 ⟿ ⟴ ➟
@@ -128,8 +128,8 @@ zstyle ':vcs_info:*' enable git
 
 *** Post-tangle actions
 #+begin_src sh :noweb-ref symlinks
-ln sv ~/Projects/Home/dotfiles/tangled/zsh/ ~/.zsh
-ln sv ~/Projects/Home/dotfiles/tangled/zshrc ~/.zshrc
+ln -sfvn ~/Projects/Home/dotfiles/tangled/zsh/ ~/.zsh
+ln -sfvn ~/Projects/Home/dotfiles/tangled/zshrc ~/.zshrc
 #+end_src
 
 * Systemd
@@ -164,7 +164,7 @@ Description=Syncs OneDrive
 [Service]
 ExecStart=/usr/bin/onedrive --synchronize
 
-fInstall]
+[Install]
 WantedBy=default.target
 #+end_src
 
@@ -188,9 +188,9 @@ WantedBy=timers.target
 Describe the symlink to be created for this section and any actions that should be taken after the symlinks are created.
 
 #+begin_src sh :noweb-ref symlinks
-ln sv $(pwd)/tangled/onedrive-sync.timer ~/.config/systemd/user/onedrive-sync.timer
+ln -sfvn $(pwd)/tangled/onedrive-sync.timer ~/.config/systemd/user/onedrive-sync.timer
 
-ln sv $(pwd)/tangled/onedrive-sync.service ~/.config/systemd/user/onedrive-sync.service
+ln -sfvn $(pwd)/tangled/onedrive-sync.service ~/.config/systemd/user/onedrive-sync.service
 #+end_src
 
 Enable the onedrive-sync timer.
@@ -297,7 +297,7 @@ URxvt*externalBorder: 0
 URxvt.geometry:   84x22
 
 ! perl extensions
-URxvt.perl-ext-common: default,clipboard,url-select,keyboard-select,selection-clipboard
+URxvt.perl-ext-common: default,clipboard,url-select,keyboard-select,selection-clipboard,matcher
 
 ! macros for clipboard and selection
 URxvt.copyCommand:  xclip -i -selection clipboard
@@ -308,9 +308,11 @@ URxvt.keysym.M-C-v:  perl:clipboard:paste_escaped
 URxvt.keysym.M-Escape: perl:keyboard-select:activate
 URxvt.keysym.M-s:  perl:keyboard-select:search
 URxvt.keysym.M-u:  perl:url-select:select_next
-URxvt.urlLauncher:  firefox
+URxvt.url-launcher:  firefox
 URxvt.underlineURLs: true
-URxvt.urlButton:  1
+URxvt*matcher.button: 1
+URxvt.urlButton: 1
+URxvt.underlineColor: #bf616a
 
 ! scroll one line
 URxvt.keysym.Shift-Up:  command:\033]720;1\007
@@ -345,7 +347,6 @@ dmenu.selforeground:     #d8dee9
 dmenu.background:         #2e3440
 dmenu.selbackground:     #bf616a
 dmenu.foreground:         #d8dee9
-
 #+end_src
 
 *** Post-tangle actions
@@ -353,7 +354,7 @@ dmenu.foreground:         #d8dee9
 Describe the symlink to be created for this file.
 
 #+begin_src sh :noweb-ref symlinks
-ln sv ~/Projects/Home/dotfiles/tangled/Xresources ~/.Xresources
+ln -sfvn ~/Projects/Home/dotfiles/tangled/Xresources ~/.Xresources
 #+end_src
 
 Source the Xresources file.
@@ -374,7 +375,7 @@ Xft/Antialias 1
 *** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln sv $(pwd)/tangled/xsettingsd ~/.xsettingsd
+ln -sfvn $(pwd)/tangled/xsettingsd ~/.xsettingsd
 #+end_src
 
 * Gitconfig
@@ -436,7 +437,7 @@ Writes out a ~/.gitconfig file for global configuration.
 Describe the symlink to be created for this file.
 
 #+begin_src sh :noweb-ref symlinks
-ln sv ~/Projects/Home/dotfiles/tangled/gitconfig ~/.gitconfig
+ln -sfvn ~/Projects/Home/dotfiles/tangled/gitconfig ~/.gitconfig
 #+end_src
 
 * i3
@@ -572,7 +573,11 @@ bindsym $mod+a focus parent
 
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
-set $ws1 "1"
+set $prim "primary"
+set $comm "comm."
+set $net "internet"
+set $game "game"
+set $mail "mail"
 set $ws2 "2"
 set $ws3 "3"
 set $ws4 "4"
@@ -583,8 +588,8 @@ set $ws8 "8"
 set $ws9 "9"
 set $ws10 "10"
 
-# switch to workspace
-bindsym $mod+1 workspace number $ws1
+# Switch to workspace
+bindsym $mod+1 workspace $prim
 bindsym $mod+2 workspace number $ws2
 bindsym $mod+3 workspace number $ws3
 bindsym $mod+4 workspace number $ws4
@@ -594,9 +599,13 @@ bindsym $mod+7 workspace number $ws7
 bindsym $mod+8 workspace number $ws8
 bindsym $mod+9 workspace number $ws9
 bindsym $mod+0 workspace number $ws10
+bindsym $mod+c workspace $comm
+bindsym $mod+n workspace $net
+bindsym $mod+g workspace $game
+bindsym $mod+m workspace $mail
 
 # move focused container to workspace
-bindsym $mod+Shift+1 move container to workspace number $ws1
+bindsym $mod+Shift+1 move container to workspace $prim
 bindsym $mod+Shift+2 move container to workspace number $ws2
 bindsym $mod+Shift+3 move container to workspace number $ws3
 bindsym $mod+Shift+4 move container to workspace number $ws4
@@ -606,9 +615,13 @@ bindsym $mod+Shift+7 move container to workspace number $ws7
 bindsym $mod+Shift+8 move container to workspace number $ws8
 bindsym $mod+Shift+9 move container to workspace number $ws9
 bindsym $mod+Shift+0 move container to workspace number $ws10
+bindsym $mod+Shift+c move container to workspace $comm
+bindsym $mod+Shift+n move container to workspace $net
+bindsym $mod+Shift+g move container to workspace $game
+bindsym $mod+Shift+m move container to workspace $mail
 
 # reload the configuration file
-bindsym $mod+Shift+c reload
+bindsym $mod+Shift+Control+c reload
 # restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
 bindsym $mod+Shift+r restart
 # exit i3 (logs you out of your X session)
@@ -660,17 +673,17 @@ bar {
 
 # window rules, you can find the window class using xprop
 for_window [class=".*"] border pixel 1
-assign [class=Firefox|Transmission-gtk] 2
-assign [class=Thunar|File-roller] 3
-assign [class=Geany|Evince|Gucharmap|Soffice|libreoffice*] 4
-assign [class=Audacity|Vlc|mpv|Ghb|Xfburn|Gimp*|Inkscape] 5
-assign [class=Lxappearance|System-config-printer.py|Lxtask|GParted|Pavucontrol|Exo-helper*|Lxrandr|Arandr] 6
 for_window [class=Viewnior|feh|Audacious|File-roller|Lxappearance|Lxtask|Pavucontrol] floating enable
 for_window [class=URxvt|Firefox|Geany|Evince|Soffice|libreoffice*|mpv|Ghb|Xfburn|Gimp*|Inkscape|Vlc|Lxappearance|Audacity] focus
 for_window [class=Xfburn|GParted|System-config-printer.py|Lxtask|Pavucontrol|Exo-helper*|Lxrandr|Arandr] focus
 for_window [class=zoom title="^Participants"] floating enable
 for_window [class=zoom title="^Zoom Meeting"] floating enable
 for_window [class=zoom title="^Zoom - Licensed Account"] floating enable
+for_window [class=firefox] move --no-auto-back-and-forth container to workspace $net
+for_window [class=Google-chrome window_role=browser] move container to workspace $net
+for_window [class=Google-chrome window_role=pop-up] move container to workspace $comm
+for_window [class=Signal] move container to workspace $comm
+for_window [class=Emacs] move container to workspace $prim
 
 # Autostart applications and other things
 exec --no-startup-id ~/.fehbg &
@@ -778,8 +791,8 @@ general {
 ** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln sv ~/Projects/Home/dotfiles/tangled/i3status/ ~/.config/i3status
-ln sv ~/Projects/Home/dotfiles/tangled/i3/ ~/.config/i3
+ln -sfvn ~/Projects/Home/dotfiles/tangled/i3status/ ~/.config/i3status
+ln -sfvn ~/Projects/Home/dotfiles/tangled/i3/ ~/.config/i3
 #+end_src
 
 * Tmux
@@ -856,7 +869,7 @@ set -g status-right '#[fg=yellow]#(curl "wttr.in/?format=3")#[default] #[fg=whit
 Describe the symlink to be created for this file.
 
 #+begin_src sh :noweb-ref symlinks
-ln sv ~/Projects/Home/dotfiles/tangled/tmux.conf ~/.tmux.conf
+ln -sfvn ~/Projects/Home/dotfiles/tangled/tmux.conf ~/.tmux.conf
 #+end_src
 
 * Dunst
@@ -925,7 +938,7 @@ timeout = 0
 Describe the symlink to be created for this file.
 
 #+begin_src sh :noweb-ref symlinks
-ln sv $(pwd)/tangled/dunst ~/.config/dunst
+ln -sfvn $(pwd)/tangled/dunst ~/.config/dunst
 #+end_src
 
 * Mutt
@@ -1492,7 +1505,7 @@ fi
 ** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln sv $(pwd)/tangled/mutt ~/.config/mutt
+ln -sfvn $(pwd)/tangled/mutt ~/.config/mutt
 #+end_src
 
 * OfflineImap
@@ -1583,7 +1596,7 @@ folderfilter = lambda folder: folder not in ['[Gmail]/Trash',
 ** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln sv $(pwd)/tangled/offlineimap $HOME/.config/offlineimap
+ln -sfvn $(pwd)/tangled/offlineimap $HOME/.config/offlineimap
 #+end_src
 
 * ncmpcpp
@@ -1906,9 +1919,246 @@ mkdir $(pwd)/tangled/vim/swaps
 Create symlinks.
 
 #+begin_src sh :noweb-ref symlinks
-ln sv $(pwd)/tangled/vim $HOME/.vim
-ln sv $(pwd)/tangled/vimrc $HOME/.vimrc
+ln -sfvn $(pwd)/tangled/vim $HOME/.vim
+ln -sfvn $(pwd)/tangled/vimrc $HOME/.vimrc
 #+end_src
+
+* Vimb
+
+=Vimb= is a webkit based browser that functions very similarly to =vim=. I found this browser before =qutebrowser=, but I might still find a use for it.
+
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/vimb/config
+# set accelerated-compositing=true
+# set insecure-content-show=false
+# set insecure-content-run=false
+# tabbed vimb -e
+set accelerated-2d-canvas=true # 2D Acceleration
+set allow-file-access-from-file-urls=false # file:urls? something?
+set allow-universal-access-from-file-urls=false # Cross origin requests to other files.
+set caret=false # Accessibility enhanced keyboard navigation.
+set cookie-accept=origin
+# Only first-party cookies.
+set closed-max-items=20 # Max stored closed URLs. @todo - understand.
+set dark-mode=true
+set default-charset=utf-8
+set dns-prefetching=true
+set download-path=~/Downloads # Where to download things.
+set editor-command=emacsclient
+set frame-flattening=true
+set hardware-acceleration-policy=ondemand
+set header=DNT=1,User-Agent,Cookie='name=value'
+set home-page=http://10.0.1.43:3000/d/tf-AoabMk/docker-metrics-per-container?orgId=1&refresh=30s
+set html5-database=true
+set html5-local-storage=true
+set hyperlink-auditing=true
+set images=true
+set incsearch=true # Incremental search highlighting.
+set input-autohide=true # Hide the input when it isn't in use.
+set javascript-can-access-clipboard=false
+set javascript-can-open-windows-automatically=false
+set geolocation=never
+set media-playback-allows-inline=true
+set media-playback-requires-user-gesture=true
+set media-stream=true
+set mediasource=true
+set strict-ssl=false
+set default-font=M+ 1mn
+set font-size=12
+# set notification=ask # Doesn't work.
+set offline-cache=false
+set print-backgrounds=false
+set plugins=false # Don't allow plugins on the page.
+set prevent-newwindow=true #Allow opening in a new window.
+set scripts=true # Allow JavaScript.
+set scroll-step=30 # Number of pixel vimb scrolls if 'j' or 'k' is used.
+set show-titlebar=true # Show the titlebar.
+set smooth-scrolling=true # Smooth scrolling
+set spacial-navigation=false # Allows navigation between focusable elements via arrows.
+set spell-checking=true
+set spell-checking-languages=en_US # Spell check US English.
+set status-bar=true # Show the status bar.
+set stylesheet=false # Use the user stylesheet in $XDG_CONFIG_HOME/vimb/style.css
+set tabs-to-links=true # Use Tab for navigating the page elements.
+set user-agent=""
+set user-scripts=false # Whether to source $XDG_CONFIG_HOME/vimb/style.css
+set webaudio=true # Allow audio
+set webgl=true # Allow webgl
+set webinspector=true # Allow dev tools
+set xss-auditor=true # Enable the XSS auditor.
+
+# Keybinding
+# -------------------------------------------------------------------------------------
+# - 'e' edits URL in current window
+# - 'E' edits URL in new window
+# - 'O' opens URL in new window
+# - 'H' navigates back
+# - 'L' navigates forward
+# - 'D' closes the window
+# - 'C-g' exits command and input mode, like emacs.
+# - 'C-j' and 'C-k' move down and up command selections
+nn e O
+nn E T
+nn H <C-O>
+nn L <C-I>
+nm D :q<CR>
+ino <C-G> <Esc>
+cno <C-J> <Tab>
+cno <C-K> <S-Tab>
+
+# Zoom keys
+nmap + zI
+nmap - zO
+nmap = zz
+
+# Hint Configuration
+# -------------------------------------------------------------------------------------
+# Use home-row for hints
+set hint-keys=asdfg;lkjh
+set hint-match-element=false
+set hint-keys-same-length=true
+set hint-timeout=0
+
+# Styles
+# -------------------------------------------------------------------------------------
+set monospace-font=Dank Mono
+set monospace-font-size=11
+set sans-serif-font=M+ 1mn
+set serif-font=DejaVu Serif
+set input-css=font: "M+ 1m" 11px; color: #222222; background: #f8f5ec;
+set input-error-css=font: "M+ 1m" 11px; color: #f1f1f1; background: #ec5044;
+set completion-css=font: "M+ 1m" 11; color: #222222; background: #f8f5ec;
+set completion-selected-css=font: "M+ 1m" 11; color: #222222; background: #ffee99;
+set status-css=font: "M+ 1m" 11px; background: #36424e; color: #f1f1f1;
+set status-ssl-css=font: "M+ 1m" 11px; background: #36424e; color: #f1f1f1;
+set status-ssl-invalid-css=font: "M+ 1m" 11px; color: #f1f1f1; background: #36424e
+
+shortcut-default duck
+shortcut-add duck=https://duckduckgo.com/?q=$0
+
+#+end_src
+
+** Post-tangle actions
+
+#+begin_src sh :noweb-ref symlinks
+ln -sfvn $(pwd)/tangled/vimb $HOME/.config/vimb
+#+end_src
+
+
+* Qutebrowser
+
+#+begin_src python :tangle ./tangled/qutebrowser/config.py
+
+# Custom keybindings
+config.unbind('d') # Don't close window when d is pressed
+config.bind('yy', 'yank') # Yank
+config.bind(',.', 'tab-next') # Next tab
+config.bind(",'", 'tab-prev') # Previous tab
+# Vim-style movement keys in command mode
+config.bind('<Ctrl-j>', 'completion-item-focus --history next', mode='command')
+config.bind('<Ctrl-k>', 'completion-item-focus --history prev', mode='command')
+# Play YouTube videos with mpv
+config.bind(",m", "spawn mpv {url}")
+config.bind(",M", "hint links spawn mpv {hint-url}")
+
+# Add a hint group for scrollable elements
+config.set(
+  'hints.selectors',
+  {'scrollable': ['.custom-scrollbar']},
+  pattern='*://10.0.1.43:3000/*',
+)
+config.bind(';c', 'hint scrollable')
+
+# Fonts & Colors
+c.fonts.web.family.standard = "M+ 1m"
+c.fonts.web.family.serif = "Bitsream Vera Serif"
+c.fonts.web.family.sans_serif = "M+ 1mn"
+c.fonts.web.family.fixed = "Dank Mono"
+c.fonts.statusbar = "18px M+ 1m"
+
+# Save sessions for next time.
+c.auto_save.session = True
+c.session.lazy_restore = True
+
+# Be smooth
+c.scrolling.smooth = True
+
+# Dark mode (doesn't work everywhere)
+c.colors.webpage.darkmode.enabled = True
+
+# Automatically turn on insert mode when a loaded page focuses a text field
+c.input.insert_mode.auto_load = True
+
+# Edit fields in Emacs with Ctrl+E
+c.editor.command = ["emacsclient", "+{line}:{column}", "{file}"]
+
+# Don't allow autoplay media
+c.content.autoplay = False
+
+# Only first-party cookies
+c.content.cookies.accept = "no-unknown-3rdparty"
+
+# Don't tell sites where we came from
+c.content.headers.referer = "same-domain"
+
+# Hint settings
+c.fonts.hints = "bold 20pt monospace"
+
+# Allow viewing pdfs in qutebrowser via pdfjs
+c.content.pdfjs = True
+
+# Expose only public interface via webrtc
+c.content.webrtc_ip_handling_policy = "default-public-interface-only"
+
+with config.pattern('*://*.youtube.com/watch') as p:
+    p.content.javascript.enabled = True
+    p.content.autoplay = False
+
+#+end_src
+
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/qute_home.desktop
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Qutebrowser (Home)
+Comment=Qutebrowser instance for home.
+Exec=qutebrowser --basedir .config/qutebrowser/profile_home
+#+end_src
+
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/qute_work.desktop
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Qutebrowser (Work)
+Comment=Qutebrowser instance for work.
+Exec=qutebrowser --basedir .config/qutebrowser/profile_work
+#+end_src
+
+#+begin_src sh :noweb-ref symlinks
+mkdir -p $(pwd)/tangled/qutebrowser/profile_home/config;
+ln -s $(pwd)/tangled/qutebrowser/config.py $(pwd)/tangled/qutebrowser/profile_home/config/config.py
+mkdir -p $(pwd)/tangled/qutebrowser/profile_work/config;
+ln -s $(pwd)/tangled/qutebrowser/config.py $(pwd)/tangled/qutebrowser/profile_work/config/config.py
+ln -sfvn $(pwd)/tangled/qutebrowser $HOME/.config/qutebrowser
+ln -sfvn $(pwd)/tangled/qute_home.desktop $HOME/.local/share/applications/qute_home.desktop
+ln -sfvn $(pwd)/tangled/qute_work.desktop $HOME/.local/share/applications/qute_work.desktop
+#+end_src
+
+#+begin_src sh :noweb-ref symlinks
+if [[ ! -d "~/.qutebrowser_work" ]]; then
+  mkdir ~/.qutebrowser_work;
+fi
+if [[ ! -d "~/.qutebrowser_home" ]]; then
+  mkdir ~/.qutebrowser_home;
+fi
+
+# cp -s $HOME/.config/qutebrowser/config.py $HOME/.config/qutebrowser/profile_work;
+# cp -s $HOME/.config/qutebrowser/config.py $HOME/.config/qutebrowser/profile_home;
+# ls -sfvn $(pwd)/tangled/qutebrowser $HOME/.qutebrowser_home
+# ls -sfvn $(pwd)/tangled/qutebrowser $HOME/.qutebrowser_work
+
+# cp -s $HOME/.config/qutebrowser/config.py $HOME/.qutebrowser_
+#+end_src
+
 * Rofi
 
 This is my dmenu replacement.
@@ -1922,6 +2172,7 @@ configuration {
 ** Theme
 
 #+begin_src css :tangle ~/Projects/Home/dotfiles/tangled/rofi/themes/slate.rasi
+
  * {
   background-color: #282C33;
   border-color: #2e343f;
@@ -1965,12 +2216,161 @@ element {
 element selected {
   background-color: #2e343f;
 }
+
 #+end_src
 
 ** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln sv $(pwd)/tangled/rofi ~/.config/rofi
+ln -sfvn $(pwd)/tangled/rofi ~/.config/rofi
+#+end_src
+
+* mpv
+
+#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/mpv/mpv.conf
+#
+# Example mpv configuration file
+#
+# Warning:
+#
+# The commented example options usually do _not_ set the default values. Call
+# mpv with --list-options to see the default values for most options. There is
+# no builtin or example mpv.conf with all the defaults.
+#
+#
+# Configuration files are read system-wide from /usr/local/etc/mpv.conf
+# and per-user from ~/.config/mpv/mpv.conf, where per-user settings override
+# system-wide settings, all of which are overridden by the command line.
+#
+# Configuration file settings and the command line options use the same
+# underlying mechanisms. Most options can be put into the configuration file
+# by dropping the preceding '--'. See the man page for a complete list of
+# options.
+#
+# Lines starting with '#' are comments and are ignored.
+#
+# See the CONFIGURATION FILES section in the man page
+# for a detailed description of the syntax.
+#
+# Profiles should be placed at the bottom of the configuration file to ensure
+# that settings wanted as defaults are not restricted to specific profiles.
+
+##################
+# video settings #
+##################
+
+# Start in fullscreen mode by default.
+fs=no
+
+# force starting with centered window
+geometry=50%:50%
+
+# don't allow a new window to have a size larger than 90% of the screen size
+# autofit-larger=90%x90%
+
+# Do not close the window on exit.
+keep-open=yes
+
+# Do not wait with showing the video window until it has loaded. (This will
+# resize the window once video is loaded. Also always shows a window with
+# audio.)
+force-window=immediate
+
+# Disable the On Screen Controller (OSC).
+osc=no
+
+# Keep the player window on top of all other windows.
+ontop=yes
+
+# Specify high quality video rendering preset (for --vo=gpu only)
+# Can cause performance problems with some drivers and GPUs.
+profile=gpu-hq
+
+# Force video to lock on the display's refresh rate, and change video and audio
+# speed to some degree to ensure synchronous playback - can cause problems
+# with some drivers and desktop environments.
+#video-sync=display-resample
+
+# Enable hardware decoding if available. Often, this does not work with all
+# video outputs, but should work well with default settings on most systems.
+# If performance or energy usage is an issue, forcing the vdpau or vaapi VOs
+# may or may not help.
+hwdec=auto
+
+##################
+# audio settings #
+##################
+
+# Specify default audio device. You can list devices with: --audio-device=help
+# The option takes the device string (the stuff between the '...').
+audio-device=alsa/default
+
+# Do not filter audio to keep pitch when changing playback speed.
+audio-pitch-correction=no
+
+# Output 5.1 audio natively, and upmix/downmix audio with a different format.
+audio-channels=5.1
+# Disable any automatic remix, _if_ the audio output accepts the audio format.
+# of the currently played file. See caveats mentioned in the manpage.
+# (The default is "auto-safe", see manpage.)
+audio-channels=auto
+
+##################
+# other settings #
+##################
+
+# Pretend to be a web browser. Might fix playback with some streaming sites,
+# but also will break with shoutcast streams.
+user-agent="Mozilla/5.0"
+
+# cache settings
+#
+# Use a large seekable RAM cache even for local input.
+#cache=yes
+#
+# Use extra large RAM cache (needs cache=yes to make it useful).
+#demuxer-max-bytes=500M
+#demuxer-max-back-bytes=100M
+#
+# Disable the behavior that the player will pause if the cache goes below a
+# certain fill size.
+#cache-pause=no
+#
+# Store cache payload on the hard disk instead of in RAM. (This may negatively
+# impact performance unless used for slow input such as network.)
+#cache-dir=~/.cache/
+#cache-on-disk=yes
+
+# Display English subtitles if available.
+#slang=en
+
+# Play Finnish audio if available, fall back to English otherwise.
+#alang=fi,en
+
+# Change subtitle encoding. For Arabic subtitles use 'cp1256'.
+# If the file seems to be valid UTF-8, prefer UTF-8.
+# (You can add '+' in front of the codepage to force it.)
+#sub-codepage=cp1256
+
+# You can also include other configuration files.
+#include=/path/to/the/file/you/want/to/include
+
+############
+# Profiles #
+############
+
+# The options declared as part of profiles override global default settings,
+# but only take effect when the profile is active.
+
+# The following profile can be enabled on the command line with: --profile=eye-cancer
+
+#[eye-cancer]
+#sharpen=5
+
+#+end_src
+
+#+begin_src sh :noweb-ref symlinks
+ln -sfvn $(pwd)/tangled/mpv ~/.config/mpv
 #+end_src
 
 * mpd
@@ -2404,7 +2804,7 @@ mkdir $(pwd)/tangled/mpd/playlists
 Symlink the mpd configuration directory.
 
 #+begin_src sh :noweb-ref symlinks
-ln sv $(pwd)/tangled/mpd ~/.config/mpd
+ln -sfvn $(pwd)/tangled/mpd ~/.config/mpd
 #+end_src
 
 * Taskwarrior
@@ -2453,5 +2853,5 @@ taskd.trust=ignore hostname
 ** Post-tangle actions
 
 #+begin_src sh :noweb-ref symlinks
-ln sv $(pwd)/tangled/taskrc ~/.taskrc
+ln -sfvn $(pwd)/tangled/taskrc ~/.taskrc
 #+end_src

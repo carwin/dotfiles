@@ -871,12 +871,12 @@ This is a really great selection tool. Basically it starts at the pointer then /
   "dd"  '(dired :which-key "Here")
   "dh"  `(,(cy/dired-link "~") :which-key "Home")
   "di"  `(,(cy/dired-link "~/OneDrive/Notes/Inbox.org") :which-key "Inbox")
+  "dj"  `(,(cy/dired-link "~/OneDrive/Notes/Journal.org") :which-key "Journal")
   "dn"  `(,(cy/dired-link "~/OneDrive/Notes") :which-key "Notes")
   "do"  `(,(cy/dired-link "~/Downloads") :which-key "Downloads")
   "dp"  `(,(cy/dired-link "~/Pictures") :which-key "Pictures")
   "dv"  `(,(cy/dired-link "~/Videos") :which-key "Videos")
-  "d."  `(,(cy/dired-link "~/Projects/Home/dotfiles") :which-key "dotfiles")
-  "de"  `(,(cy/dired-link "~/.emacs.d") :which-key ".emacs.d"))
+  "d."  `(,(cy/dired-link "~/Projects/Home/dotfiles") :which-key "dotfiles"))
 #+end_src
 
 ** Opening Files Externally
