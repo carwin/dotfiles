@@ -941,6 +941,8 @@ Set up Org Mode's basic configuration, then expand on it in other sections.
   (setq evil-auto-indent nil)
   (diminish org-indent-mode))
 
+(global-set-key (kbd "C-c q") 'auto-fill-mode)
+
 (use-package org
   :defer t
   :hook (org-mode . cy/org-mode-setup)
@@ -1697,18 +1699,6 @@ This will install the typescript-language-server and the TypeScript compiler pac
 
 #+end_src
 
-*** Markdown
-
-#+begin_src emacs-lisp
-(use-package markdown-mode
-  :ensure t
-  :commands (markdown-mode gfm-mode)
-  :mode (("README\\.md\\'" . gfm-mode)
-         ("\\.md\\'" . gfm-mode)
-         ("\\.markdown\\'" . markdown-mode))
-  :init (setq markdown-command "multimarkdown"))
-#+end_src
-
 *** JSON
 #+begin_src emacs-lisp
 (use-package json-mode)
@@ -1843,6 +1833,35 @@ Really useful for editing Systemd  timers and configurations.
 (add-to-list 'auto-mode-alist '("\\.link\\'" . conf-unix-mode))
 #+end_src
 
+*** Markdown
+
+Assuming the command =multimarkdown= is available to the system, Markdown can be previewed with ~C-c C-c p~.
+
+#+begin_src emacs-lisp
+(use-package markdown-mode
+  :ensure t
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown"))
+#+end_src
+
+#+begin_src emacs-lisp
+(defun cy/markdown-html (buffer)
+  (princ (with-current-buffer buffer
+    (format "<!DOCTYPE html><html><title>Impatient Markdown</title><xmp theme=\"united\" style=\"display:none;\"> %s  </xmp><script src=\"http://strapdownjs.com/v/0.2/strapdown.js\"></script></html>" (buffer-substring-no-properties (point-min) (point-max))))
+  (current-buffer)))
+#+end_src
+
+With this function defined, impatient mode needs to be instructed to use it via: ~M-x imp-set-user-filter RET cy/markdown-html RET~.
+
+For =markdown-preview-mode= to work, the =websocket.el= dependency is required. This package is not part of melpa/elpa and needs to be installed manually via ~M-x package-install-file <path-to-zip>~. =websocket.el= can be found here: https://github.com/ahyatt/emacs-websocket.
+
+#+begin_src emacs-lisp
+(use-package markdown-preview-mode)
+#+end_src
+
 ** Productivity
 
 *** Flycheck
@@ -1929,13 +1948,14 @@ Company Box enhances the look with icons and stuff.
 #+end_src
 
 
-*** Tree
+*** Treemacs
 
 Like NeoVim but Emacs-y-er.
 
 #+begin_src emacs-lisp
 (use-package treemacs
   :ensure t
+  :defer t
   :init
   (with-eval-after-load 'winum
     (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
@@ -1948,12 +1968,12 @@ Like NeoVim but Emacs-y-er.
           treemacs-indentation-string          " "
           treemacs-no-delete-other-windows     t
           treemacs-position                    'left
-          treemacs-width                       35
+          treemacs-width                       45
           treemacs-sorting                     'alphabetic-asc
           treemacs-resize-icons                44
           treemacs-follow-mode                 t
           treemacs-filewatch-mode              t
-          treemacs-fringe-indicator-mode       t)
+          treemacs-fringe-indicator-mode       'always)
           (pcase (cons (not (null (executable-find "git")))
                        (not (null treemacs-python-executable)))
             (`(t . t)
@@ -1968,6 +1988,10 @@ Like NeoVim but Emacs-y-er.
         ("C-x t B"   . treemacs-bookmark)
         ("C-x t C-t" . treemacs-find-file)
         ("C-x t M-t" . treemacs-find-tag)))
+
+(with-eval-after-load 'treemacs
+  (define-key evil-treemacs-state-map (kbd "?") #'treemacs-common-helpful-hydra)
+  (define-key evil-treemacs-state-map (kbd "C-?") #'treemacs-advanced-helpful-hydra))
 #+end_src
 
 **** Evil Tree

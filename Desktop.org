@@ -60,6 +60,7 @@ yay -S \
   mlocate \
   mpd \
   mpv \
+  multimarkdown \
   mutt \
   ncmpcpp \
   network-manager-applet \
@@ -120,9 +121,8 @@ if which ruby >/dev/null && which gem >/dev/null; then
 fi
 
 # Source node version manager
-if which nvm >/dev/null; then
-  source /usr/share/nvm/init-nvm.sh
-fi
+[[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
+# source /usr/share/nvm/init-nvm.sh
 
 # LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
 LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
@@ -220,7 +220,15 @@ zstyle ':completion:*' menu select  # Highlight on tab
 # Color dirs
 export LS_COLORS # I don't know why this is necessary here, but colors don't work without it.
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+
 alias ls='ls --color=auto'
+alias 7zultra='7z a -t7z -m0=lzma2 -mx=0 -mfb=64 -md=32m -ms=on'
+alias curlheaders='curl -I'
+alias curlheadersproxy='curl --socks5 localhost:11080 -I'
+alias scrot='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/foo.png && rm ~/foo.png'
+alias webcam='mplayer tv:// -tv driver=v412:width=1920:height=1080:device=/dev/video0 -fps 15 -vf screenshot'
+alias dots='cd ~/Projects/Home/dotfiles'
+alias work='cd ~/Projects/Work'
 #+end_src
 
 My custom prompt for =zsh=.
@@ -468,7 +476,7 @@ Writes out my global =git= configuration.
 
 *** i3
 
-#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/i3/config :mkdirp yes
+#+begin_src conf :tangle ~/.config/i3/config :mkdirp yes
 # i3 config file (v4)
 #
 # Please see https://i3wm.org/docs/userguide.html for a complete reference!
@@ -778,7 +786,7 @@ bind-key -T copy-mode-vi 'y' send-keys -X copy-pipe-and-cancel "xclip -i -f -sel
 # General Settings
 # ------------------------------------------------------------------------------
 # Be colorful
-# set -g default-terminal "screen-256color"
+set -g default-terminal "screen-256color"
 
 # Enable the mouse
 set-option -g mouse on
