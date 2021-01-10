@@ -249,7 +249,7 @@ Until =Wayland= stops being terrible with the =nvidia= drivers, I'll continue us
 
 This file handles a variety of things, from shell colors to terminal emulator settings.
 
-#+begin_src conf :tangle ~/.Xresources :mkdirp
+#+begin_src conf :tangle ~/.Xresources :mkdirp yes
 !emacs*Background: DarkSlateGray
 !emacs*Foreground: Wheat
 !emacs*pointerColor: Orchid
@@ -412,7 +412,7 @@ Xft/RGBA "rgb"
 
 Writes out my global =git= configuration.
 
-#+begin_src shell :tangle ~/.gitconfig :mkdirp
+#+begin_src shell :tangle ~/.gitconfig :mkdirp yes
 [core]
   editor = vim
 [user]
@@ -871,7 +871,7 @@ timeout = 0
 
 ** Rofi
 
-#+begin_src conf :tangle ~/.config/rofi/config.rasi
+#+begin_src conf :tangle ~/.config/rofi/config.rasi :mkdirp yes
 configuration {
 	theme: "~/.config/rofi/themes/slate.rasi";
 }
@@ -930,7 +930,7 @@ element selected {
 
 This is the script that =i3= uses to launch =Rofi= as a =dmenu= replacement.
 
-#+begin_src sh :tangle ~/.config/rofi/rofia.sh
+#+begin_src sh :tangle ~/.config/rofi/rofia.sh :mkdirp yes
 #!/bin/bash
 # A messy & pathetic script to launch rofi with xrdb colours
 getcolors () {
@@ -975,7 +975,7 @@ rofi -show drun -sidebar-mode \
 
 Media player configuration. =mpv= replaces =mplayer=.
 
-#+begin_src conf :tangle ~/Projects/Home/dotfiles/tangled/mpv/mpv.conf
+#+begin_src conf :tangle ~/.config/mpv/mpv.conf :mkdirp yes
 ##################
 # video settings #
 ##################
@@ -1114,7 +1114,7 @@ mkdir -p ~/.config/mpd/playlists
 
 ** ncmpcpp
 
-#+begin_src conf :tangle ~/.config/ncmpcpp/config
+#+begin_src conf :tangle ~/.config/ncmpcpp/config :mkdirp yes
 mpd_host = 127.0.0.1
 mpd_port = 6600
 
@@ -2023,8 +2023,7 @@ taskd.trust=ignore hostname
 
 =Qutebrowser= is a keyboard based web browser with vim-like keybindings.
 
-
-#+begin_src python :tangle ~/.config/qutebrowser/config.py
+#+begin_src python :tangle ~/.config/qutebrowser/config.py :mkdirp yes
 
 # Custom keybindings
 config.unbind('d') # Don't close window when d is pressed
@@ -2100,7 +2099,7 @@ with config.pattern('*://*.youtube.com/watch') as p:
 
 #+end_src
 
-#+begin_src  conf :tangle ~/.config/qutebrowser/quickmarks
+#+begin_src  conf :tangle ~/.config/qutebrowser/quickmarks :mkdirp yes
 lp https://lastpass.com/?ac=1&lpnorefresh=1
 gh https://github.com/ $0
 type https://www.keybr.com/login/MOma70tyO6
@@ -2163,7 +2162,7 @@ User level =Systemd= configurations live in =~/.config/systemd/user/=
 
 Emacs ships with a systemd unit (at least in Arch), so there's really not much to tangle out. On a fresh system, one need simply enable the service and start it.
 
-#+begin_src sh
+#+begin_src sh :noweb-ref emacs-post-tangle
 systemctl --user enable --now emacs
 systemctl --user start emacs
 #+end_src
@@ -2209,5 +2208,6 @@ systemctl --user start onedrive-sync.timer
 ** Post-tangle
 
 #+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/Home/dotfiles/tangled/systemd-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
+<<emacs-post-tangle>>
 <<onedrive-post-tangle>>
 #+end_src
