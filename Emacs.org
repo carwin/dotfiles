@@ -285,8 +285,10 @@ I keep themes I like in here and just uncomment or eval whichever one I'm /feeli
   (setq doom-themes-enable-bold t
         doom-themes-enable-italic t)
   ;; (load-theme 'doom-vibrant t)
-  (load-theme 'doom-palenight t)
-  ;;(load-theme 'doom-city-lights t)
+  ;;  (load-theme 'doom-palenight t)
+  ;; (load-theme 'doom-city-lights t)
+  ;; (load-theme 'doom-laserwave)
+  (load-theme 'doom-snazzy)
 
   (doom-themes-org-config))
 #+end_src
