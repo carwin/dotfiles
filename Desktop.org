@@ -2209,8 +2209,8 @@ WantedBy=timers.target
 Once these files have been tangled out, some kind of action needs to enable the timer via: ~systemctl --user enable onedrive-sync.timer~
 
 #+begin_src sh :noweb-ref onedrive-post-tangle
-systemctl --user enable onedrive-sync.timer
-systemctl --user start onedrive-sync.timer
+# systemctl --user enable onedrive-sync.timer
+# systemctl --user start onedrive-sync.timer
 #+end_src
 
 ** Post-tangle

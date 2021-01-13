@@ -1,6 +1,6 @@
 #+title: Org Mode Workflow
 #+author: Carwin Young
-#+property: header-args:emacs-lisp :tangle ./.emacs.d/elisp/cy-workflow.el :mkdirp yes
+#+property: header-args:emacs-lisp :tangle ~/.emacs.d/elisp/cy-workflow.el :mkdirp yes
 
 This file contains the description and configuration of the productivity workflow I plan on using with Org.
 
@@ -202,7 +202,5 @@ Tags are used to filter all tasks to find anything actionable in a particular co
 This Org file produces a file called =cy-workflow.el= which gets loaded up in =init.el Export it as a feature so that it can be loaded with =require=.
 
 #+begin_src emacs-lisp
-
 (provide 'cy-workflow)
-
 #+end_src
