@@ -2,6 +2,9 @@
 
 This is the primary desktop application configuration.
 
+@todo
+This block pulls in all the =:noweb-ref= references to =symlinks= and outputs them all into a =symlinks.sh= file. This block will normally be empty, if only this file is tangled out. The =:noweb-ref= references are stored in different files.
+
 * System
 
 Once =Arch Linux= is installed, a few things need to happen.
@@ -1976,6 +1979,7 @@ mkdir -p ~/.vim/undo
 mkdir -p ~/.vim/backups
 mkdir -p ~/.vim/swaps
 #+end_src
+
 
 Before this configuration file can be useful some directories and the =vim-plugin= manager needs to be put in the autoload directory.
 

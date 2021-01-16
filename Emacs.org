@@ -439,7 +439,10 @@ Comparing this with Smart Mode Line
   (doom-modeline-major-mode-icon nil))
 #+end_src
 
+
 ** Auto-Save Changed Files
+
+Here automatic saving of buffers is enabled. The exclusion list excludes the entire dotfiles directory, since auto-save in these files may be quite cumbersome due to the large amount of tangling and script running that happens throughout.
 
 #+begin_src emacs-lisp
 (use-package super-save
@@ -448,6 +451,8 @@ Comparing this with Smart Mode Line
   :diminish super-saver-mode
   :config
   (super-save-mode +1)
+  ;; (setq super-save-exclude (concat (file-name-directory buffer-file-name) "*.org"))
+  (setq super-save-exclude (directory-files (file-name-directory buffer-file-name)))
   (setq super-save-auto-save-when-idle t))
 #+end_src
 
@@ -2148,46 +2153,19 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
   "cc"  '(cfw:open-org-calendar :which-key "calendar"))
 #+end_src
 
-* Symlinker Tanglifier
 
-This block pulls in all the =:noweb-ref= references to =symlinks= and outputs them all into a =symlinks.sh= file. This block will normally be empty, if only this file is tangled out. The =:noweb-ref= references are stored in different files.
+* Desktop Setup
 
-#+begin_src shell :noweb yes :mkdirp yes :tangle /home/narwic/Projects/Home/dotfiles/tangled/symlinks.sh
-<<symlinks>>
-#+end_src
 
-This block is tangled out into a script called =concat.sh=, the purpose of which is to concatenate all the org files in my dotfiles directory together temporarily into a single =concat.org= file. After that process, the script looks through the concatenated Org for the =symlinks.sh= block above and tangles it out (overwriting the original empty output). After tangling out the =symlinks.sh= block (complete with references), the symlinks script is run, creating symlinks around the system. The script then removes the concatenated Org file.
-
-This process is necessary because the actual symlink references are spread across multiple files, so the primary block above, if left on its own, will be empty. Only with a single, concactenated Org file can it find the references it wants.
-
-#+begin_src shell :tangle /home/narwic/Projects/Home/dotfiles/tangled/concat.sh :shebang "#!/bin/bash" :output yes
-catFile="/home/narwic/Projects/Home/dotfiles/tangled/concat.org"
-symlinkFile="/home/narwic/Projects/Home/dotfiles/tangled/symlinks.sh"
-self="/home/narwic/Projects/Home/dotfiles/tangled/concat.sh"
-
-cat <(cat /home/narwic/Projects/Home/dotfiles/*.org) > $catFile
-
-emacs --batch --eval="\
-  (progn (require 'org)
-         (let ((org-confirm-babel-evaluate nil))
-           (find-file \"$catFile\")
-           (search-forward \":tangle $symlinkFile\")
-           (org-babel-tangle \"/home/narwic/Projects/Home/dotfiles/tangled/symlinks.sh\")))"
-
-chmod +x $symlinkFile
-chmod +x $self
-
-$symlinkFile
-
-rm $catFile
-#+end_src
-
-This after-save-hook runs the above =concat.sh= script to do the concatenation and symlinking.
+Some test paths for regex:
+=/home/narwic/Projects/Home/dotfiles/tangled/application-post-tangle.sh=
+=/home/narwic/Projects/Home/dotfiles/tangled/environment-post-tangle.sh=
+=/home/narwic/Projects/Home/dotfiles/tangled/systemd-post-tangle.sh=
 
 #+begin_src emacs-lisp
-(defun cy/concat-org-configs ()
-  (when (eq major-mode 'org-mode)
-    (shell-command-to-string (format "~/Projects/Home/dotfiles/tangled/concat.sh %s" buffer-file-name))))
+(defun cy/run-tangles ()
+  (when (string-match "\\(dotfiles/\\)$" (file-name-directory buffer-file-name))
+    (shell-command-to-string (concat (file-name-directory buffer-file-name) "tangled/*.sh"))))
 
-(add-hook 'after-save-hook 'cy/concat-org-configs)
+(add-hook 'after-save-hook 'cy/run-tangles)
 #+end_src
