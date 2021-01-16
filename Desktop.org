@@ -229,6 +229,8 @@ alias scrot='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/foo
 alias webcam='mplayer tv:// -tv driver=v412:width=1920:height=1080:device=/dev/video0 -fps 15 -vf screenshot'
 alias dots='cd ~/Projects/Home/dotfiles'
 alias work='cd ~/Projects/Work'
+alias notes='cd ~/OneDrive/Notes'
+alias docs='cd ~/Documents'
 #+end_src
 
 My custom prompt for =zsh=.

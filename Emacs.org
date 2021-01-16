@@ -13,7 +13,6 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
   (setq evil-want-keybinding nil)
 #+end_src
 
-
 * Package Management
 
 #+begin_src emacs-lisp
