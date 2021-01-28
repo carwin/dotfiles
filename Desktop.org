@@ -27,6 +27,7 @@ sudo pacman -S \
   go \
   git \
   nvidia \
+  nfs-utils \
   docker \
 #+end_src
 
@@ -449,6 +450,10 @@ Writes out my global =git= configuration.
   untracked = cyan
 [merge]
   log = true
+[rebase]
+  stat = true
+[log]
+  decorate = full
 [url "git@github.com:"]
   insteadOf = "gh:"
   pushInsteadOf = "github:"
@@ -474,7 +479,7 @@ Writes out my global =git= configuration.
   lgp = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --
   lg = log --show-signature
   cm = commit -S -m
-	change-commits = "!f() { VAR=$1; OLD=$2; NEW=$3; shift 3; git filter-branch -f --env-filter \"if [[ \\\"$`echo $VAR`\\\" = '$OLD' ]]; then export $VAR='$NEW'; fi\" $@; }; f"
+  change-commits = "!f() { VAR=$1; OLD=$2; NEW=$3; shift 3; git filter-branch -f --env-filter \"if [[ \\\"$`echo $VAR`\\\" = '$OLD' ]]; then export $VAR='$NEW'; fi\" $@; }; f"
 #+end_src
 
 ** Window Manager
@@ -743,7 +748,6 @@ general {
 }
 
 #+end_src
-
 
 ** System Post-tangle
 #+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/Home/dotfiles/tangled/environment-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
@@ -1692,6 +1696,162 @@ else
 fi
 #+end_src
 
+** Mail
+
+*** Mbsync
+
+#+begin_src conf :tangle ~/.mbsyncrc
+
+# Global Channel configuration.
+Create Both
+Expunge Slave
+Remove None
+Sync All
+SyncState *
+
+#####################
+# carwin@mobomo.com #
+#####################
+IMAPAccount work
+Host imap.gmail.com
+User carwin@mobomo.com
+# PassCmd "~/Scripts/emacs-mail-sync.sh work"
+PassCmd "secret-tool lookup user carwin@mobomo.com host imap.gmail.com"
+SSLType IMAPS
+CertificateFile /etc/ssl/certs/ca-certificates.crt
+
+IMAPStore work-remote
+Account work
+
+MaildirStore work-local
+# Subfolders Verbatim
+Path ~/Mail/Work/
+Inbox ~/Mail/Work/inbox
+
+Channel work-inbox
+Master :work-remote:
+Slave :work-local:inbox
+
+Channel work-archive
+Master :work-remote:"[Gmail]/All Mail"
+Slave :work-local:archive
+
+Channel work-sent
+Master :work-remote:"[Gmail]/Sent Mail"
+Slave :work-local:sent
+
+Channel work-trash
+Master :work-remote:"[Gmail]/Trash"
+Slave :work-local:trash
+Create Slave
+
+# Get all the work channels together into a group.
+Group work
+Channel work-inbox
+Channel work-archive
+Channel work-sent
+Channel work-trash
+
+##########################
+# narwic@1000needles.net #
+##########################
+IMAPAccount home
+Host mail.runbox.com
+Port 993
+User narwic@1000needles.net
+# PassCmd "~/Scripts/emacs-mail-sync.sh home"
+PassCmd "secret-tool lookup user narwic@1000needles.net host mail.runbox.com"
+SSLType IMAPS
+SSLVersions TLSv1.2
+CertificateFile /etc/ssl/certs/ca-certificates.crt
+
+IMAPStore home-remote
+Account home
+
+MaildirStore home-local
+Path ~/Mail/Home/
+Inbox ~/Mail/Home/inbox/
+# Trash ~/Mail/Home/trash/
+# SubFolders Verbatim
+# Channel home
+# Master :home-remote:
+# Slave :home-local:
+# Patterns *
+# Expunge None
+# CopyArrivalDate yes
+# Sync All
+# Create Both
+# SyncState *
+
+Channel home-inbox
+Master :home-remote:
+Slave :home-local:inbox
+Create Slave
+
+Channel home-sent
+Master :home-remote:"Sent"
+Slave :home-local:sent
+Create Slave
+
+Channel home-archive
+Master :home-remote:"Archives"
+Slave :home-local:archive
+Create Slave
+
+Channel home-quarantine
+Master :home-remote:"Quarantine"
+Slave :home-local:quarantine
+Create Slave
+
+Channel home-trash
+Master :home-remote:"Trash"
+Slave :home-local:trash
+Create Slave
+
+Channel home-drafts
+Master :home-remote:"Drafts"
+Slave :home-local:drafts
+Create Slave
+
+Group home
+Channel home-inbox
+Channel home-archive
+Channel home-sent
+Channel home-trash
+Channel home-quarantine
+Channel home-drafts
+
+#+end_src
+
+*** msmtp config
+
+=msmtp= is used by mu4e for sending mail instead of the basic smtp process. This is preferred because we have different contexts and emails from which we want to send mail and =msmtp= makes that much easier. See the sister configuration in Emacs.org.
+
+#+begin_src sh :tangle ~/.msmtprc :tangle-mode (identity #o600)
+defaults
+tls on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+logfile ~/msmtp.log
+
+# Home
+account Home
+auth on
+host mail.runbox.com
+port 587
+from cy@carw.in
+user narwic@1000needles.net
+
+# Work
+account Work
+auth on
+host smtp.gmail.com
+port 587
+from carwin@mobomo.com
+user carwin@mobomo.com
+
+# account default : home
+#+end_src
+
 ** OfflineImap
 
 As you might expect, =offlineimap= creates a local database of =IMAP= data for viewing emails offline.
@@ -1699,46 +1859,27 @@ As you might expect, =offlineimap= creates a local database of =IMAP= data for v
 #+begin_src conf :tangle ~/.config/offlineimap/config :mkdirp yes
 [general]
 ui = ttyui
-accounts = CarwinYoung, Mobomo
-pythonfile=~/.config/mutt/offlineimap.py
+accounts = 1000needles, Mobomo
+#pythonfile=~/.config/mutt/offlineimap.py
 fsync = False
 
-[Account CarwinYoung]
-localrepository = CarwinYoung-Local
-remoterepository = CarwinYoung-Remote
+[Account 1000needles]
+localrepository = 1000needles-Local
+remoterepository = 1000needles-Remote
 postsynchook = notmuch new
 
-[Repository CarwinYoung-Local]
+[Repository 1000needles-Local]
 type = Maildir
-localfolders = ~/.mail/carwinyoung-gmail.com
-nametrans = lambda folder: {'drafts':   '[Gmail]/Drafts',
-                            'sent':     '[Gmail]/Sent Mail',
-                            'flagged':  '[Gmail]/Starred',
-                            'trash':    '[Gmail]/Trash',
-                            'archive':  '[Gmail]/All Mail',
-                            }.get(folder, folder)
+localfolders = ~/.mail/narwic@1000needles.net
 
-[Repository CarwinYoung-Remote]
+[Repository 1000needles-Remote]
 maxconnections = 1
-type = Gmail
+type = IMAP
+remotehost = mail.runbox.com
 ssl = yes
-remoteuser = carwinyoung@gmail.com
+remoteuser = narwic@1000needles.net
 sslcacertfile = /etc/ssl/certs/ca-certificates.crt
-remotepasseval = get_pw_from_desc("Personal gmail password for mutt")
-realdelete = no
-nametrans = lambda folder: {'[Gmail]/Drafts':     'drafts',
-                            '[Gmail]/Sent Mail':  'sent',
-                            '[Gmail]/Starred':    'flagged',
-                            '[Gmail]/Trash':      'trash',
-                            '[Gmail]/All Mail':   'archive',
-                            }.get(folder, folder)
-folderfilter = lambda folder: folder not in ['[Gmail]/Trash',
-                                             '[Gmail]/Important',
-                                             '[Gmail]/Spam'
-                                            ]
-
-
-
+remotepassfile = /tmp/pw.txt
 
 
 [Account Mobomo]
@@ -1749,13 +1890,6 @@ postsynchook = notmuch new
 [Repository Mobomo-Local]
 type = Maildir
 localfolders = ~/.mail/carwin-mobomo.com
-nametrans = lambda folder: {'drafts':     '[Gmail]/Drafts',
-                            'sent':       '[Gmail]/Sent Mail',
-                            'sales':      'Sales',
-                            'flagged':    '[Gmail]/Starred',
-                            'trash':      '[Gmail]/Trash',
-                            'archive':    '[Gmail]/All Mail',
-                           }.get(folder, folder)
 
 
 [Repository Mobomo-Remote]
@@ -1764,19 +1898,8 @@ type = Gmail
 ssl = yes
 remoteuser = carwin@mobomo.com
 sslcacertfile = /etc/ssl/certs/ca-certificates.crt
-remotepasseval = get_pw_from_desc("Mobomo gmail password for mutt")
+remotepassfile = /tmp/pw-work.txt
 realdelete = no
-nametrans = lambda folder: {'[Gmail]/Drafts':     'drafts',
-                            '[Gmail]/Sent Mail':  'sent',
-                            'Sales':              'sales',
-                            '[Gmail]/Starred':    'flagged',
-                            '[Gmail]/Trash':      'trash',
-                            '[Gmail]/All Mail':   'archive',
-                           }.get(folder, folder)
-folderfilter = lambda folder: folder not in ['[Gmail]/Trash',
-                                             '[Gmail]/Important',
-                                             '[Gmail]/Spam'
-                                            ]
 #+end_src
 
 ** vim

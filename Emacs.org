@@ -9,7 +9,7 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 ;; (setq debug-on-error t)
   (defvar cy/default-font-size 110)
   (defvar cy/default-variable-font-size 110)
-  (defvar cy/frame-transparency '(95 . 95))
+  (defvar cy/frame-transparency '(90 . 90))
   (setq evil-want-keybinding nil)
 #+end_src
 
@@ -47,11 +47,9 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 
 * Start the server on launch
 
+@TODO: I don't think this is really necessary anymore now that I'm using the systemd setup and attaching through a client but I'm not sure.
+
 #+begin_src emacs-lisp
-    (use-package server)
-    (unless (server-running-p)
-      (server-start))
-    (setq org-image-actual-width nil)
 #+end_src
 
 * Keep .emacs.d Clean
@@ -128,7 +126,7 @@ I've been using the comma (,) key as my leader key for almost a decade in vim. T
 
 Evil mode is essentially vim keybindings for Emacs. Emacs is essentially unusable for me without this.
 
-`evil-collection` essentially just adds supports for more modes to make sure we keep those vim bindings wherever we are and whatever we're doing in Emacs.
+=evil-collection= essentially just adds supports for more modes to make sure we keep those vim bindings wherever we are and whatever we're doing in Emacs.
 
 I don't remember what org-evil does, but I've had it in my config since I started using Org. Probably pretty important.
 
@@ -236,9 +234,26 @@ Set frame transparency and maximize windows by default.
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 #+end_src
 
-Configure line numbers. Some modes don't need them.
+Define a toggle function that can be called to turn transparency on and off.
 
 #+begin_src emacs-lisp
+(defun toggle-transparency ()
+  (interactive)
+  (let ((alpha (frame-parameter nil 'alpha)))
+    (set-frame-parameter
+     nil 'alpha
+     (if (eql (cond ((numberp alpha) alpha)
+                    ((numberp (cdr alpha)) (cdr alpha))
+                    ;; Also handle undocumented (<active> <inactive>) form.
+                    ((numberp (cadr alpha)) (cadr alpha)))
+              100)
+         '(90 . 90) '(100 . 100)))))
+(global-set-key (kbd "C-c t") 'toggle-transparency)
+#+end_src
+
+Configure line numbers. Some modes don't need them.
+
+,#+begin_src emacs-lisp
 ;; Turn on column number mode and display line numbers for everything by default.
 (column-number-mode)
 
@@ -275,29 +290,36 @@ Don't warn when advice is added for functions. This can get annoying.
 
 ** Theme
 
-Make it pretty. Lots of good things on the doom-themes repo.
+Configure a personal custom themes directory using a directory within the dotfiles repository.
 
-I keep themes I like in here and just uncomment or eval whichever one I'm /feelin'/.
+@TODO: I would like to have a handy way to figure out the dotfiles directory's path. Possibly set some kind of global variable that can be referenced in all the places I need to use it.
+
+#+begin_src emacs-lisp
+(add-to-list 'custom-theme-load-path
+  (concat
+    "~/Projects/Home/dotfiles/" "emacs-themes"))
+#+end_src
+
+Use the =doom-themes= package to get some very nice themes. Some of these themes need explicit bold / italic display support turned on as part of the package's configuration.
 
 #+begin_src emacs-lisp
 (use-package doom-themes
   :config
   (setq doom-themes-enable-bold t
-        doom-themes-enable-italic t)
-  ;; (load-theme 'doom-vibrant t)
-  ;; (load-theme 'doom-palenight t)
-  ;; (load-theme 'doom-city-lights t)
-  ;; (load-theme 'doom-laserwave)
-  (load-theme 'doom-snazzy)
-
+             doom-themes-enable-italic t)
   (doom-themes-org-config))
+#+end_src
+
+Enable one of the themes, either from the custom theme directory or from the themes provided by =doom-themes=.
+#+begin_src emacs-lisp
+(load-theme 'doom-laserwave t)
 #+end_src
 
 ** Font
 
 *** Set the font
 
-Dank Mono is really interesting, but I've been mostly using the really excellent [[https://mplus-fonts.osdn.jp/about-en.html][M+]] font set as it has full support for Latin and Japanese glyphs  in with half-width, full-width, and proportional options.
+Dank Mono is really interesting, but I've been mostly using the really excellent [[https://mplus-fonts.osdn.jp/about-en.html][M+]] font set as it has full support for Latin and Japanese glyphs with half-width, full-width, and proportional options.
 
 #+begin_src emacs-lisp
 (set-face-attribute 'default nil
@@ -332,15 +354,6 @@ We should always use UTF-8.
 *** Enable proper Unicode glyph support
 
 #+begin_src emacs-lisp
-;(defun cy/replace-unicode-font-mapping (block-name old-font new-font)
-;  (let* ((block-idx (cl-position-if
-;                                          (lambda (i) (string-equal (car i) block-name))
-;                                          unicode-fonts-block-font-mapping))
-;              (block-fonts (cadr (nth block-idx unicode-fonts-block-font-mapping)))
-;              (updated-block (cl-substitute new-font old-font block-fonts :test 'string-equal)))
-;      (setf (cdr (nth block-idx unicode-fonts-block-font-mapping))
-;                 (,updated-block))))
-
 (use-package unicode-fonts
   :ensure t
   :custom
@@ -363,48 +376,6 @@ The diminish package hides stuff in the modelines. I think use-package can do th
 
 #+begin_src emacs-lisp
 (use-package diminish)
-#+end_src
-
-*** Smart Mode Line
-
-#+begin_src emacs-lisp
-;; (use-package all-the-icons) ;; @todo: Maybe don't use this. I can't decide if it makes Org worse or better.
-;; (use-package smart-mode-line
-;;   :disabled
-;;   :config
-;;   (setq sml/no-confirm-load-theme t)
-;;   (sml/setup)
-;;   (sml/apply-theme 'respectful)  ;; Respect the theme colors
-;;   (setq sml/mode-width 'right
-;;       sml/name-width 60)
-;;
-;;   (setq-default mode-line-format
-;;   `("%e"
-;;       mode-line-front-space
-;;       evil-mode-line-tag
-;;       mode-line-mule-info
-;;       mode-line-client
-;;       mode-line-modified
-;;       mode-line-remote
-;;       mode-line-frame-identification
-;;       mode-line-buffer-identification
-;;       sml/pos-id-separator
-;;       (vc-mode vc-mode)
-;;       " "
-;;       ;mode-line-position
-;;       sml/pre-modes-separator
-;;       mode-line-modes
-;;       " "
-;;       mode-line-misc-info))
-;;
-;;   (setq rm-excluded-modes
-;;     (mapconcat
-;;       'identity
-;;       ; These names must start with a space!
-;;       '(" GitGutter" " MRev" " company"
-;;       " Helm" " Undo-Tree" " Projectile.*" " Z" " Ind"
-;;       " Org-Agenda.*" " ElDoc" " SP/s" " cider.*")
-;;       "\\|")))
 #+end_src
 
 *** Doom Modeline
@@ -431,7 +402,7 @@ Comparing this with Smart Mode Line
   (doom-modeline-bar-width 6)
   (doom-modeline-lsp t)
   (doom-modeline-github nil)
-  (doom-modeline-mu4e nil)
+  (doom-modeline-mu4e t)
   (doom-modeline-irc nil)
   (doom-modeline-minor-modes t)
   (doom-modeline-persp-name nil)
@@ -445,6 +416,11 @@ Comparing this with Smart Mode Line
 Here automatic saving of buffers is enabled. The exclusion list excludes the entire dotfiles directory, since auto-save in these files may be quite cumbersome due to the large amount of tangling and script running that happens throughout.
 
 #+begin_src emacs-lisp
+(defun cy/auto-save-exclude-dir-list ()
+  (directory-files "~/Projects/Home/dotfiles" t "\\.org$"))
+#+end_src
+
+#+begin_src emacs-lisp
 (use-package super-save
   :ensure t
   :defer 1
@@ -452,7 +428,7 @@ Here automatic saving of buffers is enabled. The exclusion list excludes the ent
   :config
   (super-save-mode +1)
   ;; (setq super-save-exclude (concat (file-name-directory buffer-file-name) "*.org"))
-  (setq super-save-exclude (directory-files (file-name-directory buffer-file-name)))
+  (setq super-save-exclude (cy/auto-save-exclude-dir-list))
   (setq super-save-auto-save-when-idle t))
 #+end_src
 
@@ -957,6 +933,7 @@ Set up Org Mode's basic configuration, then expand on it in other sections.
         org-hide-block-startup nil
         org-src-preserve-indentation nil
         org-startup-folded 'content
+        org-image-actual-width nil ;; Useful for inline org images that are huge.
         org-cycle-separator-lines 2)
   (setq org-modules
     '(org-habit))
@@ -1990,10 +1967,6 @@ Like NeoVim but Emacs-y-er.
         ("C-x t B"   . treemacs-bookmark)
         ("C-x t C-t" . treemacs-find-file)
         ("C-x t M-t" . treemacs-find-tag)))
-
-(with-eval-after-load 'treemacs
-  (define-key evil-treemacs-state-map (kbd "?") #'treemacs-common-helpful-hydra)
-  (define-key evil-treemacs-state-map (kbd "C-?") #'treemacs-advanced-helpful-hydra))
 #+end_src
 
 **** Evil Tree
@@ -2001,6 +1974,10 @@ Like NeoVim but Emacs-y-er.
 (use-package treemacs-evil
   :after treemacs evil
   :ensure t)
+
+(with-eval-after-load 'treemacs
+  (define-key evil-treemacs-state-map (kbd "?") #'treemacs-common-helpful-hydra)
+  (define-key evil-treemacs-state-map (kbd "C-?") #'treemacs-advanced-helpful-hydra))
 #+end_src
 
 **** Projectile Tree
@@ -2087,6 +2064,7 @@ This is a really nice package that helps when you need to get to some HTTP docum
                           (bookmarks . 5)
                           (projects . 5)
                           (agenda . 5)))
+  ;; (setq dashboard-filter-agenda-entry 'dashboard-no-filter-agenda)
   (dashboard-setup-startup-hook))
 #+end_src
 
@@ -2151,8 +2129,115 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
 
 (cy/leader-key-def
   "cc"  '(cfw:open-org-calendar :which-key "calendar"))
+
+
+;; ;; Google Calendar
+(use-package org-gcal
+  :ensure t
+  :config
+  (setq org-gcal-client-id "367256572210-m73qcnfg3v1eiknjrtgk8runc6emmov5.apps.googleusercontent.com"
+        org-gcal-client-secret "zzNMaXuX6CWpF3iLArSgy85W"
+        org-gcal-fetch-file-alist '(("carwinyoung@gmail.com" .  "~/OneDrive/Notes/cal-personal.org")
+                                    ("carwin@mobomo.com" .  "~/OneDrive/Notes/cal-mobomo.org"))))
+
+(add-hook 'org-agenda-mode-hook (lambda () (org-gcal-sync) ))
+(add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-sync) ))
 #+end_src
 
+** Mail
+
+#+begin_src emacs-lisp
+;; (use-package notmuch
+;;   :config
+;;   (setq notmuch-show-logo nil))
+#+end_src
+
+*** mu4e
+
+#+begin_src emacs-lisp :noweb yes
+;; (defun cy/run-tangles ()
+;;   (when (string-match "\\(dotfiles/\\)$" (file-name-directory buffer-file-name))
+;;     (shell-command-to-string (concat (file-name-directory buffer-file-name) "tangled/*.sh"))))
+
+(defun cy/work-sig ()
+  (shell-command-to-string "cat ~/Mail/Work/signature.sig"))
+
+(use-package mu4e
+  :ensure nil
+  :config
+  ;; This is set to 't' to avoid mail syncing issues when using mbsync
+  (setq mu4e-change-filenames-when-moving t
+        ;; Refresh mail using isync every 10 minutes
+        mu4e-update-interval (* 10 60)
+        mu4e-compose-in-new-frame t
+        mu4e-view-show-images t
+        mu4e-get-mail-command "mbsync -a"
+        mu4e-maildir "~/Mail")
+  (setq mu4e-contexts
+       (list
+       ;; Personal account
+       (make-mu4e-context
+        :name "Personal"
+        :match-func
+          (lambda (msg)
+            (when msg
+              (string-prefix-p "/Home" (mu4e-message-field msg :maildir))))
+        :vars '((user-mail-address . "cy@carw.in")
+                (user-full-name    . "Carwin Young")
+                (mu4e-drafts-folder  . "/Home/drafts")
+                (mu4e-sent-folder    . "/Home/sent")
+                (mu4e-refile-folder  . "/Home/archive")
+                (mu4e-trash-folder   . "/Home/trash")
+                (mu4e-maildir-shortcuts .  (("/Home/inbox"         . ?i)
+                                            ("/Home/sent"          . ?s)
+                                            ("/Home/quarantine"    . ?q)
+                                            ("/Home/trash"         . ?t)
+                                            ("/Home/drafts"        . ?d)
+                                            ("/Home/archive"       . ?a)))))
+         ;; Work account
+       (make-mu4e-context
+        :name "Work"
+        :match-func
+          (lambda (msg)
+            (when msg
+              (string-prefix-p "/Work" (mu4e-message-field msg :maildir))))
+        :vars '((user-mail-address . "carwin@mobomo.com")
+                (user-full-name    . "Carwin Young")
+                (mu4e-compose-signature . cy/work-sig)
+                (mu4e-drafts-folder  . "/Work/drafts")
+                (mu4e-sent-folder    . "/Work/sent")
+                (mu4e-refile-folder  . "/Work/archive")
+                (mu4e-trash-folder   . "/Work/trash")
+                (mu4e-maildir-shortcuts . (("/Work/inbox"     . ?i)
+                                            ("/Work/sent"     . ?s)
+                                            ("/Work/trash"    . ?t)
+                                            ("/Work/drafts"   . ?d)
+                                            ("/Work/archive"  . ?a))))))))
+
+#+end_src
+
+#+begin_src emacs-lisp
+(require 'mu4e-contrib)
+(setq mu4e-html2text-command 'mu4e-shr2text)
+(add-to-list 'mu4e-view-actions '("ViewInBrowser" . mu4e-action-view-in-browser) t)
+
+(setq mu4e-view-html-plaintext-ratio-heuristic most-positive-fixnum)
+(add-hook 'mu4e-compose-mode-hook 'flyspell-mode)
+(setq mu4e-compose-format-flowed t)
+(setq fill-flowed-encode-column 998)
+
+(setq mail-user-agent 'message-user-agent)
+#+end_src
+
+*** msmtp
+
+#+begin_src emacs-lisp
+(setq sendmail-program "/usr/bin/msmtp"
+      message-sendmail-f-is-evil t
+      message-sendmail-extra-arguments '("--read-envelope-from")
+      send-mail-function 'smtpmail-send-it
+      message-send-mail-function 'message-send-mail-with-sendmail)
+#+end_src
 
 * Desktop Setup
 
