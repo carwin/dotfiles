@@ -5,10 +5,13 @@
 
 This is Carwin's Emacs configuration. The goal is that it's portable enough to be moved around between machines.
 
+
+#+begin_src emacs-lisp
+(load-file "~/.emacs.d/per-system-settings.el")
+#+end_src
+
 #+begin_src emacs-lisp
 ;; (setq debug-on-error t)
-  (defvar cy/default-font-size 110)
-  (defvar cy/default-variable-font-size 110)
   (defvar cy/frame-transparency '(90 . 90))
   (setq evil-want-keybinding nil)
 #+end_src
@@ -75,6 +78,10 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 ;; (setq org-image-actual-width nil)
 #+end_src
 
+
+#+begin_src emacs-lisp
+
+#+end_src
 
 ** Auto-update packages
 #+begin_src emacs-lisp
@@ -207,7 +214,6 @@ Displays a small buffer to show the list of features you can do next after start
 #+end_src
 
 * General Configuration
-
 ** User Interface
 
 Get rid of all the chrome. I don't want to remember I'm in a GUI.
@@ -224,8 +230,6 @@ Get rid of all the chrome. I don't want to remember I'm in a GUI.
 #+end_src
 
 Set frame transparency and maximize windows by default.
-
-@todo: This looks snazzy, but isn't really necessary. I'd like to define a function that toggles this like I have in vim.
 
 #+begin_src emacs-lisp
 (set-frame-parameter (selected-frame) 'alpha cy/frame-transparency)
@@ -316,25 +320,40 @@ Enable one of the themes, either from the custom theme directory or from the the
 #+end_src
 
 ** Font
-
 *** Set the font
 
 Dank Mono is really interesting, but I've been mostly using the really excellent [[https://mplus-fonts.osdn.jp/about-en.html][M+]] font set as it has full support for Latin and Japanese glyphs with half-width, full-width, and proportional options.
 
 #+begin_src emacs-lisp
-(set-face-attribute 'default nil
-                    :family "M+ 1mn"
-                    ;; :family "Dank Mono"
-                    :height cy/default-font-size
-                    ;; :height 100
-                    :weight 'normal
-                    :width 'normal)
 
-(set-face-attribute 'fixed-pitch nil :font "Dank Mono" :height cy/default-font-size)
-;;(set-face-attribute 'fixed-pitch nil :font "Dank Mono" :height cy/default-font-size :weight 'bold)
-;; (set-face-attribute 'fixed-pitch nil :font "Monoid" :height cy/default-font-size :weight 'regular)
+;; (set-face-attribute 'default nil
+;;                     :font "Dank Mono"
+;;                     :height (cy/system-settings-get 'emacs/default-face-size))
+;; (set-face-attribute 'fixed-pitch nil
+;;                     :font "Dank Mono"
+;;                     :height (cy/system-settings-get 'emacs/fixed-face-size))
+;; (set-face-attribute 'variable-pitch nil
+;;                     :font "M+ 1c"
+;;                     :height (cy/system-settings-get 'emacs/variable-face-size)
+;;                     :weight 'normal)
 
-(set-face-attribute 'variable-pitch nil :font "M+ 1c" :height cy/default-variable-font-size :weight 'regular)
+(defun cy/init-faces (&optional frame)
+  (unless frame
+    (setq frame (selected-frame)))
+  (when frame
+    (with-selected-frame frame
+      (set-face-attribute 'default (selected-frame)
+                          :font "Dank Mono"
+                          :height (cy/system-settings-get 'emacs/default-face-size))
+      (set-face-attribute 'fixed-pitch (selected-frame)
+                          :font "Dank Mono"
+                          :height (cy/system-settings-get 'emacs/fixed-face-size))
+      (set-face-attribute 'variable-pitch (selected-frame)
+                          :font "M+ 1c"
+                          :height (cy/system-settings-get 'emacs/variable-face-size)
+                          :weight 'normal))))
+
+(add-hook 'after-make-frame-functions #'cy/init-faces t)
 #+end_src
 
 *** Use UTF-8 for everything
@@ -409,7 +428,6 @@ Comparing this with Smart Mode Line
   (doom-modeline-buffer-file-name-style 'truncate-except-project)
   (doom-modeline-major-mode-icon nil))
 #+end_src
-
 
 ** Auto-Save Changed Files
 
@@ -908,7 +926,7 @@ Set up Org Mode's basic configuration, then expand on it in other sections.
 
 #+begin_src emacs-lisp
 ;; @todo: Move this to another section.
-(setq-default fill-column 80)
+(setq-default fill-column 800)
 
 ;; Turn on indentation and auto-fill mode for Org files.
 (defun cy/org-mode-setup ()
@@ -1004,9 +1022,9 @@ Uses org-superstar. I switch between this and org-bullets mode. org-bullets some
   (org-superstar-headline-bullets-list '("☰" "☷" "☵" "☲"  "☳" "☴"  "☶"  "☱")))
 
 ;; Turn the list hyphen into a dot.
-;; (font-lock-add-keywords 'org-mode
-;;                           '(("^ *\\([-]\\) "
-;;                              (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+(font-lock-add-keywords 'org-mode
+                          '(("^ *\\([-]\\) "
+                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 
 ;; Set faces for heading levels
 (dolist (face '((org-level-1 . 1.35)
@@ -1032,6 +1050,8 @@ Uses org-superstar. I switch between this and org-bullets mode. org-bullets some
 (set-face-attribute 'org-special-keyword nil :foreground nil :inherit '(font-lock-comment-face fixed-pitch))
 (set-face-attribute 'org-meta-line nil :foreground nil :inherit '(font-lock-comment-face fixed-pitch))
 (set-face-attribute 'org-checkbox nil :foreground nil :inherit 'fixed-pitch)
+
+
 ;; Technically this belongs with the rest of the face attributes above. But
 ;; I actually sort of like having some more breating room in my text.
 ;; (set-face-attribute 'org-indent nil :foreground nil :inherit '(org-hide variable-pitch))
@@ -1272,70 +1292,6 @@ Allows opening notes from external applications in Emacs.
 
 ** Git
 
-*** Magit
-
-#+begin_src emacs-lisp
-(use-package magit
-  :commands (magit-status magit-get-current-branch)
-  :custom
-  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
-
-(use-package evil-magit
-  :after magit)
-
-;; Add a super-convenient global binding for magit-status since
-;; I use it 8 million times a day.
-(global-set-key (kbd "C-M-;") 'magit-status)
-
-(cy/leader-key-def
-  "g"   '(:ignore t :which-key "git")
-  "gs"  'magit-status
-  "gd"  'magit-diff-unstaged
-  "gc"  'magit-branch-or-checkout
-  "gl"  '(:ignore t :which-key "log")
-  "glc" 'magit-log-current
-  "glf" 'magit-log-buffer-file
-  "gb"  'magit-branch
-  "gP"  'magit-push-current
-  "gp"  'magit-pull-branch
-  "gf"  'magit-fetch
-  "gF"  'magit-fetch-all
-  "gr"  'magit-rebase)
-#+end_src
-
-*** Forge
-
-@todo I have no idea what this does.
-
-#+begin_src emacs-lisp
-;; Note: Make sure to configure a GitHub token before using this package.
-;; - https://magit.vc/manual/forge/Token-Creation.html#Token-Creation
-;; - https://magit.vc/manual/ghub/Getting-Started.html#Getting-Started
-;; (use-package forge)
-#+end_src
-
-*** magit-todos
-
-This is an interesting extension to Magit that shows a TODOs section in your git status buffer containing all lines with TODO (or other similar words) in files contained within the repo. More information at the official GitHub repo.
-
-#+begin_src emacs-lisp
-(use-package magit-todos
-  :defer t)
-#+end_src
-
-*** git-link
-
-No clue.
-
-#+begin_src emacs-lisp
-(use-package git-link
-  :commands git-link
-  :config
-  (setq git-link-open-in-browser t)
-  (cy/leader-key-def
-    "gL"  'git-link))
-#+end_src
-
 *** Git Gutter
 
 
@@ -1405,7 +1361,6 @@ No clue.
   (set-face-foreground 'git-gutter:modified "LightGoldenrod")
   (set-face-foreground 'git-gutter:deleted "LightCoral"))
 #+end_src
-
 
 ** Projectile
 
@@ -1527,15 +1482,15 @@ Integrates lsp-mode and Ivy.
 
 **** LSP Company Completion
 #+begin_src emacs-lisp
-;(add-to-list 'company-backends 'company-lsp)
+;;(add-to-list 'company-backends 'company-lsp)
 (use-package company-lsp
   :config (setq company-lsp-cache-candidates 'auto
                 company-lsp-async nil
-                company-lsp-enable-snippet nil ; Set to non-nil if you want snippet expansion on completion.
+                company-lsp-enable-snippet t ; Set to non-nil if you want snippet expansion on completion.
                 company-lsp-enable-recompletion nil))
-;(add-hook 'js2-mode-hook (lambda ()
-;                            (tern-mode)
-;                            (company-mode)))
+;; (add-hook 'js2-mode-hook (lambda ()
+                           ;; (tern-mode)
+                           ;; (company-mode)))
 #+end_src
 
 *** Debugging with dap-mode
@@ -1634,16 +1589,12 @@ Configure JavaScript and TypeScript language modes.
 Make .ts files activate typescript-mode when opened. Also adds a hook to typescript-mode-hook to call lsp-deferred so that lsp-mode is activated and the file gets LSP features every time TypeScript code is edited.
 
 #+begin_src emacs-lisp
-;
-;(use-package typescript-mode
-;  :mode "\\.ts\\'"
-;  :hook (typescript-mode . lsp-deferred)
-;  :config
-;  (setq typescript-indent-level 2))
+
 #+end_src
 
 For lsp-mode to work with TypeSript (and JavaScript) you need to install a language server on your machine. If you have Node.js installed, this is the easy way:
-#+begin_src zsh
+
+#+begin_src shell
 npm install -g typescript-language-server typescript
 #+end_src
 
@@ -1732,9 +1683,7 @@ There are many others, but this one is as good as any for now.
 You can use pyvenv package to use virtualenv environments in Emacs. The pyvenv-activate command should configure Emacs to cause lsp-mode and dap-mode to use the virtual environment when they are loaded, just select the path to your virtual environment before loading the project.
 
 #+begin_src emacs-lisp
-;(use-package pyvenv
-;  :config
-;  (pyvenv-mode 1))
+
 #+end_src
 
 *** Golang
@@ -1743,13 +1692,13 @@ You can use pyvenv package to use virtualenv environments in Emacs. The pyvenv-a
 (defun cy/lsp-go-install-save-hooks()
   (add-hook 'before-save-hook #'lsp-format-buffer t t)
   (add-hook 'before-save-hook #'lsp-organize-imports t t))
+(add-hook 'go-mode-hook #'cy/lsp-go-install-save-hooks)
 
 (use-package go-mode
   :init
   (add-to-list 'exec-path (expand-file-name "~/go/bin"))
   (add-to-list 'exec-path (expand-file-name "~/go/src/golang.org/x/lint/misc/emacs"))
-(add-hook 'go-mode-hook 'lsp-deferred) ;; Do this for golang support, it's built-in to lsp.
-(add-hook 'go-mode-hook #'cy/lsp-go-install-save-hooks))
+(add-hook 'go-mode-hook 'lsp-deferred)) ;; Do this for golang support, it's built-in to lsp.
 
 #+end_src
 
@@ -1841,6 +1790,49 @@ For =markdown-preview-mode= to work, the =websocket.el= dependency is required. 
 (use-package markdown-preview-mode)
 #+end_src
 
+*** Rust
+
+This is a newish section. Expect changes.
+
+#+begin_src emacs-lisp
+(use-package rust-mode
+  :bind ( :map rust-mode-map
+          (("C-c C-t" . racer-describe)))
+  :config
+  (progn
+    ;; add flycheck support for Rust.
+    ;; https://github.com/flycheck/flycheck-rust
+    (use-package flycheck-rust)
+
+    ;; cargo mode for all cargo related operations
+    (use-package cargo
+      :hook (rust-mode . cargo-minor-mode)
+      :bind
+      ("C-c C-c C-n" . cargo-process-new))
+
+    ;; racer mode for IDE-esque features.
+    (use-package racer
+      :hook (rust-mode . racer-mode)
+      :config
+      (progn
+        ;; set racer rust source path env var
+        (setq racer-rust-path (getenv "RUST_SRC_PATH"))
+        (defun cy/racer-mode-hook ()
+          (set (make-local-variable 'company-backends)
+               '((company-capf company-files)))
+        ;; enable company and eldoc minor modes in rust-mode
+        (add-hook 'racer-mode-hook 'company-mode)
+        (add-hook 'racer-mode-hook 'eldoc-mode)))
+    (add-hook 'rust-mode-hook 'flycheck-mode)
+    (add-hook 'rust-mode-hook 'flycheck-rust-setup)
+
+    ;; format Rust buffers on save using rustfmt
+    (add-hook 'before-save-hook
+              (lambda ()
+                (when (eq major-mode 'rust-mode)
+                  (rust-format-buffer)))))))
+#+end_src
+
 ** Productivity
 
 *** Flycheck
@@ -1911,21 +1903,20 @@ Company Box enhances the look with icons and stuff.
   ;:init (global-company-mode)     ;; This gets pretty annoying when you're writing regular files and notes.
   :hook (lsp-mode . company-mode)
   :bind (:map company-active-map
-          ("<tab>" . company-select-next)
-          ("<tab>" . company-select-previous))
+              ("<tab>" . company-select-next)
+              ("<tab>" . company-select-previous))
   :config (setq company-idle-delay 0.0
-            company-tooltip-align-annotations t
-            company-minimum-prefix-length 1
-            create-lockfiles nil   ;; Lock file creation can crash debuggers.
-            ;; Easy navigation to candidates with M-<n>
-            company-show-numbers t
-            company-dabbrev-downcase nil)
+                company-tooltip-align-annotations t
+                company-minimum-prefix-length 1
+                create-lockfiles nil   ;; Lock file creation can crash debuggers.
+                ;; Easy navigation to candidates with M-<n>
+                company-show-numbers t
+                company-dabbrev-downcase nil)
   :diminish company-mode)
 
 (use-package company-box
   :hook (company-mode . company-box-mode))
 #+end_src
-
 
 *** Treemacs
 
@@ -1995,12 +1986,6 @@ Like NeoVim but Emacs-y-er.
   :config (treemacs-icons-dired-mode))
 #+end_src
 
-#+begin_src emacs-lisp
-;(use-package treemacs-magit
-;  :after treemacs-magit
-;  :ensure t)
-#+end_src
-
 
 ** Reference
 
@@ -2035,7 +2020,6 @@ This is a really nice package that helps when you need to get to some HTTP docum
 * Applications
 
 ** Dashboard
-
 *** Set page break line mode globally
 
 #+begin_src emacs-lisp
@@ -2063,9 +2047,13 @@ This is a really nice package that helps when you need to get to some HTTP docum
   (setq dashboard-items '((recents . 5)
                           (bookmarks . 5)
                           (projects . 5)
+                          (registers . 5)
                           (agenda . 5)))
   ;; (setq dashboard-filter-agenda-entry 'dashboard-no-filter-agenda)
   (dashboard-setup-startup-hook))
+
+(set-face-attribute 'dashboard-items-face nil :foreground nil :inherit 'fixed-pitch)
+
 #+end_src
 
 *** Set the initial buffer to the Dashboard.
@@ -2247,10 +2235,16 @@ Some test paths for regex:
 =/home/narwic/Projects/Home/dotfiles/tangled/environment-post-tangle.sh=
 =/home/narwic/Projects/Home/dotfiles/tangled/systemd-post-tangle.sh=
 
+Only auto-tangle on =guts=, =punchy=, or =buster=. Windows machines are too difficult to deal with.
+
 #+begin_src emacs-lisp
 (defun cy/run-tangles ()
   (when (string-match "\\(dotfiles/\\)$" (file-name-directory buffer-file-name))
     (shell-command-to-string (concat (file-name-directory buffer-file-name) "tangled/*.sh"))))
 
-(add-hook 'after-save-hook 'cy/run-tangles)
+(if
+  (or (equal system-name "guts")
+      (equal system-name "punchy")
+      (equal system-name "buster"))
+    (add-hook 'after-save-hook 'cy/run-tangles))
 #+end_src

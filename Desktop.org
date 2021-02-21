@@ -5,6 +5,17 @@ This is the primary desktop application configuration.
 @todo
 This block pulls in all the =:noweb-ref= references to =symlinks= and outputs them all into a =symlinks.sh= file. This block will normally be empty, if only this file is tangled out. The =:noweb-ref= references are stored in different files.
 
+* System Settings
+Load system-specific settings from =.emacs.d/per-system-settings.el= and unpack relevant values into blocks so that they can be used in configuration file blocks. These settings are configured in Systems.org.
+
+#+begin_src emacs-lisp
+(load-file "~/.emacs.d/per-system-settings.el")
+#+end_src
+
+#+begin_src emacs-lisp
+(cy/system-settings-get (intern name))
+#+end_src
+
 * System
 
 Once =Arch Linux= is installed, a few things need to happen.
@@ -85,6 +96,7 @@ yay -S \
   ranger \
   remmina \
   rofi \
+  rustup \
   scrot \
   sshfs \
   spotify \
@@ -124,6 +136,11 @@ if which ruby >/dev/null && which gem >/dev/null; then
   PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"
 fi
 
+# Add Rust crates into path.
+if which rustup >/dev/null; then
+  PATH="$HOME/.cargo/bin:$PATH"
+fi
+
 # Source node version manager
 [[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
 # source /usr/share/nvm/init-nvm.sh
@@ -132,7 +149,7 @@ fi
 LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
 
 # Add personal binaries into PATH.
-PATH="$HOME/.local/bin:$PATH"
+# PATH="$HOME/.local/bin:$PATH"
 
 # XDG Basedir specification, these for some reason don't go into user-dirs.dirs
 XDG_CONFIG_HOME="$HOME/.config"
@@ -142,7 +159,7 @@ ZDOTDIR="$HOME/.zsh"
 #+end_src
 
 #+begin_src sh :noweb-ref environment-post-tangle
-source ~/.profile
+# source ~/.profile
 #+end_src
 
 ** XDG User Directories
@@ -2052,7 +2069,7 @@ au BufRead,BufNewFile *.scss set filetype=scss.css
 autocmd FileType scss set iskeyword+=-
 
 " Make
-autocmd FileType make setlocal noexpandtab
+autocmd FileType make set noexpandtab shiftwidth=8 softtabstop=0
 
 " Markdown
 au BufRead,BufNewFile *.m*down setlocal filetype=markdown

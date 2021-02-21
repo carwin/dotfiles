@@ -1,0 +1,88 @@
+#+title: System Specific Configuration
+
+* Table of Contents
+:PROPERTIES:
+:TOC:       :include all :ignore this
+:END:
+:CONTENTS:
+- [[#systems][Systems]]
+  - [[#base-configuration][Base Configuration]]
+  - [[#machines][Machines]]
+    - [[#per-system-settings][Per-System Settings]]
+  - [[#guts][guts]]
+  - [[#buster][buster]]
+  - [[#punchy][punchy]]
+:END:
+
+* Systems
+
+** Base Configuration
+
+This base configuration is shared between all of the machines I manage.
+
+@todo
+
+** Machines
+
+Machines are named with shortness and distinguishability in mind. Some of them have been around nearly a decade so I'm rather partial to them.
+
+*** Per-System Settings
+
+Some settings need to be customized on a per-system basis without tweaking individual configuration files. Thanks to =noweb= this is pretty easy to tweak.
+
+@todo: define a getter function =cy/system-settings-get= to retrieve values appropriately.
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/per-system-settings.el :noweb yes
+(require 'map) ;; needed for map-merge
+
+(setq cy/system-settings
+  (map-merge
+    'list
+    '((desktop/dpi . 180)
+      (desktop/background . "some-file.jpg")
+      (emacs/default-face-size . 220)
+      (emacs/variable-face-size . 245)
+      (emacs/fixed-face-size . 200))
+    <<system-settings>>))
+
+(defun cy/system-settings-get (setting)
+ (alist-get setting cy/system-settings))
+#+end_src
+
+** guts
+
+=guts= is my primary desktop machine. It runs 3 2560x1440 monitors. =guts= has two hard drives, one which boots =Arch Linux= and the other which boots =Windows 10=.
+
+#+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep ""
+(when (equal system-name "guts")
+  '((desktop/dpi . 130)
+    (emacs/default-face-size . 165)
+    (emacs/variable-face-size . 190)
+    (emacs/default-face-size . 165)))
+
+;; When booted into Windows
+(when (equal system-name "GUTS")
+  '((desktop/dpi . 130)
+    (emacs/default-face-size . 165)
+    (emacs/variable-face-size . 190)
+    (emacs/default-face-size . 165)))
+
+#+end_src
+
+** buster
+
+=buster= is a ThinkPad x201s that runs =Arch Linux=. This is a side machine that more or less acts as a backup when other machines are down for service or when I have a need to test out equipment in the network closet via a cabled interface. Most of the time it gets used for Music and Movie watching in the background.
+
+** punchy
+
+=punchy= is a ThinkPad p43s that I use primarily for my day job, but has also become a go-to favorite generally. It runs =Arch Linux=. The screen is wonderful, but there are some HiDPI quirks that make using =i3= and =gtk= applications somewhat annoying.
+
+*System Settings*
+
+#+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep ""
+(when (equal system-name "punchy")
+  '((desktop/dpi . 89)
+    (emacs/default-face-size . 110)
+    (emacs/variable-face-size . 110)
+    (emacs/fixed-face-size . 110)))
+#+end_src
