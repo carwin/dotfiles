@@ -12,6 +12,7 @@
   - [[#guts][guts]]
   - [[#buster][buster]]
   - [[#punchy][punchy]]
+- [[#system-settings-get][system-settings-get]]
 :END:
 
 * Systems
@@ -44,27 +45,26 @@ Some settings need to be customized on a per-system basis without tweaking indiv
       (emacs/variable-face-size . 245)
       (emacs/fixed-face-size . 200))
     <<system-settings>>))
-
-(defun cy/system-settings-get (setting)
- (alist-get setting cy/system-settings))
 #+end_src
 
 ** guts
 
 =guts= is my primary desktop machine. It runs 3 2560x1440 monitors. =guts= has two hard drives, one which boots =Arch Linux= and the other which boots =Windows 10=.
 
-#+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep ""
+#+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep
 (when (equal system-name "guts")
-  '((desktop/dpi . 130)
-    (emacs/default-face-size . 165)
-    (emacs/variable-face-size . 190)
-    (emacs/default-face-size . 165)))
+  '((desktop/dpi . 72)
+    (emacs/default-face-size . 145)
+    (emacs/variable-face-size . 150)
+    (emacs/fixed-face-size . 130)
+    (emacs/default-face-size . 145)))
 
 ;; When booted into Windows
 (when (equal system-name "GUTS")
   '((desktop/dpi . 130)
     (emacs/default-face-size . 165)
     (emacs/variable-face-size . 190)
+    (emacs/fixed-face-size . 180)
     (emacs/default-face-size . 165)))
 
 #+end_src
@@ -79,10 +79,17 @@ Some settings need to be customized on a per-system basis without tweaking indiv
 
 *System Settings*
 
-#+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep ""
+#+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep
 (when (equal system-name "punchy")
   '((desktop/dpi . 89)
     (emacs/default-face-size . 110)
     (emacs/variable-face-size . 110)
     (emacs/fixed-face-size . 110)))
+#+end_src
+
+* =system-settings-get=
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/per-system-settings.el :noweb yes
+(defun cy/system-settings-get (setting)
+ (alist-get setting cy/system-settings))
 #+end_src

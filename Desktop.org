@@ -141,6 +141,9 @@ if which rustup >/dev/null; then
   PATH="$HOME/.cargo/bin:$PATH"
 fi
 
+# Add composer globals into path.
+export PATH="$PATH:$HOME/.config/composer/vendor/bin"
+
 # Source node version manager
 [[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
 # source /usr/share/nvm/init-nvm.sh
