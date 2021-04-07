@@ -18,7 +18,7 @@ The location where my Notes folder lives. There's a function here in case I need
 
 
 #+begin_src emacs-lisp
-(setq org-directory "~/OneDrive/Notes")
+(setq org-directory "~/Documents/Notes")
 
 (setq org-agenda-files `(,org-directory))
 
@@ -102,8 +102,26 @@ Tags are used to filter all tasks to find anything actionable in a particular co
         ((org-agenda-overriding-header "Low Effort Tasks")
          (org-agenda-max-todos 20)
          (org-agenda-files org-agenda-files)))))
+#+end_src
 
+** Contacts
 
+#+begin_src emacs-lisp
+(use-package org-contacts
+  :ensure nil
+  :after org
+  :custom (org-contacts-files '("~/Documents/Notes/Contacts.org")))
+#+end_src
+
+The =org-contacts= package doesn't ship with much in the way of templates, so I create a few below:
+
+#+begin_src emacs-lisp
+(defun cy/org-contacts-template-tel (&optional return-value)
+  return-value
+  (concat "%^{Phone number (111-222-3333)}"))
+(defun cy/org-contacts-template-addr (&optional return-value)
+  return-value
+  (concat "%^{Address (18455 S Figueroa St, Gardena CA 90248)}"))
 #+end_src
 
 * Capture Templates
@@ -121,10 +139,21 @@ Tags are used to filter all tasks to find anything actionable in a particular co
 (add-hook 'org-capture-mode-hook 'cy/on-org-capture)
 
 (setq org-capture-templates
-  `(("t" "Tasks")
-    ("tt" "Task" entry (file ,(cy/org-path "Inbox.org"))
-         "* TODO %?\n %U\n %i" :empty-lines 1)
-    ("ts" "Clocked Entry Subtask" entry (clock)
+  `(
+    ("t" "Task" entry (file ,(cy/org-path "Inbox.org"))
+         "* TODO %? [/]\n %U\n %i" :empty-lines 1)
+    ("m" "Task [mail]" entry (file ,(cy/org-path "Inbox.org"))
+         ,(concat "* TODO Process \"%a\" %?\n"
+                  "/Entered on/ %U"))
+    ("c" "Contacts" entry (file ,(cy/org-path "Contacts.org"))
+         "* %(org-contacts-template-name)
+         :PROPERTIES:
+         :EMAIL: %(org-contacts-template-email)
+         :PHONE: %(cy/org-contacts-template-tel)
+         :ADDRESS: %(cy/org-contacts-template-addr)
+         :BIRTHDAY:
+         :END:")
+    ("l" "Clocked Entry Subtask" entry (clock)
          "* TODO %?\n %U\n %i" :empty-lines 1)
     ("j" "Journal Entries")
     ("je" "General Entry" entry
@@ -145,56 +174,13 @@ Tags are used to filter all tasks to find anything actionable in a particular co
          :tree-type week
          :clock-in :clock-resume
          :empty-lines 1)))
-
 #+end_src
 
-* Capture Templates
+#+begin_src emacs-lisp
 
-#+begin_src emacs-lisp :tangle no
-;;(setq org-capture-templates
-;;  `(("t" "Tasks / Projects")
-;;    ("tt" "Task" entry (file+olp ,(cy/org-path "Inbox.org") "Projects" "Inbox")
-;;         "* TODO %?\n  %U\n  %a\n  %i" :empty-lines 1)
-;;    ("ts" "Clocked Entry Subtask" entry (clock)
-;;         "* TODO %?\n  %U\n  %a\n  %i" :empty-lines 1)
-;;    ("tp" "New Project" entry (file+olp ,(cy/org-path "Projects.org") "Projects" "Inbox")
-;;         "* PLAN %?\n  %U\n  %a\n  %i" :empty-lines 1)
-;;    ("j" "Journal Entries")
-;;    ("jj" "Journal" entry
-;;         (file+olp+datetree ,(cy/get-todays-journal-file-name))
-;;         ;"\n* %<%I:%M %p> - Journal :journal:\n\n%?\n\n"
-;;         ,(cy/read-file-as-string "~/Notes/Templates/Daily.org")
-;;         :clock-in :clock-resume
-;;         :empty-lines 1)
-;;    ("jm" "Meeting" entry
-;;         (file+olp+datetree ,(cy/get-todays-journal-file-name))
-;;         "* %<%I:%M %p> - %a :meetings:\n\n%?\n\n"
-;;         :clock-in :clock-resume
-;;         :empty-lines 1)
-;;    ("jt" "Thinking" entry
-;;         (file+olp+datetree ,(cy/get-todays-journal-file-name))
-;;         "\n* %<%I:%M %p> - %^{Topic} :thoughts:\n\n%?\n\n"
-;;         :clock-in :clock-resume
-;;         :empty-lines 1)
-;;    ("jc" "Clocked Entry Notes" entry
-;;         (file+olp+datetree ,(cy/get-todays-journal-file-name))
-;;         "* %<%I:%M %p> - %K :notes:\n\n%?"
-;;         :empty-lines 1)
-;;    ("jg" "Clocked General Task" entry
-;;         (file+olp+datetree ,(cy/get-todays-journal-file-name))
-;;         "* %<%I:%M %p> - %^{Task description} %^g\n\n%?"
-;;         :clock-in :clock-resume
-;;         :empty-lines 1)
-;;
-;;    ("w" "Workflows")
-;;    ("we" "Checking Email" entry (file+olp+datetree ,(cy/get-todays-journal-file-name))
-;;         "* Checking Email :email:\n\n%?" :clock-in :clock-resume :empty-lines 1)
-;;
-;;    ("m" "Metrics Capture")
-;;    ("mw" "Weight" table-line (file+headline "~/Notes/Metrics.org" "Weight")
-;;     "| %U | %^{Weight} | %^{Notes} |" :kill-buffer)
-;;    ("mp" "Blood Pressure" table-line (file+headline "~/Notes/Metrics.org" "Blood Pressure")
-;;     "| %U | %^{Systolic} | %^{Diastolic} | %^{Notes}" :kill-buffer)))
+;;(define-key mu4e-headers-mode-map (kbd "C-c i") 'cy/org-capture-mail)
+;;(define-key mu4e-view-mode-map (kbd "C-c i") 'cy/org-capture-mail)
+
 #+end_src
 
 * Module Setup

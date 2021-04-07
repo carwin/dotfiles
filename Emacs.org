@@ -11,7 +11,7 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 
 #+begin_src emacs-lisp
 ;; (setq debug-on-error t)
-  (defvar cy/frame-transparency '(90 . 90))
+  (defvar cy/frame-transparency '(100 . 100))
   (setq evil-want-keybinding nil)
 #+end_src
 
@@ -47,13 +47,6 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
     (exec-path-from-shell-initialize)))
 #+end_src
 
-* Start the server on launch
-
-@TODO: I don't think this is really necessary anymore now that I'm using the systemd setup and attaching through a client but I'm not sure.
-
-#+begin_src emacs-lisp
-#+end_src
-
 * Keep .emacs.d Clean
 
 #+begin_src emacs-lisp
@@ -65,22 +58,6 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 #+end_src
 
 * Emacs Backend
-
-** Start the Emacs server on first launch
-
-@todo: This seems like a duplicate entry, above I do the same thing but with use-package.
-
-#+begin_src emacs-lisp
-;; (require 'server)
-;; (unless (server-running-p)
-;;   (server-start))
-;; (setq org-image-actual-width nil)
-#+end_src
-
-
-#+begin_src emacs-lisp
-
-#+end_src
 
 ** Auto-update packages
 #+begin_src emacs-lisp
@@ -99,6 +76,12 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
   :ensure t)
 #+end_src
 
+** Stop telling me about every little thing
+
+#+begin_src emacs-lisp
+(setq warning-minimum-level :emergency)
+#+end_src
+
 * Keyboard Bindings
 
 ** ESC Cancels Everything
@@ -107,12 +90,12 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 (global-set-key (kbd "<escape>") 'keyboad-escape-quit)
 #+end_src
 
-** Rebind C-u
+** Unbind C-u
 
 Since I prefer the =vim= binding of <C-u>, the original binding for `universal-agreement` needs to be rebound to something.
 
 #+begin_src emacs-lisp
-(global-set-key (kbd "C-M-u") 'universal-argument)
+(global-set-key (kbd "C-s-u") 'universal-argument)
 #+end_src
 
 ** Configure `,` as a leader key
@@ -143,9 +126,11 @@ I don't remember what org-evil does, but I've had it in my config since I starte
   (message "Arrow keys are bad, m'kay?"))
 
 (use-package evil
+  :ensure t
   :init
   (setq evil-want-integration t)
   (setq evil-want-C-u-scroll t)
+  (setq evil-want-fine-undo 'fine)
   ;(setq evil-want-C-i-jump t)
   :config
   (evil-mode 1)
@@ -154,6 +139,8 @@ I don't remember what org-evil does, but I've had it in my config since I starte
   ;; Use visual line motions even outside of visual-line-mode buffers
   (evil-global-set-key 'motion "j" 'evil-next-visual-line)
   (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+  ;; Set the undo system Evil should use.
+  (evil-set-undo-system 'undo-redo)
   ;; Disable arrow keys in normal and visual modes.
   (define-key evil-normal-state-map (kbd "<left>") 'cy/dont-arrow-me-bro)
   (define-key evil-normal-state-map (kbd "<down>") 'cy/dont-arrow-me-bro)
@@ -167,11 +154,12 @@ I don't remember what org-evil does, but I've had it in my config since I starte
   (evil-set-initial-state 'messages-buffer-mode 'normal)
   (evil-set-initial-state 'dashboard-mode 'normal))
 
-
+asdfasdf
 (use-package evil-collection
     :after evil
     :ensure t
     :config
+    (evil-collection-init)
     (evil-collection-init 'dashboard)) ;;Make sure Evil bindings work on the Dashboard.
 
 #+end_src
@@ -212,6 +200,16 @@ Displays a small buffer to show the list of features you can do next after start
         which-key-idle-delay 0.2))
 #+end_src
 
+** Emacs tab bar
+
+Emacs 27.1 shipped with Tabbar which provides something like Vim's tabs.
+
+#+begin_src emacs-lisp
+(cy/leader-key-def
+  "."  'tab-bar-switch-to-next-tab
+  "'" 'tab-bar-switch-to-prev-tab)
+#+end_src
+
 * General Configuration
 ** User Interface
 
@@ -235,6 +233,8 @@ Set frame transparency and maximize windows by default.
 (add-to-list 'default-frame-alist `(alpha . ,cy/frame-transparency))
 (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
+(add-to-list 'default-frame-alist '(cy/system-settings-get 'desktop/dpi))
+(add-to-list 'default-frame-alist '(cy/system-settings-get 'emacs/default-face-size))
 #+end_src
 
 Define a toggle function that can be called to turn transparency on and off.
@@ -256,7 +256,7 @@ Define a toggle function that can be called to turn transparency on and off.
 
 Configure line numbers. Some modes don't need them.
 
-,#+begin_src emacs-lisp
+#+begin_src emacs-lisp
 ;; Turn on column number mode and display line numbers for everything by default.
 (column-number-mode)
 
@@ -315,7 +315,7 @@ Use the =doom-themes= package to get some very nice themes. Some of these themes
 
 Enable one of the themes, either from the custom theme directory or from the themes provided by =doom-themes=.
 #+begin_src emacs-lisp
-(load-theme 'doom-laserwave t)
+(load-theme 'doom-Iosvkem t)
 #+end_src
 
 ** Font
@@ -336,7 +336,7 @@ Dank Mono is really interesting, but I've been mostly using the really excellent
 ;;                     :height (cy/system-settings-get 'emacs/variable-face-size)
 ;;                     :weight 'normal)
 
-(defun cy/init-faces (&optional frame)
+(defun cy/init-faces (frame)
   (unless frame
     (setq frame (selected-frame)))
   (when frame
@@ -353,6 +353,12 @@ Dank Mono is really interesting, but I've been mostly using the really excellent
                           :weight 'normal))))
 
 (add-hook 'after-make-frame-functions #'cy/init-faces t)
+#+end_src
+
+The latter only applies to new frames that get created. If Emacs gets started in non-daemon mode, the =after-make-frame-functions= won't apply to the default frame. To solve that, just call the =cy/init-faces= function directly:
+
+#+begin_src emacs-lisp
+(cy/init-faces (selected-frame))
 #+end_src
 
 *** Use UTF-8 for everything
@@ -463,11 +469,6 @@ Assign some shortcuts using the leader key defined earlier.
 Requires the use-package-chords package setup in the Keybindings section.
 
 #+begin_src emacs-lisp
-;(cy/leader-key-def
-;  "e" 'find-file)
-#+end_src
-
-#+begin_src emacs-lisp
 (cy/leader-key-def
   "t"  '(:ignore t :which-key "toggle")
   "tt" '(treemacs :which-key "treemacs")
@@ -574,9 +575,11 @@ This is where I define keybindings to quickly jump to settings files.
 #+begin_src emacs-lisp
   (cy/leader-key-def
     "fd" '(:ignore t :which-key "dotfiles")
-    "fde" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/dotfiles/Emacs.org"))) :which-key "edit config")
-    "fdE" '((lambda () (interactive) (cy/org-file-show-headings "~/Projects/Home/dotfiles/Emacs.org")) :which-key "edit config")
-    "fdW" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/dotfiles/Workflow.org"))) :which-key "workflow"))
+    "fde" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Emacs.org"))) :which-key "edit config")
+    "fdE" '((lambda () (interactive) (cy/org-file-show-headings "~/Projects/Home/sys/dotfiles/Emacs.org")) :which-key "edit config")
+    "fdD" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Desktop.org"))) :which-key "workflow")
+    "fdS" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Systems.org"))) :which-key "workflow")
+    "fdW" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Workflow.org"))) :which-key "workflow"))
 #+end_src
 
 * Stateful Keymaps with Hydra
@@ -755,15 +758,17 @@ ivy-rich adds extra columns to some Counsel commands to provide more information
 
 ** Set Margins for Modes
 
-#+begin_src emacs-lisp
-(defun cy/org-mode-visual-fill ()
-  (setq visual-fill-column-width 100
-        visual-fill-column-center-text t)
-  (visual-fill-column-mode 1))
+@todo: Olivetti seems to conflict with =visual-fill-column= somewhat.
 
-(use-package visual-fill-column
-  :defer t
-  :hook (org-mode . cy/org-mode-visual-fill))
+#+begin_src emacs-lisp
+;;(defun cy/org-mode-visual-fill ()
+;;  (setq visual-fill-column-width 140
+;;        visual-fill-column-center-text t)
+;;  (visual-fill-column-mode 1))
+;;
+;;(use-package visual-fill-column
+;;  :defer t
+;;  :hook (org-mode . cy/org-mode-visual-fill))
 #+end_src
 
 * Expand Region
@@ -868,13 +873,13 @@ This is a really great selection tool. Basically it starts at the pointer then /
   "d"   '(:ignore t :which-key "dired")
   "dd"  '(dired :which-key "Here")
   "dh"  `(,(cy/dired-link "~") :which-key "Home")
-  "di"  `(,(cy/dired-link "~/OneDrive/Notes/Inbox.org") :which-key "Inbox")
-  "dj"  `(,(cy/dired-link "~/OneDrive/Notes/Journal.org") :which-key "Journal")
-  "dn"  `(,(cy/dired-link "~/OneDrive/Notes") :which-key "Notes")
+  "di"  `(,(cy/dired-link "~/Documents/Notes/Inbox.org") :which-key "Inbox")
+  "dj"  `(,(cy/dired-link "~/Documents/Notes/Journal.org") :which-key "Journal")
+  "dn"  `(,(cy/dired-link "~/Documents/Notes") :which-key "Notes")
   "do"  `(,(cy/dired-link "~/Downloads") :which-key "Downloads")
   "dp"  `(,(cy/dired-link "~/Pictures") :which-key "Pictures")
   "dv"  `(,(cy/dired-link "~/Videos") :which-key "Videos")
-  "d."  `(,(cy/dired-link "~/Projects/Home/dotfiles") :which-key "dotfiles"))
+  "d."  `(,(cy/dired-link "~/Projects/Home/sys/dotfiles") :which-key "dotfiles"))
 #+end_src
 
 ** Opening Files Externally
@@ -917,7 +922,7 @@ A nice way to browse files, specifically installed for org-roam. If this ever ge
 ;;  (deft-recursive t)
 ;;  (deft-use-filter-string-for-filename t)
 ;;  (deft-default-extension "org")
-;;  (deft-directory "~/OneDrive/Notes/"))
+;;  (deft-directory "~/Documents/Notes/"))
 ;;  (evil-leader/set-key
 ;;    "d" 'deft)
 #+end_src
@@ -943,6 +948,7 @@ Set up Org Mode's basic configuration, then expand on it in other sections.
 
 (use-package org
   :defer t
+  :ensure org-plus-contrib
   :hook (org-mode . cy/org-mode-setup)
   :config
   (setq org-ellipses " ▾"
@@ -1045,6 +1051,7 @@ Uses org-superstar. I switch between this and org-bullets mode. org-bullets some
 
 ;; Ensure that anything that should be fixed-pitch in Org files appears that way.
 (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+;; (set-face-attribute 'org-agenda nil :foreground nil :inherit 'fixed-pitch)
 (set-face-attribute 'org-code nil :foreground nil :inherit '(shadow fixed-pitch))
 ;; (set-face-attribute 'org-table nil :foreground nil :inherit '(fixed-pitch))
 (set-face-attribute 'org-table nil :inherit 'fixed-pitch :foreground "#83a598")
@@ -1097,6 +1104,7 @@ You can add more src block templates below by copying one of the lines and chang
 
 ** Pomodoro
 :LOGBOOK:
+CLOCK: [2021-03-23 Tue 04:44]
 CLOCK: [2020-12-06 Sun 16:46]--[2020-12-06 Sun 17:11] =>  0:25
 :END:
 
@@ -1126,7 +1134,7 @@ I use a Pomodoro timer when working to chunk my work into manageable blocks of t
 #+begin_src emacs-lisp
 (defun cy/search-org-files ()
   (interactive)
-  (counsel-rg "" "~/OneDrive/Notes" nil "Search Notes: "))
+  (counsel-rg "" "~/Documents/Notes" nil "Search Notes: "))
 #+end_src
 
 ** Bindings
@@ -1152,7 +1160,7 @@ I'm trying out daviwil's bindings using evil-org.
   "on"  '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
   "os"  '(cy/counsel-rg-org-files :which-key "search notes")
   "oa"  '(org-agenda :which-key "status")
-  "oc"  '(org-capture t :which-key "capture")
+  "c"  '(org-capture t :which-key "capture")
   "ox"  '(org-export-dispatch t :which-key "export"))
 
 ;(use-package org-evil
@@ -1216,8 +1224,8 @@ This is the interface I use primarily for notes in a Zettelkasten style.
   :hook
   (after-init . org-roam-mode)
   :custom
-  (org-roam-directory "~/OneDrive/Notes/org-roam")
-  (org-roam-index "~/OneDrive/Notes/org-roam/Index.org")
+  (org-roam-directory "~/Documents/Notes/org-roam")
+  (org-roam-index "~/Documents/Notes/org-roam/Index.org")
   (org-roam-graph-executable "neato")
   (org-roam-buffer-window-parameters '((no-delete-other-windows . t)))
   (org-roam-dailies-directory "daily/")
@@ -1489,19 +1497,6 @@ Integrates lsp-mode and Ivy.
 (use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
 #+end_src
 
-**** LSP Company Completion
-#+begin_src emacs-lisp
-;;(add-to-list 'company-backends 'company-lsp)
-(use-package company-lsp
-  :config (setq company-lsp-cache-candidates 'auto
-                company-lsp-async nil
-                company-lsp-enable-snippet t ; Set to non-nil if you want snippet expansion on completion.
-                company-lsp-enable-recompletion nil))
-;; (add-hook 'js2-mode-hook (lambda ()
-                           ;; (tern-mode)
-                           ;; (company-mode)))
-#+end_src
-
 *** Debugging with dap-mode
 DAP (Debug Adapter Protocol). This is some thing that I guess comes from VSCode but seems like the de facto way to debug code using Language Servers.
 This is essentially the debug client.
@@ -1630,13 +1625,16 @@ This will install the typescript-language-server and the TypeScript compiler pac
 
 (cy/leader-key-def
   "e"   '(:ignore t :which-key "eval")
-  "eb"  '(eval-buffer :which-key "eval buffer"))
+  "eb"  '(eval-buffer :which-key "eval buffer")
+  "eh"  '(eval-last-sexp :which-key "eval this"))
 
 (cy/leader-key-def
-  :keymaps   '(visual)
+  :keymaps 'visual
   "er"  '(eval-region :which-key "eval region"))
 
 #+end_src
+
+@todo: =,er= for evaluating a visual-mode region doesn't seem to work.
 
 *** JSON
 #+begin_src emacs-lisp
@@ -1866,6 +1864,24 @@ This is a newish section. Expect changes.
                   (rust-format-buffer)))))))
 #+end_src
 
+*** Solidity
+
+#+begin_src emacs-lisp
+(use-package solidity-mode
+  :after (flycheck company)
+  :bind ( :map solidity-mode-map
+          (("C-c C-g" . solidity-estimate-gas-at-point)))
+  :config
+  (setq solidity-comment-style 'slash)
+  (progn
+    ;; add flycheck support for Solidity.
+    (use-package solidity-flycheck
+      :config
+      (setq flycheck-solidity-solium-soliumrcfile "~/.soliumrc.json"))
+    ;; Company support
+    (use-package company-solidity)))
+#+end_src
+
 ** Productivity
 
 *** Snippets
@@ -2031,7 +2047,7 @@ This is a really nice package that helps when you need to get to some HTTP docum
    :config
    (add-hook 'text-mode-hook 'olivetti-mode)
    ;(add-hook 'text-mode-hook (lambda () (setq indent-line-function #'indent-relative)))
-   (setq-default olivetti-body-width 120))
+   (setq-default olivetti-body-width 140))
 #+end_src
 
 ** LaTeX / PDFs
@@ -2072,7 +2088,6 @@ This is a really nice package that helps when you need to get to some HTTP docum
   (setq dashboard-items '((recents . 5)
                           (bookmarks . 5)
                           (projects . 5)
-                          (registers . 5)
                           (agenda . 5)))
   ;; (setq dashboard-filter-agenda-entry 'dashboard-no-filter-agenda)
   (dashboard-setup-startup-hook))
@@ -2094,13 +2109,13 @@ This is useful if you start Emacs as a server and connect through /emacsclient/.
 term-mode is a built-in terminal emulator in Emacs.
 
 #+begin_src emacs-lisp
-(use-package term
-  :config
-  (setq explicit-shell-file-name "zsh")
-  ;;(setq explicit-zsh-args '())        ;; Use explicit-<shell>-args for shell-specific configs
+;; (use-package term
+;;   :config
+;;   (setq explicit-shell-file-name "zsh")
+;;   ;;(setq explicit-zsh-args '())        ;; Use explicit-<shell>-args for shell-specific configs
 
-  ;; Set up the prompt:
- (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
+;;   ;; Set up the prompt:
+;;  (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
 #+end_src
 
 *** Better term-mode colors
@@ -2118,6 +2133,7 @@ term-mode is a built-in terminal emulator in Emacs.
   :bind (:map ledger-mode-map
               ("TAB" . completion-at-point)))
 #+end_src
+
 
 ** Calendar
 
@@ -2141,7 +2157,7 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
     (setq cfw:org-agenda-schedule-args '(:timestamp))))
 
 (cy/leader-key-def
-  "cc"  '(cfw:open-org-calendar :which-key "calendar"))
+  "C"  '(cfw:open-org-calendar :which-key "calendar"))
 
 
 ;; ;; Google Calendar
@@ -2153,21 +2169,14 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
         org-gcal-recurring-events-mode 'nested
         org-gcal-notify-p nil
         org-gcal-remove-api-cancelled-events t
-        org-gcal-fetch-file-alist '(("carwinyoung@gmail.com" .  "~/OneDrive/Notes/cal-personal.org")
-                                    ("carwin@mobomo.com" .  "~/OneDrive/Notes/cal-mobomo.org"))))
+        org-gcal-fetch-file-alist '(("carwinyoung@gmail.com" .  "~/Documents/Notes/cal-personal.org")
+                                    ("carwin@mobomo.com" .  "~/Documents/Notes/cal-mobomo.org"))))
 
-(add-hook 'org-agenda-mode-hook (lambda () (org-gcal-sync) ))
-(add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-sync) ))
+(add-hook 'org-agenda-mode-hook (lambda () (org-gcal-fetch) ))
+(add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-fetch) ))
 #+end_src
 
 ** Mail
-
-#+begin_src emacs-lisp
-;; (use-package notmuch
-;;   :config
-;;   (setq notmuch-show-logo nil))
-#+end_src
-
 *** mu4e
 
 #+begin_src emacs-lisp :noweb yes
@@ -2177,6 +2186,8 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
 
 (defun cy/work-sig ()
   (shell-command-to-string "cat ~/Mail/Work/signature.sig"))
+(defun cy/home-sig ()
+  (shell-command-to-string "cat ~/Mail/Home/signature.sig"))
 
 (use-package mu4e
   :ensure nil
@@ -2200,6 +2211,7 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
               (string-prefix-p "/Home" (mu4e-message-field msg :maildir))))
         :vars '((user-mail-address . "cy@carw.in")
                 (user-full-name    . "Carwin Young")
+                (mu4e-compose-signature . cy/home-sig)
                 (mu4e-drafts-folder  . "/Home/drafts")
                 (mu4e-sent-folder    . "/Home/sent")
                 (mu4e-refile-folder  . "/Home/archive")
@@ -2230,6 +2242,17 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
                                             ("/Work/drafts"   . ?d)
                                             ("/Work/archive"  . ?a))))))))
 
+
+
+(defun cy/org-capture-mail ()
+  (interactive)
+  (call-interactively 'org-store-link)
+  (org-capture nil "m"))
+
+(cy/leader-key-def
+  :keymaps 'mu4e-headers
+  "i" '(cy/org-capture-mail :which-key "capture mail"))
+
 #+end_src
 
 #+begin_src emacs-lisp
@@ -2256,7 +2279,6 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
 #+end_src
 
 * Desktop Setup
-
 
 Some test paths for regex:
 =/home/narwic/Projects/Home/dotfiles/tangled/application-post-tangle.sh=

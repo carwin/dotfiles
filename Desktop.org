@@ -136,6 +136,9 @@ if which ruby >/dev/null && which gem >/dev/null; then
   PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"
 fi
 
+# Source Ruby Version Manager (rvm)
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+
 # Add Rust crates into path.
 if which rustup >/dev/null; then
   PATH="$HOME/.cargo/bin:$PATH"
@@ -143,6 +146,9 @@ fi
 
 # Add composer globals into path.
 export PATH="$PATH:$HOME/.config/composer/vendor/bin"
+
+# Add cuda stuff into path
+export PATH="$PATH:/opt/cuda/bin"
 
 # Source node version manager
 [[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
@@ -251,25 +257,49 @@ alias curlheaders='curl -I'
 alias curlheadersproxy='curl --socks5 localhost:11080 -I'
 alias scrot='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/foo.png && rm ~/foo.png'
 alias webcam='mplayer tv:// -tv driver=v412:width=1920:height=1080:device=/dev/video0 -fps 15 -vf screenshot'
-alias dots='cd ~/Projects/Home/dotfiles'
+alias dots='cd ~/Projects/Home/sys/dotfiles'
 alias work='cd ~/Projects/Work'
-alias notes='cd ~/OneDrive/Notes'
+alias notes='cd ~/Documents/Notes'
 alias docs='cd ~/Documents'
+alias mine-rvn='~/Documents/Cryptocurrency/Mining/RVN/t-rex/t-rex -c ~/Documents/Cryptocurrency/Mining/RVN/t-rex-config.json'
+alias mine-nicehash='sudo ~/Documents/Cryptocurrency/Mining/NiceHash/PhoenixMiner/PhoenixMiner'
+#alias startwin='sudo virsh -c qemu:///system start win10'
+#alias stopwin='sudo virsh -c qemu:///system shutdown win10'
 #+end_src
 
 My custom prompt for =zsh=.
 
 #+begin_src conf :tangle ~/.zsh/prompt :mkdirp yes
 
+# Setup ruby prompt
+count_rbs=`find . -maxdepth 1 -type f -name "*.rb" | wc -l`;
+count_gemfile=`find . -maxdepth 1 -type f -name "Gemfile" | wc -l`;
+
+function ruby_version()
+{
+  if [ $count_rbs != 0 ] || [ $count_gemfile != 0 ]; then
+    if which rvm-prompt &> /dev/null; then
+        #echo "%F{225}(%F{212} $(rvm-prompt i v g) %F{225})"
+        rvm-prompt i v g
+    else
+      if which rbenv &> /dev/null; then
+        rbenv version | sed -e "s/ (set.*$//"
+      fi
+    fi
+  else
+    false
+  fi
+}
+
 # Left prompt
-export PS1="%F{223}%n%F{224}@%F{211}%m %F{179}%~%b%F{255} › "
+export PS1="%F{223}%n%F{224}@%F{211}%m %F{179}%~%b%F{255} %F{255}> "
 
 # Right prompt
 autoload -Uz vcs_info
 precmd_vcs_info() { vcs_info }
 precmd_functions+=( precmd_vcs_info )
 setopt prompt_subst
-RPROMPT=\$vcs_info_msg_0_
+RPROMPT=\$vcs_info_msg_0_\
 zstyle ':vcs_info:git:*' formats '%F{223}%b|%F{211}%r%f'
 zstyle ':vcs_info:*' enable git
 
@@ -353,6 +383,7 @@ Xft.hintstyle: hintslight
 Xft.hinting: 1
 Xft.antialias: 1
 Xft.rgba: rgb
+Xft.dpi: 109
 
 ! ------------------------------------------------------------------------------
 ! URxvt configs
@@ -553,7 +584,7 @@ bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 # split in horizontal orientation
-bindsym $mod+bar split h
+bindsym $mod+apostrophe split h
 # split in vertical orientation
 bindsym $mod+minus split v
 # enter fullscreen mode for the focused container
@@ -644,19 +675,19 @@ mode "resize" {
 bindsym $mod+r mode "resize"
 # Start i3bar to display a workspace bar (plus the system information i3status
 # finds out, if available)
-bar {
-        colors {
-        background #2f343f
-        statusline #2f343f
-        separator #4b5262
-        # colour of border, background, and text
-        focused_workspace       #2f343f #bf616a #d8dee8
-        active_workspace        #2f343f #2f343f #d8dee8
-        inactive_workspace      #2f343f #2f343f #d8dee8
-        urgent_workspacei       #2f343f #ebcb8b #2f343f
-    }
-        status_command i3status
-}
+# bar {
+#         colors {
+#         background #2f343f
+#         statusline #2f343f
+#         separator #4b5262
+#         # colour of border, background, and text
+#         focused_workspace       #2f343f #bf616a #d8dee8
+#         active_workspace        #2f343f #2f343f #d8dee8
+#         inactive_workspace      #2f343f #2f343f #d8dee8
+#         urgent_workspacei       #2f343f #ebcb8b #2f343f
+#     }
+#         status_command i3status
+# }
 # window rules, you can find the window class using xprop
 for_window [class=".*"] border pixel 1
 for_window [class=feh|Pavucontrol] floating enable
@@ -671,9 +702,10 @@ for_window [class=Emacs] move container to workspace $prim
 # Autostart applications and other things
 exec --no-startup-id ~/.fehbg &
 exec --no-startup-id xsettingsd &
-exec --no-startup-id ~/.screenlayout/home_triple.sh &
+# exec --no-startup-id ~/.screenlayout/home_triple.sh &
 exec --no-startup-id dunst &
 exec --no-startup-id picom -b
+exec --no-startup-id ~/.config/polybar/launch.sh --hack
 # colour of border, background, text, indicator, and child_border
 client.focused              #bf616a #2f343f #d8dee8 #bf616a #ff91a4
 client.focused_inactive     #2f343f #2f343f #d8dee8 #2f343f #2f343f
@@ -967,7 +999,7 @@ element selected {
 
 This is the script that =i3= uses to launch =Rofi= as a =dmenu= replacement.
 
-#+begin_src sh :tangle ~/.config/rofi/rofia.sh :mkdirp yes
+#+begin_src sh :tangle ~/.config/rofi/rofia.sh :mkdirp yes :shebang "#!/bin/bash" :tangle-mode (identity #o755)
 #!/bin/bash
 # A messy & pathetic script to launch rofi with xrdb colours
 getcolors () {
@@ -1199,523 +1231,23 @@ use_console_editor = yes
 # execute_on_song_change = "~/.config/ncmpcpp/art.sh"
 #+end_src
 
-** mutt
-
-Email with mutt.
-
-#+begin_src conf :tangle ~/.config/mutt/muttrc :mkdirp yes
-
-# Paths ------------------------------------------------------------------------
-set folder 						= ~/.mail												# mailbox location
-set alias_file	            = ~/.config/mutt/alias		# where to store aliases
-set header_cache           = ~/.config/mutt/cache/headers	# where to store headers
-set message_cachedir 	    = ~/.config/mutt/cache/bodies	# where to store bodies
-set certificate_file	    = ~/.config/mutt/certificates	# where to store certs
-set mailcap_path           = ~/.config/mutt/mailcap            # entries for filetypes
-set tmpdir                 = ~/.config/mutt/tmp                # where to keep temp files
-set signature              = ~/.config/mutt/sig                # my signature file
-
-# Basic Options ----------------------------------------------------------------
-set wait_key		= no         # shut up, mutt
-set mbox_type		= Maildir    # mailbox type
-set timeout 		= 3          # idle time before scanning
-set mail_check	        = 0          # minimum time between scans
-unset move                          # gmail does that
-set delete                          # don't ask, just do
-unset confirmappend                 # don't ask, just do
-set quit                            # don't ask, just do
-unset mark_old	                     # read/new is good enough for me
-set beep_new                        # bell on new mails
-set pipe_decode                     # strip headers and eval mimes when piping
-set thorough_search                 # strip headers and eval mimes before searching
-
-# Sidebar ----------------------------------------------------------------------
-# Should the Sidebar be shown?
-set sidebar_visible = yes
-# How wide should the Sidebar be in screen columns?
-# Note: Some characters, e.g. Chinese, take up two columns each.
-set sidebar_width = 25
-# Should the mailbox paths be abbreviated?
-set sidebar_short_path = yes
-# When abbreviating mailbox path names, use any of these characters as path
-# separators.  Only the part after the last separators will be shown.
-# For file folders '/' is good.  For IMAP folders, often '.' is useful.
-set sidebar_delim_chars = '/.'
-# If the mailbox path is abbreviated, should it be indented?
-set sidebar_folder_indent = yes
-# Indent mailbox paths with this string.
-set sidebar_indent_string = ' '
-# Make the Sidebar only display mailboxes that contain new, or flagged,
-# mail.
-set sidebar_new_mail_only = no
-# Any mailboxes that are whitelisted will always be visible, even if the
-# sidebar_new_mail_only option is enabled.
-# sidebar_whitelist '/home/user/mailbox1'
-# sidebar_whitelist '/home/user/mailbox2'
-# When searching for mailboxes containing new mail, should the search wrap
-# around when it reaches the end of the list?
-set sidebar_next_new_wrap = no
-# The character to use as the divider between the Sidebar and the other Mutt
-# panels.
-# Note: Only the first character of this string is used.
-set sidebar_divider_char = ' | '
-# Enable extended buffy mode to calculate total, new, and flagged
-# message counts for each mailbox.
-set mail_check_stats
-# Display the Sidebar mailboxes using this format string.
-# set sidebar_format = '%B%?F? [%F]?%* %?N?%N/?%S'
-set sidebar_format = "%B %* [%?N?%N / ?%S]"
-# Sort the mailboxes in the Sidebar using this method:
-#       count    - total number of messages
-#       flagged  - number of flagged messages
-#       new      - number of new messages
-#       path     - mailbox path
-#       unsorted - do not sort the mailboxes
-set sidebar_sort_method = 'unsorted'
-# FUNCTIONS - shown with an example mapping
-# Move the highlight to the previous mailbox
-bind index,pager \Cp sidebar-prev
-# Move the highlight to the next mailbox
-bind index,pager \Cn sidebar-next
-# Open the highlighted mailbox
-bind index,pager \Co sidebar-open
-# Move the highlight to the previous page
-# This is useful if you have a LOT of mailboxes.
-bind index,pager <F3> sidebar-page-up
-# Move the highlight to the next page
-# This is useful if you have a LOT of mailboxes.
-bind index,pager <F4> sidebar-page-down
-# Move the highlight to the previous mailbox containing new, or flagged,
-# mail.
-bind index,pager <F5> sidebar-prev-new
-# Move the highlight to the next mailbox containing new, or flagged, mail.
-bind index,pager <F6> sidebar-next-new
-# Toggle the visibility of the Sidebar.
-bind index,pager B sidebar-toggle-visible
-# COLORS - some unpleasant examples are given
-# Note: All color operations are of the form:
-#       color OBJECT FOREGROUND BACKGROUND
-# Color of the current, open, mailbox
-# Note: This is a general Mutt option which colors all selected items.
-color indicator cyan black
-# Color of the highlighted, but not open, mailbox.
-color sidebar_highlight black color8
-# Color of the divider separating the Sidebar from Mutt panels
-color sidebar_divider color8 black
-# Color to give mailboxes containing flagged mail
-color sidebar_flagged red black
-# Color to give mailboxes containing new mail
-color sidebar_new green black
-# Status Bar -------------------------------------------------------------------
-set status_chars = " *%A"
-set status_format = "---[ Folder: %f ]---[%r%m messages%?n? (%n new)?%?d? (%d to delete)?%?t? (%t tagged)? ]---%>-%?p?( %p postponed )?---"
-# Header Options ---------------------------------------------------------------
-ignore *																			# ignore all headers
-unignore from: to: cc: bcc: date: subject:		# show only these
-unhdr_order *																	# some distros order things by default
-hdr_order from: to: cc: bcc: date: subject:		# and in this order
-# Account Settings -------------------------------------------------------------
-# Default inbox
-set spoolfile = "+carwinyoung-gmail.com/INBOX"
-# Alternate email addresses.
-# Mailboxes to show in the sidebar
-mailboxes "Personal =================" \
-          +carwinyoung-gmail.com/INBOX \
-					+carwinyoung-gmail.com/archive \
-					+carwinyoung-gmail.com/sent \
-					+carwinyoung-gmail.com/drafts \
-          "Mobomo ======================" \
-          +carwin-mobomo.com/INBOX \
-          +carwin-mobomo.com/sales \
-          +carwin-mobomo.com/archive \
-          +carwin-mobomo.com/sent \
-          +carwin-mobomo.com/drafts \
-
-# Other special folders
-set mbox			= "+carwinyoung-gmail.com/archive"
-set postponed = "+carwinyoung-gmail.com/drafts"
-# Index View Options -----------------------------------------------------------
-set date_format = "%m/%d"
-set index_format = "[%Z]  %D  %-20.20F  %s"
-set sort = threads                          # like gmail
-set sort_aux = reverse-last-date-received   # like gmail
-set uncollapse_jump                         # don't collapse on an unread message
-set sort_re                                 # thread based on regex
-set reply_regexp = "^(([Rr][Ee]?(\[[0-9]+\])?: *)?(\[[^]]+\] *)?)*"
-# Index Key Bindings -----------------------------------------------------------
-bind index gg         first-entry
-bind index G          last-entry
-bind index R          group-reply
-bind index <tab>      sync-mailbox
-bind index <space>    collapse-thread
-# Ctrl-R mark all as read
-macro index \Cr "T~U<enter><tag-prefix><clear-flag>N<untag-pattern>.<enter>" "mark all messages as read"
-# Sync email
-macro index O "<shell-escape>offlineimap<enter>"            "run offlineimap to sync all mail"
-macro index o "<shell-escape>offlineimap -qf INBOX<enter>"  "run offlineimap to sync inbox"
-# Saner copy/move dialogs
-macro index C "<copy-message>?<toggle-mailboxes>"     "copy a message to a mailbox"
-macro index M "<save-message>?<toggle-mailboxes>"     "move a message to a mailbox"
-# Sidebar Navigation -----------------------------------------------------------
-bind index,pager <down>     sidebar-next
-bind index,pager <up>       sidebar-prev
-bind index,pager <right>    sidebar-open
-# Pager View Options -----------------------------------------------------------
-set pager_index_lines = 10        # number of index lines to show
-set pager_context = 3             # number of context lines to show
-set pager_stop                    # don't go to next message automatically
-set menu_scroll                   # scroll in menus
-set tilde                         # show tildes like in vim
-unset markers                     # no ugly plus signs
-set quote_regexp = "^( {0,4}[>|:#%]| {0,4}[a-z0-9]+[>|]+)+"
-alternative_order text/plain text/enriched text/html
-# Pager Key Bindings -----------------------------------------------------------
-bind pager k previous-line
-bind pager j next-line
-bind pager gg top
-bind pager G bottom
-bind pager R group-reply
-# View attachments properly.
-bind attach <return> view-mailcap
-# Compose View Options ---------------------------------------------------------
-set realname = "Carwin Young"                 # who am i?
-set envelope_from                             # which from?
-set sig_dashes                                # dashes before sig
-set edit_headers                              # show headers when composing
-set fast_reply                                # skip to compose when replying
-set askcc                                     # ask for CC:
-set fcc_attach                                # save attachments with the body
-unset mime_forward                            # forward attachments as part of body
-set forward_format = "Fwd: %s"                # format of subject when forwarding
-set forward_decode                            # decode when forwarding
-set attribution = "On %d, %n wrote:"          # format of quoting header
-set reply_to                                  # reply to Reply to: field
-set reverse_name                              # reply to whomever it was to
-set include                                   # include message in replies
-set forward_quote                             # include message in forwards
-set editor = "vim"                            # Use terminal Vim to compose email
-auto_view text/html
-folder-hook 'carwinyoung-gmail.com'  set from="carwinyoung@gmail.com"
-folder-hook 'carwin-mobomo.com'  set from="carwin@mobomo.com"
+** RSS
+#+begin_src emacs-lisp
+(use-package elfeed
+  :config
+  (setq elfeed-feeds
+    '(
+      ;; programming
+      ;; ("https://news.ycombinator.com/rss" hacker)
+      ;; programming languages
+      ;; ("https://www.reddit.com/r/golang.rss" golang)
+      ;; cloud
+      ;; ("https://www.reddit.com/r/aws.rss" aws)
+  ))
+  (setq-default elfeed-search-filter "@2-days-ago +unread")
+  (setq-default elfeed-search-title-max-width 100)
+  (setq-default elfeed-search-title-min-width 100))
 #+end_src
-
-*** Secret Management
-
-Handle secrets used by =mutt=. I've been using =Seahorse= to manage a keyring, but I don't really like it. I don't have a good solution, and my passwords are a mess.
-
-#+begin_src python :tangle ~/.config/mutt/offlineimap.py :mkdirp yes
-'''
-gkgetsecret.py
-This provides a handful of functions for retrieving secrets from GNOME Keyring
-using the libsecret API. See the documentation for each function
-'''
-
-from gi import require_version
-require_version('Secret', '1')
-from gi.repository import Secret
-
-def get_pw_from_desc(pw_desc) :
-    '''
-    This function returns the password for an item in the default keyring
-    which contains the description provided.
-    Use this function if you created a password using the dialogue in Seahorse
-    '''
-    # Get service
-    service = Secret.Service.get_sync(Secret.ServiceFlags.LOAD_COLLECTIONS)
-
-    # Get default keyring
-    keyring = Secret.Collection.for_alias_sync(service, "default", \
-          Secret.CollectionFlags.NONE, None)
-
-    # Get keyring items
-    items = keyring.get_items()
-
-    # Load secrets
-    Secret.Item.load_secrets_sync(items)
-
-    # Loop through items, find the matching one and return its password
-    password = None
-    for item in items :
-        if item.get_label() == pw_desc :
-            password = item.get_secret().get_text()
-            break
-
-    # Close connection
-    service.disconnect()
-
-    return password
-
-def get_pw_from_attrs(*attr_val_pairs) :
-    '''
-    This function returns the password for an item in the default keyring
-    which contains all of the attribute value pairs provided as arguments.
-    Use this function if you created a password using the secret-tool command
-    or another such program that interfaces with libsecret
-    '''
-    # Check the list of attr-val pairs is present and contains an even number
-    # of elements
-    if attr_val_pairs == () :
-        raise TypeError("get_pw_from_attrs() at least 1 attribute-value pair " \
-                "must be supplied")
-    if len(attr_val_pairs) % 2 != 0 :
-        raise TypeError("get_pw_from_attrs() incomplete attribute-value " \
-                "pair was supplied")
-
-    # Get service
-    service = Secret.Service.get_sync(Secret.ServiceFlags.LOAD_COLLECTIONS)
-
-    # Get default keyring
-    keyring = Secret.Collection.for_alias_sync(service, "default", \
-          Secret.CollectionFlags.NONE, None)
-
-    # Get keyring items
-    items = keyring.get_items()
-
-    # Load secrets
-    Secret.Item.load_secrets_sync(items)
-
-    # Loop through items, find the one which contains all supplied attr_val
-    # pairs and return its password
-    password = None
-    for item in items :
-        attrs = item.get_attributes()
-        match = True
-        for x in range(0, len(attr_val_pairs), 2) :
-            key = attr_val_pairs[x]
-            value = attr_val_pairs[x + 1]
-            try :
-                if attrs[key] != value :
-                    match = False
-                    break
-            except KeyError :
-                match = False
-                break
-        if match :
-            password = item.get_secret().get_text()
-            break
-
-    # Close connection
-    service.disconnect()
-
-    return password
-
-def get_val_from_attrs(attr, *attr_val_pairs) :
-    '''
-    This function returns the value for a given attribute. The first item
-    found that contains that attribute will be the one that is used. To ensure
-    that the correct item is chosen, any number of attribute-value pairs can
-    be optionally supplied as arguments and only the item which contains all
-    of those attr-val pairs (along with the main attr) will be used.
-    Use this function if you created a password using the secret-tool command
-    or another such program that interfaces with libsecret
-    '''
-    # Check the list of attr-val pairs contains an even number of elements
-    # if it exists
-    if attr_val_pairs != () :
-        if len(attr_val_pairs) % 2 != 0 :
-            raise TypeError("get_val_from_attrs() incomplete attribute-value " \
-                    "pair was supplied")
-
-    # Get service
-    service = Secret.Service.get_sync(Secret.ServiceFlags.LOAD_COLLECTIONS)
-
-    # Get default keyring
-    keyring = Secret.Collection.for_alias_sync(service, "default", \
-          Secret.CollectionFlags.NONE, None)
-
-    # Get keyring items
-    items = keyring.get_items()
-
-    # Loop through items, find the one which contains the supplied attribute
-    # (plus any attr_val pairs if specified) and return that attribute's
-    # value
-    attr_value = None
-    for item in items :
-        attrs = item.get_attributes()
-        try :
-            attrs[attr]
-        except KeyError :
-            continue
-        match = True
-        for x in range(0, len(attr_val_pairs), 2) :
-            key = attr_val_pairs[x]
-            value = attr_val_pairs[x + 1]
-            try :
-                if attrs[key] != value :
-                    match = False
-                    break
-            except KeyError :
-                match = False
-                break
-        if match :
-            attr_value = attrs[attr]
-            break
-
-    # Close connection
-    service.disconnect()
-
-    return attr_value
-
-#+end_src
-
-*** Mailcap
-
-#+begin_src conf :tangle ~/.config/mutt/mailcap
-# MS Word documents
-#application/msword; ~/.config/mutt/view_attachment.sh %s "-" 'document-viewer'
-
-# Images
-image/jpg; ~/.config/mutt/view_attachment.sh %s jpg
-image/jpeg; ~/.config/mutt/view_attachment.sh %s jpg
-image/pjpeg; ~/.config/mutt/view_attachment.sh %s jpg
-image/png; ~/.config/mutt/view_attachment.sh %s png
-image/gif; ~/.config/mutt/view_attachment.sh %s gif
-
-# PDFs
-application/pdf; ~/.config/mutt/view_attachment.sh %s pdf
-
-# HTML
-# text/html; ~/.config/mutt/view_attachment.sh %s html
-text/html; w3m -I %{charset} -T text/html; copiousoutput;
-
-# Unidentified files
-application/octet-stream; ~/.mutt/view_attachment.sh %s "-"
-#+end_src
-
-*** View Attachment
-
-This script handles email attachments for =mutt=. It's possible this will need to be set as executable via: ~chmod +x $HOME/.config/mutt/view_attachment.sh~
-
-#+begin_src sh :tangle ~/.config/mutt/view_attachment.sh
-#!/bin/bash
-#
-# Author:  Eric Gebhart
-#
-# Purpose:  To be called by mutt as indicated by .mailcap to handle mail attachments.
-#
-# Function: Copy the given file to a temporary directory so mutt
-#           Won't delete it before it is read by the application.
-#
-#           Along the way, discern the file type or use the type
-#           That is given.
-#
-#           Finally use 'open' or 'open -a' if the third argument is
-#           given.
-#
-#
-# Arguments:
-#
-#     $1 is the file
-#     $2 is the type - for those times when file magic isn't enough.
-#                      I frequently get html mail that has no extension
-#                      and file can't figure out what it is.
-#
-#                      Set to '-' if you don't want the type to be discerned.
-#                      Many applications can sniff out the type on their own.
-#                      And they do a better job of it too.
-#
-#                      Open Office and MS Office for example.
-#
-#     $3 is open with.  as in open -a 'open with this .app' foo.xls
-#
-# Examples:  These are typical .mailcap entries which use this program.
-#
-#     Image/JPEG; /Users/vdanen/.mutt/view_attachment %s
-#     Image/PNG; /Users/vdanen/.mutt/view_attachment %s
-#     Image/GIF; /Users/vdanen/.mutt/view_attachment %s
-#
-#     Application/PDF; /Users/vdanen/.mutt/view_attachment %s
-#
-#         #This HTML example passes the type because file doesn't always work and
-#         #there aren't always extensions.
-#
-#     text/html; /Users/vdanen/.mutt/view_attachment %s html
-#
-#         # If your Start OpenOffice.org.app is spelled with a space like this one, <--
-#         # then you'll need to precede the space with a \ .  I found that too painful
-#         # and renamed it with an _.
-#
-#     Application/vnd.ms-excel; /Users/vdanen/.mutt/view_attachment %s "-" '/Applications/OpenOffice.org1.1.2/Start_OpenOffice.org.app'
-#     Application/msword; /Users/vdanen/.mutt/view_attachment %s "-" '/Applications/OpenOffice.org1.1.2/Start_OpenOffice.org.app'
-#
-#
-# Debugging:  If you have problems set debug to 'yes'.  That will cause a debug file
-#             be written to /tmp/mutt_attach/debug so you can see what is going on.
-#
-# See Also:  The man pages for open, file, basename
-#
-
-# the tmp directory to use.
-tmpdir="/tmp/mutt_attach"
-
-# the name of the debug file if debugging is turned on.
-debug_file=$tmpdir/debug
-
-# debug.  yes or no.
-#debug="no"
-debug="yes"
-
-type=$2
-open_with=$3
-
-# make sure the tmpdir exists.
-mkdir -p $tmpdir
-
-# clean it out.  Remove this if you want the directory
-# to accumulate attachment files.
-rm -f $tmpdir/*
-
-# Mutt puts everything in /tmp by default.
-# This gets the basic filename from the full pathname.
-filename=`basename $1`
-
-# get rid of the extenson and save the name for later.
-file=`echo $filename | cut -d"." -f1`
-
-if [ $debug = "yes" ]; then
-    echo "1:" $1 " 2:" $2 " 3:" $3 > $debug_file
-    echo "Filename:"$filename >> $debug_file
-    echo "File:"$file >> $debug_file
-    echo "===========================" >> $debug_file
-fi
-
-# if the type is empty then try to figure it out.
-if [ -z $type ]; then
-    file  $1
-    type=`file -bi $1 | cut -d"/" -f2`
-fi
-
-# if the type is '-' then we don't want to mess with type.
-# Otherwise we are rebuilding the name.  Either from the
-# type that was passed in or from the type we discerned.
-if [ $type = "-" ]; then
-    newfile=$filename
-else
-    newfile=$file.$type
-fi
-
-newfile=$tmpdir/$newfile
-
-# Copy the file to our new spot so mutt can't delete it
-# before the app has a chance to view it.
-cp $1 $newfile
-
-if [ $debug = "yes" ]; then
-    echo "File:" $file "TYPE:" $type >> $debug_file
-    echo "Newfile:" $newfile >> $debug_file
-    echo "Open With:" $open_with >> $debug_file
-fi
-
-# If there's no 'open with' then we can let preview do it's thing.
-# Otherwise we've been told what to use.  So do an open -a.
-
-if [ -z $open_with ]; then
-    xdg-open $newfile
-else
-    xdg-open $newfile
-fi
-#+end_src
-
 ** Mail
 
 *** Mbsync
@@ -2131,51 +1663,6 @@ curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
   https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 #+end_src
 
-** Taskwarrior
-
-Now that I have =Emacs= and it's super great Agenda, I don't often use =Taskwarrior= anymore, but it's still a useful tool, and I may end up picking it up again.
-
-#+begin_src conf :tangle ~/.taskrc
-# [Created by task 2.5.1 6/3/2020 15:38:53]
-# Taskwarrior program configuration file.
-# For more documentation, see http://taskwarrior.org or try 'man task', 'man task-color',
-# 'man task-sync' or 'man taskrc'
-
-# Here is an example of entries that use the default, override and blank values
-#   variable=foo   -- By specifying a value, this overrides the default
-#   variable=      -- By specifying no value, this means no default
-#   #variable=foo  -- By commenting out the line, or deleting it, this uses the default
-
-# Use the command 'task show' to see all defaults and overrides
-
-# Files
-data.location=~/.task
-
-# Color theme (uncomment one to use)
-#include /usr/share/doc/task/rc/light-16.theme
-#include /usr/share/doc/task/rc/light-256.theme
-#include /usr/share/doc/task/rc/dark-16.theme
-#include /usr/share/doc/task/rc/dark-256.theme
-#include /usr/share/doc/task/rc/dark-red-256.theme
-#include /usr/share/doc/task/rc/dark-green-256.theme
-#include /usr/share/doc/task/rc/dark-blue-256.theme
-#include /usr/share/doc/task/rc/dark-violets-256.theme
-#include /usr/share/doc/task/rc/dark-yellow-green.theme
-#include /usr/share/doc/task/rc/dark-gray-256.theme
-#include /usr/share/doc/task/rc/dark-gray-blue-256.theme
-#include /usr/share/doc/task/rc/solarized-dark-256.theme
-#include /usr/share/doc/task/rc/solarized-light-256.theme
-#include /usr/share/doc/task/rc/no-color.theme
-
-taskd.certificate=\/home\/narwic\/.task\/narwic.cert.pem
-taskd.key=\/home\/narwic\/.task\/narwic.key.pem
-taskd.ca=\/home\/narwic\/.task\/ca.cert.pem
-taskd.server=sector6.1000needles.net:53589
-# taskd.credentials=Personal\/narwic\/c8101054-0d12-4c41-995a-693230b96085
-taskd.credentials=Personal\/narwic\/0b7a353e-8137-4c9e-8621-699471e2ec95
-taskd.trust=ignore hostname
-#+end_src
-
 ** Qutebrowser
 
 =Qutebrowser= is a keyboard based web browser with vim-like keybindings.
@@ -2301,6 +1788,50 @@ ln -s ~/.config/qutebrowser/config.py ~/.config/qutebrowser/profile_work/config/
 ln -s ~/.config/qutebrowser/quickmarks ~/.config/qutebrowser/profile_work/config/quickmarks
 #+end_src
 
+** Firefox
+
+Firefox and dark mode generally place well together, but when transitioning between pages, Firefox likes to flash a horrible full-white page that temporarily blinds anyone who gazes upon it. These tweaks solve that, but need to be generalized.
+
+Before any of these tweaks will work, the setting =toolkit.legacyUserProfileCustomizations.stylesheets = true= must be set in =about:config=.
+
+#+begin_src emacs-lisp
+(defun cy/firefox-profile-dir ()
+  (concat "~/.mozilla/firefox/" "8zl2ickg.default-release"))
+#+end_src
+*** userChrome.css
+
+#+begin_src css :tangle ~/.mozilla/firefox/8zl2ickg.default-release/chrome/userChrome.css :mkdirp yes
+@-moz-document url(chrome://browser/content/browser.xhtml)
+{
+  #main-window,
+  browser[type="content-primary"],
+  browser[type="content"],
+  tabbrowser#content,
+  #content,
+  browser[type="content"] > html
+  {
+     background: #323234 !important;
+  }
+
+}
+#+end_src
+
+*** userContent.css
+
+#+begin_src css :tangle ~/.mozilla/firefox/8zl2ickg.default-release/chrome/userContent.css :mkdirp yes
+@charset "utf-8";
+/* CSS Document */
+
+@-moz-document url("about:newtab") {
+body { background-color: #011326 !important;}
+}
+
+@-moz-document url(chrome://browser/content/browser.xhtml) {
+browser[type="content-primary"] {background: #011326 !important}
+}
+
+#+end_src
+
 ** Application post-tangle actions.
 
 #+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/Home/dotfiles/tangled/application-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
@@ -2367,4 +1898,18 @@ Once these files have been tangled out, some kind of action needs to enable the 
 #+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/Home/dotfiles/tangled/systemd-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
 <<emacs-post-tangle>>
 <<onedrive-post-tangle>>
+#+end_src
+
+* Other
+
+#+begin_src conf :tangle ~/.soliumrc.json
+{
+  "extends": "solium:recommended"
+  "plugins": ["security"],
+  "rules": {
+    "quotes": ["error", "double"],
+    "indentation": ["error", 4],
+    "linebreak-style": ["error", "unix"]
+  }
+}
 #+end_src
