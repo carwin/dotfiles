@@ -154,7 +154,6 @@ I don't remember what org-evil does, but I've had it in my config since I starte
   (evil-set-initial-state 'messages-buffer-mode 'normal)
   (evil-set-initial-state 'dashboard-mode 'normal))
 
-asdfasdf
 (use-package evil-collection
     :after evil
     :ensure t
@@ -224,6 +223,8 @@ Get rid of all the chrome. I don't want to remember I'm in a GUI.
 (tooltip-mode -1)         ; Disable tooltips.
 (menu-bar-mode -1)        ; Disable the menu bar.
 (set-fringe-mode 0)       ; Define the width of the fringe. Useful for breakpoints, but not much else.
+
+(setq visible-bell 1)     ; No more noises please.
 #+end_src
 
 Set frame transparency and maximize windows by default.
@@ -609,10 +610,9 @@ Ivy provides a more minimal (but still powerful) selection menu that appears whe
 
 ivy-rich adds extra columns to some Counsel commands to provide more information.
 
+@todo: Is counsel still a thing?
+
 #+begin_src emacs-lisp
-
-
-
 (use-package counsel
   :bind (("C-M-j" . 'counsel-switch-buffer)
          :map minibuffer-local-map
@@ -882,33 +882,6 @@ This is a really great selection tool. Basically it starts at the pointer then /
   "d."  `(,(cy/dired-link "~/Projects/Home/sys/dotfiles") :which-key "dotfiles"))
 #+end_src
 
-** Opening Files Externally
-
-@todo I need a way to make sure this only applies in certain modes. It causes the dashboard to crash when it boots up because there's a png logo.
-
-#+begin_src emacs-lisp
-;;(use-package openwith
-;;  :config
-;;  (setq openwith-associations
-;;    (list
-;;      (list (openwith-make-extension-regexp
-;;             '("mpg" "mpeg" "mp3" "mp4"
-;;               "avi" "wmv" "wav" "mov" "flv"
-;;               "ogm" "ogg" "mkv"))
-;;             "mpv"
-;;             '(file))
-;;      (list (openwith-make-extension-regexp
-;;             '("xbm" "pbm" "pgm" "ppm" "pnm"
-;;               "png" "gif" "bmp" "tif" "jpeg" "jpg"))
-;;             "feh"
-;;             '(file))
-;;      (list (openwith-make-extension-regexp
-;;             '("pdf"))
-;;             "google-chrome-stable"
-;;             '(file))))
-;;  (openwith-mode 1))
-#+end_src
-
 ** Deft
 
 A nice way to browse files, specifically installed for org-roam. If this ever gets super slow, look into installing the Notdeft fork.
@@ -1131,6 +1104,7 @@ I use a Pomodoro timer when working to chunk my work into manageable blocks of t
 
 ** Searching
 
+@TODO: This doesn't work.
 #+begin_src emacs-lisp
 (defun cy/search-org-files ()
   (interactive)
@@ -1158,14 +1132,11 @@ I'm trying out daviwil's bindings using evil-org.
   "oi"  '(:ignore t :which-key "insert")
   "oil" '(:ignore t :which-key "insert link")
   "on"  '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
-  "os"  '(cy/counsel-rg-org-files :which-key "search notes")
+  "os"  '(cy/counsel-org-files :which-key "search notes")
   "oa"  '(org-agenda :which-key "status")
   "c"  '(org-capture t :which-key "capture")
   "ox"  '(org-export-dispatch t :which-key "export"))
 
-;(use-package org-evil
-;  :after evil
-;  :ensure t)
 #+end_src
 
 ** End use-package org-mode
@@ -1229,6 +1200,7 @@ This is the interface I use primarily for notes in a Zettelkasten style.
   (org-roam-graph-executable "neato")
   (org-roam-buffer-window-parameters '((no-delete-other-windows . t)))
   (org-roam-dailies-directory "daily/")
+  (org-roam-link-use-custom-faces t)
   (org-roam-dailies-capture-templates
       '(("d" "default" entry
          #'org-roam-capture--get-point
@@ -1303,7 +1275,6 @@ Allows opening notes from external applications in Emacs.
 ** Git
 
 *** Git Gutter
-
 
 #+begin_src emacs-lisp
 ;; @todo Git gutter fringe doesn't get pulled in from MELPA unless I grab it with `use-package' first.
@@ -1470,6 +1441,7 @@ which-key integration is important.
   "ls"  'counsel-imenu
   "le"  'lsp-ui-flycheck-list
   "lS"  'lsp-ui-sideline-mode
+  "lD"  'lsp-shutdown-workspace
   "lX"  'lsp-execute-code-action)
 
 (use-package lsp-ui
@@ -2176,6 +2148,65 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
 (add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-fetch) ))
 #+end_src
 
+#+begin_src emacs-lisp
+(defun cy/org-gcal-flush-and-refetch ()
+  (interactive)
+;;; Commentary:
+  "Fix duplicates displayed in org gcal.
+Delete agenda files, kill agenda buffers, remove token files, clear tokens in
+Emacs, re-fetch all information with org-gcal."
+;;; Code:
+  ;; Time stamp
+  (defvar ogf-dtstamp)
+  (setq ogf-dtstamp (format-time-string "%Y%m%d_%H%M"))
+
+  ;; Find agenda files
+  (defvar ogf-agendapath "/Path/To/My/Folder/With/AgendaFiles")
+  (defvar ogf-agendafiles)
+  (setq ogf-agendafiles (directory-files ogf-agendapath nil ".org$"))
+
+  ;; Set trash folder
+  (defvar ogf-trashfolder)
+  (setq ogf-trashfolder (concat "~/.Trash/org-gcal-fix_" ogf-dtstamp "/"))
+  (make-directory ogf-trashfolder)
+
+  ;; Clean up loop:
+  (dolist (element ogf-agendafiles)
+    ;; 1) Move agenda files to trash (don't really delete)
+    (rename-file
+     (concat ogf-agendapath "/" element)
+     (concat ogf-trashfolder element))
+    ;; 2) Close buffer
+    (when (get-buffer element)
+      (kill-buffer element))
+    )
+
+  ;; Close agenda buffer
+  (when (get-buffer "*Org Agenda*")
+    (kill-buffer "*Org Agenda*"))
+
+  ;; Remove token file
+  (rename-file
+   "~/.emacs.d/org-gcal/.org-gcal-token"
+   (concat ogf-trashfolder "/org-gcal-token"))
+
+  ;; Clear sync tokens in Emacs
+  (org-gcal-sync-tokens-clear)
+  (unintern 'org-gcal-token-plist)
+
+  ;; Set the browser function to external browser. This is required for
+  ;; obtaining a token (see next step)
+  (defvar ogf-current-browser browse-url-browser-function)
+  (setq browse-url-browser-function 'browse-url-generic)
+
+  ;; Refetch calendar (this should prompt for obtaining a token again)
+  (org-gcal-fetch)
+
+  ;; Restore browser function
+  (setq browse-url-browser-function 'ogf-current-browser)
+
+#+end_src
+
 ** Mail
 *** mu4e
 
@@ -2191,6 +2222,7 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
 
 (use-package mu4e
   :ensure nil
+  :ensure-system-package mu
   :config
   ;; This is set to 't' to avoid mail syncing issues when using mbsync
   (setq mu4e-change-filenames-when-moving t

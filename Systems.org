@@ -61,10 +61,10 @@ Some settings need to be customized on a per-system basis without tweaking indiv
 
 ;; When booted into Windows
 (when (equal system-name "GUTS")
-  '((desktop/dpi . 130)
-    (emacs/variable-face-size . 190)
-    (emacs/fixed-face-size . 180)
-    (emacs/default-face-size . 165)))
+  '((desktop/dpi . 109)
+    (emacs/variable-face-size . 1.1)
+    (emacs/fixed-face-size . 1.1)
+    (emacs/default-face-size . 100)))
 
 #+end_src
 

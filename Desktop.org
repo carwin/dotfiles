@@ -138,6 +138,7 @@ fi
 
 # Source Ruby Version Manager (rvm)
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+[[ -s "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" ]] && source "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" # Load RVM into a shell session *as a function*
 
 # Add Rust crates into path.
 if which rustup >/dev/null; then
@@ -152,6 +153,7 @@ export PATH="$PATH:/opt/cuda/bin"
 
 # Source node version manager
 [[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
+[[ -s /usr/share/nvm/init-nvm.sh ]] && . /usr/share/nvm/init-nvm.sh
 # source /usr/share/nvm/init-nvm.sh
 
 # LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
@@ -272,34 +274,34 @@ My custom prompt for =zsh=.
 #+begin_src conf :tangle ~/.zsh/prompt :mkdirp yes
 
 # Setup ruby prompt
-count_rbs=`find . -maxdepth 1 -type f -name "*.rb" | wc -l`;
-count_gemfile=`find . -maxdepth 1 -type f -name "Gemfile" | wc -l`;
+#count_rbs=`find . -maxdepth 1 -type f -name "*.rb" | wc -l`;
+#count_gemfile=`find . -maxdepth 1 -type f -name "Gemfile" | wc -l`;
 
-function ruby_version()
-{
-  if [ $count_rbs != 0 ] || [ $count_gemfile != 0 ]; then
-    if which rvm-prompt &> /dev/null; then
-        #echo "%F{225}(%F{212} $(rvm-prompt i v g) %F{225})"
-        rvm-prompt i v g
-    else
-      if which rbenv &> /dev/null; then
-        rbenv version | sed -e "s/ (set.*$//"
-      fi
-    fi
-  else
-    false
-  fi
-}
+# function ruby_version()
+# {
+#   if [ $count_rbs != 0 ] || [ $count_gemfile != 0 ]; then
+#     if which rvm-prompt &> /dev/null; then
+#         #echo "%F{225}(%F{212} $(rvm-prompt i v g) %F{225})"
+#         rvm-prompt i v g
+#     else
+#       if which rbenv &> /dev/null; then
+#         rbenv version | sed -e "s/ (set.*$//"
+#       fi
+#     fi
+#   else
+#     false
+#   fi
+# }
 
 # Left prompt
-export PS1="%F{223}%n%F{224}@%F{211}%m %F{179}%~%b%F{255} %F{255}> "
+export PS1="%F{223}%n%F{224}@%F{211}%m %F{179}%~%b%F{255} › "
 
 # Right prompt
 autoload -Uz vcs_info
 precmd_vcs_info() { vcs_info }
 precmd_functions+=( precmd_vcs_info )
 setopt prompt_subst
-RPROMPT=\$vcs_info_msg_0_\
+RPROMPT=\$vcs_info_msg_0_
 zstyle ':vcs_info:git:*' formats '%F{223}%b|%F{211}%r%f'
 zstyle ':vcs_info:*' enable git
 
@@ -545,7 +547,7 @@ set $mod Mod1
 # Font for window titles. Will also be used by the bar unless a different font
 # is used in the bar {} block below.
 font pango:monospace 8
-exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
+# exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
 exec --no-startup-id nm-applet
 # Common app binds
 bindsym Print exec scrot
@@ -701,7 +703,7 @@ for_window [class=Signal] move container to workspace $comm
 for_window [class=Emacs] move container to workspace $prim
 # Autostart applications and other things
 exec --no-startup-id ~/.fehbg &
-exec --no-startup-id xsettingsd &
+# exec --no-startup-id xsettingsd &
 # exec --no-startup-id ~/.screenlayout/home_triple.sh &
 exec --no-startup-id dunst &
 exec --no-startup-id picom -b
@@ -1759,33 +1761,33 @@ pi2 10.0.1.43:193
 znc 10.0.1.43:4378
 #+end_src
 
-#+begin_src conf :tangle ~/.local/share/applications/qute_home.desktop
-[Desktop Entry]
-Type=Application
-Version=1.0
-Name=Qutebrowser (Home)
-Comment=Qutebrowser instance for home.
-Exec=qutebrowser --basedir .config/qutebrowser/profile_home
+#+begin_src conf :tangle ~/.local/share/applications/qute_home.desktop :mkdirp yes
+;;[Desktop Entry]
+;;Type=Application
+;;Version=1.0
+;;Name=Qutebrowser (Home)
+;;Comment=Qutebrowser instance for home.
+;;Exec=qutebrowser --basedir .config/qutebrowser/profile_home
 #+end_src
 
-#+begin_src conf :tangle ~/.local/share/applications/qute_work.desktop
-[Desktop Entry]
-Type=Application
-Version=1.0
-Name=Qutebrowser (Work)
-Comment=Qutebrowser instance for work.
-Exec=qutebrowser --basedir .config/qutebrowser/profile_work
+#+begin_src conf :tangle ~/.local/share/applications/qute_work.desktop :mkdirp yes
+  ;;[Desktop Entry]
+  ;;Type=Application
+  ;;Version=1.0
+  ;;Name=Qutebrowser (Work)
+  ;;Comment=Qutebrowser instance for work.
+  ;;Exec=qutebrowser --basedir .config/qutebrowser/profile_work
 #+end_src
 
 #+begin_src sh :noweb-ref qutebrowser-post-tangle
-mkdir -p ~/.config/qutebrowser/profile_home/config;
-mkdir -p ~/.config/qutebrowser/profile_work/config;
+#mkdir -p ~/.config/qutebrowser/profile_home/config;
+#mkdir -p ~/.config/qutebrowser/profile_work/config;
 
-ln -s ~/.config/qutebrowser/config.py ~/.config/qutebrowser/profile_home/config/config.py
-ln -s ~/.config/qutebrowser/quickmarks ~/.config/qutebrowser/profile_home/config/quickmarks
+#ln -s ~/.config/qutebrowser/config.py ~/.config/qutebrowser/profile_home/config/config.py
+#ln -s ~/.config/qutebrowser/quickmarks ~/.config/qutebrowser/profile_home/config/quickmarks
 
-ln -s ~/.config/qutebrowser/config.py ~/.config/qutebrowser/profile_work/config/config.py
-ln -s ~/.config/qutebrowser/quickmarks ~/.config/qutebrowser/profile_work/config/quickmarks
+#ln -s ~/.config/qutebrowser/config.py ~/.config/qutebrowser/profile_work/config/config.py
+#ln -s ~/.config/qutebrowser/quickmarks ~/.config/qutebrowser/profile_work/config/quickmarks
 #+end_src
 
 ** Firefox
@@ -1861,7 +1863,7 @@ On Arch, I use the AUR package =onedrive-abraunegg= to sync my OneDrive files to
 
 First, set up a service that can be run as needed.
 
-#+begin_src conf :tangle ~/.config/systemd/user/onedrive-sync.service
+#+begin_src conf :tangle ~/.config/systemd/user/onedrive-sync.service :mkdirp yes
 [Unit]
 Description=Syncs OneDrive
 
@@ -1874,7 +1876,7 @@ WantedBy=default.target
 
 Now, set up a timer to run the service hourly.
 
-#+begin_src conf :tangle ~/.config/systemd/user/onedrive-sync.timer
+#+begin_src conf :tangle ~/.config/systemd/user/onedrive-sync.timer :mkdirp yes
 [Unit]
 Description=Run OneDrive synchronization hourly
 
