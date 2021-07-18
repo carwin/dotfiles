@@ -17,7 +17,7 @@ Lots of credit goes to @daviwil on github for his helpful Emacs From Scratch vid
 The location where my Notes folder lives. There's a function here in case I need to adjust my Notes directory based on machine.
 
 #+begin_src emacs-lisp
-(setq org-directory "~/Documents/Notes")
+(setq org-directory "~/Notes")
 
 (setq org-agenda-files `(,org-directory))
 
@@ -76,50 +76,69 @@ Tags are used to filter all tasks to find anything actionable in a particular co
 * Agendas
 
 #+begin_src emacs-lisp
-(setq org-agenda-window-setup 'current-window)
-(setq org-agenda-span 'day)
-(setq org-agenda-start-with-log-mode t)
-;; (setq org-agenda-tag-filter-preset '("-HABIT"))
+  (setq org-agenda-window-setup 'current-window)
+  (setq org-agenda-span 'day)
+  (setq org-agenda-start-with-log-mode t)
+  ;; (setq org-agenda-tag-filter-preset '("-HABIT"))
+  (setq org-agenda-files (list (cy/org-path "Inbox.org")
+                               (cy/org-path "Habits.org")
+                               (cy/org-path "Calendar/")))
 
-(setq org-agenda-custom-commands
-      `(("d" "Dashboard"
-         ((agenda ""
-                ((org-deadline-warning-days 7)
-                 (org-agenda-files org-agenda-files)))
-          (tags-todo "+PRIORITY=\"A\""
-                      ((org-agenda-overriding-header "High Priority")))
-          (tags-todo "+followup" ((org-agenda-overriding-header "Needs Follow Up")))
-          (todo "NEXT"
-                 ((org-agenda-overriding-header "Next Actions")))
-          (todo "TODO"
-                 ((org-agenda-overriding-header "Unprocessed Inbox Tasks")
-                  (org-agenda-files (remove '(,(cy/org-path "Habits.org")) org-agenda-files))
-                  ;; (setq org-agenda-files `(,org-directory))
-                  (org-agenda-files '(,(cy/org-path "Inbox.org")))
-                  ;; (remove '(,(cy/org-path "Habits.org")) org-agenda-files)
-                  (org-agenda-text-search-extra-files nil)))))
-       ("h" "Daily Habits"
-        ((agenda ""))
-        ((org-agenda-show-log t)
-         (org-agenda-span 'week)
-         (org-agenda-ndays 7)
-         (org-agenda-log-mode-items '(state))
-         (org-agenda-skip-function '(org-agenda-skip-entry-if 'notregexp ":HABIT:"))))
-       ("n" "Next Tasks"
-        ((agenda "" ((org-deadline-warning-days 7)))
-         (todo "NEXT"
-               ((org-agenda-overriding-header "Next Tasks")))))
+  (setq org-agenda-custom-commands
+        `(("d" "Dashboard"
+           ((agenda ""
+                  ((org-deadline-warning-days 7)
+                   (org-agenda-files org-agenda-files)))
+            (tags-todo "+PRIORITY=\"A\""
+                        ((org-agenda-overriding-header "High Priority")))
+            (tags-todo "+followup" ((org-agenda-overriding-header "Needs Follow Up")))
+            (todo "NEXT"
+                   ((org-agenda-overriding-header "Next Actions")))
+            (todo "TODO"
+                   ((org-agenda-overriding-header "Unprocessed Inbox Tasks")
+                    ;; (org-agenda-files (remove '(,(cy/org-path "Habits.org")) org-agenda-files))
+                    ;; (setq org-agenda-files `(,org-directory))
+                    (org-agenda-files '(,(cy/org-path "Inbox.org")))
+                    ;; (remove '(,(cy/org-path "Habits.org")) org-agenda-files)
+                    (org-agenda-text-search-extra-files nil)))))
+         ("h" "Habits"
+          ((agenda ""))
+          ((org-agenda-show-log t)
+           (org-agenda-span 'week)
+           (org-agenda-ndays 7)
+           (org-agenda-log-mode-items '(state))
+           (org-agenda-skip-function '(org-agenda-skip-entry-if 'notregexp ":HABIT:"))))
 
-        ("e" tags-todo "+TODO=\"NEXT\"+Effort<15&+Effort>0"
-        ((org-agenda-overriding-header "Low Effort Tasks")
-         (org-agenda-max-todos 20)
-         (org-agenda-files org-agenda-files)))))
+         ("t" "Custom Timeline"
+          ((todo "TODO"
+                 ((org-agenda-overriding-header "=== TODO tasks without a scheduled date=== ")
+                  (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))
+                  (org-agenda-prefix-format '((todo . " %1c "))))
+           (agenda ""
+                   ((org-agenda-overriding-header "=== Scheduled tasks ===")
+                    (org-agenda-span 22)
+                      (org-agenda-files org-agenda-files)
+                    (org-agenda-prefix-format '((agenda . " %1c %?-12t% s"))))))))
+
+         ("n" "Next Tasks"
+          ((agenda "" ((org-deadline-warning-days 7)))
+           (todo "NEXT"
+                 ((org-agenda-overriding-header "Next Tasks")))))
+
+          ("e" tags-todo "+TODO=\"NEXT\"+Effort<15&+Effort>0"
+          ((org-agenda-overriding-header "Low Effort Tasks")
+           (org-agenda-max-todos 20)
+           (org-agenda-files org-agenda-files)))))
 #+end_src
 
 * Habits
 
 #+begin_src emacs-lisp
-(setq org-habit-show-habits-only-for-today nil)
+  (setq org-habit-show-habits-only-for-today nil
+        ;; org-habit-graph-column
+        org-habit-preceding-days 4
+        org-habit-following-days 4
+  )
 #+end_src
 
 * Contacts
@@ -128,7 +147,7 @@ Tags are used to filter all tasks to find anything actionable in a particular co
 (use-package org-contacts
   :ensure nil
   :after org
-  :custom (org-contacts-files '("~/Documents/Notes/Contacts.org")))
+  :custom (org-contacts-files '("~/Notes/Contacts.org")))
 #+end_src
 
 The =org-contacts= package doesn't ship with much in the way of templates, so I create a few below:
@@ -154,12 +173,31 @@ The =org-contacts= package doesn't ship with much in the way of templates, so I 
     (pcase template
       ("jj" (delete-other-windows)))))
 
+(defun cy/get-work-peer-names-from-files ()
+  (setq work-people-file-list (directory-files (cy/org-path (concat "Work/People/")) nil directory-files-no-dot-files-regexp))
+  (setq work-list '())
+  (dolist (element work-people-file-list)
+    (let (name)
+       (setq name-no-dash (replace-regexp-in-string "-" " " element))
+       (setq name (replace-regexp-in-string ".org" "" name-no-dash))
+       (add-to-list 'work-list name))
+    )
+   work-list
+  )
+
+(defun cy/org-work-person-log ()
+  (let (person-name)
+    (setq choice (completing-read "choose: " (cy/get-work-peer-names-from-files) nil nil nil))
+    ;; (print person-name)
+    (cy/org-path (concat "Work/People/" (concat (replace-regexp-in-string " " "-" (capitalize choice)) ".org")))))
+
+
 (add-hook 'org-capture-mode-hook 'cy/on-org-capture)
 
 (setq org-capture-templates
   `(
     ("t" "Task" entry (file ,(cy/org-path "Inbox.org"))
-         "* TODO %? [/]\n %U\n %i" :empty-lines 1)
+         "* TODO %?\n %U\n %i" :empty-lines 1)
     ("m" "Task [mail]" entry (file ,(cy/org-path "Inbox.org"))
          ,(concat "* TODO Process \"%a\" %?\n"
                   "/Entered on/ %U"))
@@ -171,8 +209,12 @@ The =org-contacts= package doesn't ship with much in the way of templates, so I 
          :ADDRESS: %(cy/org-contacts-template-addr)
          :BIRTHDAY:
          :END:")
-    ("l" "Clocked Entry Subtask" entry (clock)
-         "* TODO %?\n %U\n %i" :empty-lines 1)))
+    ("T" "Team Log" item (file+headline cy/org-work-person-log "Log")
+         "- %U %?"
+         :lines-before 0
+         :lines-after 0
+         :unnarrowed t
+         :prepend t)))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -184,7 +226,7 @@ The =org-contacts= package doesn't ship with much in the way of templates, so I 
 
 * Module Setup
 
-This Org file produces a file called =cy-workflow.el= which gets loaded up in =init.el Export it as a feature so that it can be loaded with =require=.
+This Org file produces a file called =cy-workflow.el= which gets loaded up in =init.el= Export it as a feature so that it can be loaded with =require=.
 
 #+begin_src emacs-lisp
 (provide 'cy-workflow)
