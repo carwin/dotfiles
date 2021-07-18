@@ -26,9 +26,6 @@ Packages and stuff to check out:
 :END:
 
 * General
-:PROPERTIES:
-:ID:       0b11c88d-1c08-4fe6-b61f-61d313240992
-:END:
 
 #+begin_src emacs-lisp
 (load-file "~/.emacs.d/per-system-settings.el")
@@ -49,9 +46,6 @@ Packages and stuff to check out:
 #+end_src
 
 * Package Management
-:PROPERTIES:
-:ID:       25b067cb-6690-4e95-98de-744ae84018fc
-:END:
 
 #+begin_src emacs-lisp
 (require 'package)
@@ -76,9 +70,6 @@ Packages and stuff to check out:
 * Configure Emacs paths
 
 ** Ensure Emacs' PATH is the same as my shell's
-:PROPERTIES:
-:ID:       654dbb95-33cc-4eeb-b4fe-c3037b0be5cd
-:END:
 
 #+begin_src emacs-lisp
 (use-package exec-path-from-shell
@@ -88,18 +79,12 @@ Packages and stuff to check out:
 #+end_src
 
 ** Ensure Emacs knows about mu4e later.
-:PROPERTIES:
-:ID:       234adf8b-a36a-4e9d-922c-e8526d661cb1
-:END:
 
 #+begin_src emacs-lisp
 (add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu4e")
 #+end_src
 
 * Keep .emacs.d Clean
-:PROPERTIES:
-:ID:       e91f88be-04c4-4122-b093-73dea9b77826
-:END:
 
 #+begin_src emacs-lisp
 (setq custom-file
@@ -164,9 +149,6 @@ I've been using the comma (,) key as my leader key for almost a decade in vim. T
 #+end_src
 
 ** Turn on Evil mode
-:PROPERTIES:
-:ID:       19e53e2a-d531-493f-9bec-603788d60267
-:END:
 
 Evil mode is essentially vim keybindings for Emacs. Emacs is essentially unusable for me without this.
 
@@ -556,8 +538,23 @@ Emacs can be prompted for the PIN of a GPG private key, we just need to set epa-
 @todo: I don't have this working currently. I think the pinentry package needs to be installed, and I need to add "allow-emacs-pinentry" to "~/.gnupg/gpg-agent.conf" and then reload the configuration with "gpgconf --reload gpg-agent."
 
 #+begin_src emacs-lisp
-;(setq epa-pinentry-mode 'loopback)
-;(pinentry start)
+  (setq epa-pinentry-mode 'loopback)
+#+end_src
+
+** Completion
+
+#+begin_src emacs-lisp
+  (use-package corfu
+  :bind
+  ("C-SPC" . #'completion-at-point)
+  :config
+  (corfu-global-mode))
+
+  (use-package orderless
+  :init
+  (setq completion-styles '(orderless)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles . (partial-completion))))))
 #+end_src
 
 * Editing Configuration
@@ -583,7 +580,7 @@ I hope I never have to write any python or this might end up being a problem.
 
 ** Commenting with a shortcut
 
-Binds <C-/> to comment lines in a much better way than Emacs' default comment-dwim (bound to M-;).
+Binds =<C-/>= to comment lines in a much better way than Emacs' default comment-dwim (bound to M-;).
 
 #+begin_src emacs-lisp
 (use-package evil-nerd-commenter
@@ -608,52 +605,7 @@ This is important for projects tracked with Git.
 (setq require-final-newline t)
 #+end_src
 
-* Configuration Files
-
-** Helper Functions
-
-#+begin_src emacs-lisp
-(defun cy/org-file-jump-to-heading (org-file heading-title)
-  (interactive)
-  (find-file (expand-file-name org-file))
-  (goto-char (point-min))
-  (search-forward (concat "* " heading-title))
-  (org-overview)
-  (org-reveal)
-  (org-show-subtree)
-  (forward-line))
-
-(defun cy/org-file-show-headings (org-file)
-  (interactive)
-  (find-file (expand-file-name org-file))
-  (counsel-org-goto)
-  (org-overview)
-  (org-reveal)
-  (org-show-subtree)
-  (forward-line))
-#+end_src
-
-** Bindings for Configuration Files
-:PROPERTIES:
-:ID:       9914a048-e668-41a3-96c8-4b66e278a69f
-:END:
-
-This is where I define keybindings to quickly jump to settings files.
-
-#+begin_src emacs-lisp
-  ;; (cy/leader-key-def
-  ;;   "fd" '(:ignore t :which-key "dotfiles")
-  ;;   "fde" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Emacs.org"))) :which-key "edit config")
-  ;;   "fdE" '((lambda () (interactive) (cy/org-file-show-headings "~/Projects/Home/sys/dotfiles/Emacs.org")) :which-key "edit config")
-  ;;   "fdD" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Desktop.org"))) :which-key "workflow")
-  ;;   "fdS" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Systems.org"))) :which-key "workflow")
-  ;;   "fdW" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Workflow.org"))) :which-key "workflow"))
-#+end_src
-
 * Stateful Keymaps with Hydra
-:PROPERTIES:
-:ID:       957af07b-4fdf-4439-9f5b-e5680fde197c
-:END:
 
 #+begin_src emacs-lisp
 (use-package hydra
@@ -673,8 +625,6 @@ This is where I define keybindings to quickly jump to settings files.
 #+end_src
 
 * Ivy and Counsel
-
-Ivy is a completion framework for emacs, much like Helm. I keep switching between the two.
 
 Ivy provides a more minimal (but still powerful) selection menu that appears when you open files, switch buffers, etc... Counsel is a customized set of commands to replace `find-file` with `counsel-find-file`, etc... which provides useful commands for each of the default completion commands.
 
@@ -809,9 +759,6 @@ ivy-rich adds extra columns to some Counsel commands to provide more information
 #+end_src
 
 ** Flycheck
-:PROPERTIES:
-:ID:       1602af4d-c193-4a29-9e4b-880ec66bb733
-:END:
 #+begin_src emacs-lisp
   (use-package flycheck
     :init (add-hook 'after-init-hook #'global-flycheck-mode))
@@ -820,9 +767,6 @@ ivy-rich adds extra columns to some Counsel commands to provide more information
 * Window Management
 
 ** Window Selection with ace-window
-:PROPERTIES:
-:ID:       e29c446d-bfb7-4de9-8efe-7166bb22b6e0
-:END:
 
 #+begin_src emacs-lisp
 ;; (use-package ace-window
@@ -832,9 +776,6 @@ ivy-rich adds extra columns to some Counsel commands to provide more information
 #+end_src
 
 ** Window History with winner-mode
-:PROPERTIES:
-:ID:       859e9760-c9c5-4dd4-90d8-16bffa370f65
-:END:
 
 #+begin_src emacs-lisp
 (winner-mode)
@@ -858,9 +799,6 @@ ivy-rich adds extra columns to some Counsel commands to provide more information
 #+end_src
 
 * Expand Region
-:PROPERTIES:
-:ID:       8c0a90d4-fd7c-4433-97af-510d797215b9
-:END:
 
 According to sources, this is a really great selection tool. Basically it starts at the pointer then /expands/ to select the word, then the next boundary, then the next boundary, and so on.
 
@@ -875,9 +813,6 @@ According to sources, this is a really great selection tool. Basically it starts
 * File Browsing
 
 ** Dired
-:PROPERTIES:
-:ID:       3c3b6ddb-a5fd-4f5a-b4d0-f3e6d833279c
-:END:
 
 #+begin_src emacs-lisp
 (use-package dired
@@ -977,21 +912,12 @@ According to sources, this is a really great selection tool. Basically it starts
 #+end_src
 
 ** Deft
-:PROPERTIES:
-:ID:       7eb5033a-54e3-4c32-8634-98ac02f4ee7b
-:END:
 
 A nice way to browse files, specifically installed for org-roam. If this ever gets super slow, look into installing the Notdeft fork.
 
 @todo: I need to figure out the best way to access this. Leader+"o"rg+"r"oam+"d"eft seems like the natural way, but it is very long.
 
 #+begin_src emacs-lisp
-  ;; (use-package deft
-  ;;   :commands (deft)
-  ;;   :config (setq deft-directory "~/Notes/Roam"
-  ;;                 deft-recursive t
-  ;;                 deft-extensions '("org")))
-
   (use-package deft
     :after org
     :bind
@@ -1000,16 +926,13 @@ A nice way to browse files, specifically installed for org-roam. If this ever ge
     (deft-recursive t)
     (deft-use-filter-string-for-filename t)
     (deft-default-extension "org")
-    (deft-directory "~/Notes/Roam-v1"))
+    (deft-directory "~/Notes/Roam"))
 
   (cy/leader-key-def
     "<SPC>" '(deft :which-key "deft"))
 #+end_src
 
 * Org Mode
-:PROPERTIES:
-:ID:       f1c3d85f-4206-45dc-a2a6-8e6d07933b6b
-:END:
 
 Set up Org Mode's basic configuration, then expand on it in other sections.
 
@@ -1072,15 +995,8 @@ Set up Org Mode's basic configuration, then expand on it in other sections.
 #+end_src
 
 **  Configure Babel Languages
-:PROPERTIES:
-:ID:       b57451c5-d8d0-4a50-a838-6fed561f4b3f
-:END:
 
 To execute or export code in org-mode code blocks, you'll need to set up org-babel-load-languages for each language you'd like to use. This [[https://orgmode.org/worg/org-contrib/babel/languages.html][page]] documents all of the languages you can use with org-babel.
-
-~verbatim?~
-
-=verbatim=
 
 #+begin_src emacs-lisp
   (with-eval-after-load "org"
@@ -1100,9 +1016,6 @@ To execute or export code in org-mode code blocks, you'll need to set up org-bab
 #+end_src
 
 ** Workflow Configuration
-:PROPERTIES:
-:ID:       63af966a-710b-4971-906b-6d94190c2758
-:END:
 
 I don't have a workflow configuration yet, but, if I did - I'd define it in a separate Workflow.org file like daviwil does.
 
@@ -1129,9 +1042,6 @@ Automatically tangle when saved without having to worry about =org-confirm-babel
 #+end_src
 
 ** Fonts and Bullets
-:PROPERTIES:
-:ID:       fbdf9e80-9486-4989-b761-fef7a28f75c2
-:END:
 
 - Note taken on [2021-07-14 Wed 18:43] \\
   Space around headings is terrible.
@@ -1198,9 +1108,6 @@ Uses org-superstar. I switch between this and org-bullets mode. org-bullets some
 #+end_src
 
 ** Structure Templates
-:PROPERTIES:
-:ID:       bebac89d-723c-4eb7-b18c-59efe14312f7
-:END:
 Org Mode’s structure templates feature enables you to quickly insert code blocks into your Org files in combination with =org-tempo= by typing =<= followed by the template name like =el= or =py= and then press =TAB=. For example, to insert an empty emacs-lisp block below, you can type =<el= and press =TAB= to expand into such a block.
 
 You can add more src block templates below by copying one of the lines and changing the two strings at the end, the first to be the template name and the second to contain the name of the language as it is known by Org Babel.
@@ -1219,9 +1126,6 @@ You can add more src block templates below by copying one of the lines and chang
 #+end_src
 
 ** Pomodoro
-:PROPERTIES:
-:ID:       202a3af1-9a1f-45e2-a38e-00bca04114ff
-:END:
 I use a Pomodoro timer when working to chunk my work into manageable blocks of time. This is a lot better than having to use the various terrible options for i3 that I've found in the past.
 
 #+begin_src emacs-lisp
@@ -1237,33 +1141,7 @@ I use a Pomodoro timer when working to chunk my work into manageable blocks of t
     "op" '(org-pomodoro :which-key "pomodoro")))
 #+end_src
 
-** Protocol
-:PROPERTIES:
-:ID:       13106fb6-3be1-4ba1-9dcb-571c870a8d82
-:END:
-
-Probably not needed if using custom functions invoked through =emacsclient=.
-
-#+begin_src emacs-lisp
-;; (require 'org-protocol)
-#+end_src
-
-** Searching
-:PROPERTIES:
-:ID:       b9c33599-8a5a-4529-b46c-725f49589318
-:END:
-
-@TODO: This doesn't work.
-#+begin_src emacs-lisp
-;; (defun cy/search-org-files ()
-;;   (interactive)
-;;   (counsel-rg "" "~/Notes" nil "Search Notes: "))
-#+end_src
-
 ** Bindings
-:PROPERTIES:
-:ID:       9356024c-a6f3-45ac-9bd5-d02ac363f4a9
-:END:
 
 Originally when I started using Org and Evil, I was using a package called `org-evil` for some nice relevant bindings. That package doesn't interfere or make any assumptions about what your leader key is. It doesn't use it at all.
 
@@ -1303,9 +1181,6 @@ I'm trying out daviwil's bindings using evil-org.
 #+end_src
 
 ** End use-package org-mode
-:PROPERTIES:
-:ID:       261b6019-3275-46cd-9c4d-6a87715b2aac
-:END:
 
 All the previous configuration, up to the parent header, has been inside one giant use-package block! Wild.
 
@@ -1321,6 +1196,29 @@ It's nice to have a table of contents section for long literate config files (li
 #+begin_src emacs-lisp
 (use-package org-make-toc
   :hook (org-mode . org-make-toc-mode))
+#+end_src
+
+** Calendar Sync
+          ;; org-gcal-client-secret (password-store-get "123")
+
+
+#+begin_src emacs-lisp
+  (use-package org-gcal
+    :after org
+    :config
+
+    (setq org-gcal-client-id (password-store-get "gcal-client-id")
+          org-gcal-client-secret (password-store-get "gcal-client-secret")
+          org-gcal-fetch-file-alist '(("carwinyoung@gmail.com" .  "~/Notes/Calendar/Personal.org")
+                                        ("carwin@mobomo.com" .  "~/Notes/Calendar/Mobomo.org"))))
+
+  (cy/leader-key-def
+    "C" '(:ignore t :which-key "calendar")
+    "Cf" '(org-gcal-fetch :which-key "fetch"))
+
+
+  (add-hook 'org-agenda-mode-hook (lambda () (org-gcal-fetch) ))
+  (add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-fetch) ))
 #+end_src
 
 ** Avoid creating backup files
@@ -1347,9 +1245,6 @@ I really dislike the litter, and I haven't yet needed a backup file. Here's hopi
 #+end_src
 
 ** Roam
-:PROPERTIES:
-:ID:       044b9a58-0e37-4d63-998a-ef5adb1d6d6d
-:END:
 
 This is the interface I use primarily for notes in a Zettelkasten style. I found this before I even understood what Org mode was, it's my origin story.
 
@@ -1358,9 +1253,6 @@ This is the interface I use primarily for notes in a Zettelkasten style. I found
   ;; (set-face-attribute 'org-roam-link-invalid nil :foreground "#fe4000")
 
 *** V1 Config
-:PROPERTIES:
-:ID:       29d5789a-8b41-4a47-ac99-f4fa99f7a24d
-:END:
 
 #+begin_src emacs-lisp
   (use-package org-roam
@@ -1461,9 +1353,6 @@ This is the interface I use primarily for notes in a Zettelkasten style. I found
 #+end_src
 
 *** V2 Config
-:PROPERTIES:
-:ID:       e2a56f97-d357-47b3-be28-656a646f8130
-:END:
 #+begin_src emacs-lisp
   ;; (use-package org-roam
   ;;   :ensure t
@@ -1594,9 +1483,6 @@ This is the interface I use primarily for notes in a Zettelkasten style. I found
 
 
 *** Org Roam Server
-:PROPERTIES:
-:ID:       4b4a15da-b68b-4cb2-8586-a0b12db46e30
-:END:
 @todo needs a description. Roam server lets me preview my files and see the big map of connected concepts in a browser.
 
 @todo swap the server host based on info about whether I'm in WSL or not.
@@ -1619,9 +1505,6 @@ This is the interface I use primarily for notes in a Zettelkasten style. I found
 #+end_src
 
 *** Org Roam Protocol
-:PROPERTIES:
-:ID:       697965ea-e41e-484a-bfa6-788654d00269
-:END:
 
 Allows opening notes from external applications in Emacs.
 
@@ -1630,9 +1513,6 @@ Allows opening notes from external applications in Emacs.
 #+end_src
 
 ** Automatically show/hide markup symbols
-:PROPERTIES:
-:ID:       16c07a10-0170-41b0-b8b1-28ac9dd8e057
-:END:
 
 Now characters won't disappear for stuff like === and =*= text.
 
@@ -1762,18 +1642,10 @@ Below is an example.
 ;;             (projectile-project-compilation-dir . nil)
 ;;             (projectile-project-compilation-cmd . "script/build")))))
 ;;
-;; (dir-locals-set-directory-class (expand-file-name "~/Projects/Home/atom") 'Atom)
+;; (dir-locals-set-directory-class (expand-file-name "~/Projects/home/atom") 'Atom)
 #+end_src
 
 ** Languages
-
-*** Flycheck
-
-#+begin_src emacs-lisp
-(use-package flycheck
- :ensure t
- :init (global-flycheck-mode))
-#+end_src
 
 *** Language Server Support
 
@@ -1834,7 +1706,7 @@ It's built on Treemacs, but it doesn't require Treemacs.
 
 **** lsp-ivy
 
-Integrates lsp-mode and Ivy. 
+Integrates lsp-mode and Ivy.
 
 #+begin_src emacs-lisp
 (use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
@@ -1950,30 +1822,30 @@ This will install the typescript-language-server and the TypeScript compiler pac
 *** Emacs Lisp
 
 #+begin_src emacs-lisp
-(add-hook 'emacs-lisp-mode-hook #'flycheck-mode)
+  (add-hook 'emacs-lisp-mode-hook 'flycheck-mode)
 
-;; Improved help in Emacs.
-(use-package helpful
-  :ensure t
-  :custom
-  (counsel-describe-function-function #'helpful-callable)
-  (counsel-describe-variable-function #'helpful-variable)
-  ;; Remap whatever key is bound to these functions to go to these other functions instead.
-  ;; This doesn't change the keybinding itself, only its target.
-  :bind
-  ([remap describe-function] . counsel-describe-function)
-  ([remap describe-command] . helpful-command)
-  ([remap describe-variable] . counsel-describe-variable)
-  ([remap describe-key] . helpful-key))
+  ;; Improved help in Emacs.
+  (use-package helpful
+    :ensure t
+    :custom
+    (counsel-describe-function-function #'helpful-callable)
+    (counsel-describe-variable-function #'helpful-variable)
+    ;; Remap whatever key is bound to these functions to go to these other functions instead.
+    ;; This doesn't change the keybinding itself, only its target.
+    :bind
+    ([remap describe-function] . counsel-describe-function)
+    ([remap describe-command] . helpful-command)
+    ([remap describe-variable] . counsel-describe-variable)
+    ([remap describe-key] . helpful-key))
 
-(cy/leader-key-def
-  "e"   '(:ignore t :which-key "eval")
-  "eb"  '(eval-buffer :which-key "eval buffer")
-  "eh"  '(eval-last-sexp :which-key "eval this"))
+  (cy/leader-key-def
+    "e"   '(:ignore t :which-key "eval")
+    "eb"  '(eval-buffer :which-key "eval buffer")
+    "eh"  '(eval-last-sexp :which-key "eval this"))
 
-(cy/leader-key-def
-  :keymaps 'visual
-  "er"  '(eval-region :which-key "eval region"))
+  (cy/leader-key-def
+    :keymaps 'visual
+    "er"  '(eval-region :which-key "eval region"))
 
 #+end_src
 
@@ -2025,11 +1897,11 @@ I do a ton of PHP work, but oddly don't have much configuration for it here. I s
 ;; (setq flymake-phpcs-standard "Drupal")
 ;; (setq flymake-phpcs-show-rule t)
 (use-package drupal-mode
-  :after (flycheck php-mode))
+  :after (php-mode))
+;;  :after (flycheck php-mode))
 #+end_src
 
 *** Python
-
 lsp-mode and dap-mode again, this time for Python.
 
 Ensure the pyls language server is installed before using lsp-mode.
@@ -2228,9 +2100,6 @@ This is a newish section. Expect changes.
 ** Productivity
 
 *** Flycheck
-:PROPERTIES:
-:ID:       c041d661-1ff9-4fe8-9773-d8f44009695e
-:END:
 
 #+begin_src emacs-lisp
 (use-package flycheck
@@ -2240,6 +2109,8 @@ This is a newish section. Expect changes.
 
 *** Snippets
 
+@todo I'm not actually using this yet.
+
 #+begin_src emacs-lisp
 ;; (use-package yasnippet
 ;;   :hook (prog-mode . yas-minor-mode)
@@ -2248,7 +2119,6 @@ This is a newish section. Expect changes.
 #+end_src
 
 *** Smart Parenthesis
-
 #+begin_src emacs-lisp
 (use-package smartparens
   :hook (prog-mode . smartparens-mode))
@@ -2284,9 +2154,6 @@ Set the background of HTML color strings in buffers to the color they represent.
 #+end_src
 
 *** Origami
-:PROPERTIES:
-:ID:       4280af62-fbd9-47d2-86b2-d003b33061ee
-:END:
 
 Better folding.
 
@@ -2306,9 +2173,6 @@ Better folding.
 ** Tools
 
 *** Company Mode
-:PROPERTIES:
-:ID:       1f543285-1d51-47dd-9086-8c2834a56b97
-:END:
 
 Company Mode provides a nice in-buffer completion interface, makes Emacs feel more IDE-like.
 
@@ -2339,9 +2203,6 @@ Company Box enhances the look with icons and stuff.
 #+end_src
 
 *** Treemacs
-:PROPERTIES:
-:ID:       40382653-230f-41cd-81a6-01c368460996
-:END:
 #+begin_src emacs-lisp
 (use-package treemacs-evil
   :after treemacs evil
@@ -2498,97 +2359,23 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
 
 (cy/leader-key-def
   "Cv"  '(cfw:open-org-calendar :which-key "view"))
-
-
-;; ;; Google Calendar
-(use-package org-gcal
-  :ensure t
-  :config
-  (setq org-gcal-client-id "367256572210-m73qcnfg3v1eiknjrtgk8runc6emmov5.apps.googleusercontent.com"
-        org-gcal-client-secret "zzNMaXuX6CWpF3iLArSgy85W"
-        org-gcal-recurring-events-mode 'nested
-        org-gcal-notify-p nil
-        org-gcal-remove-api-cancelled-events t
-        org-gcal-fetch-file-alist '(("carwinyoung@gmail.com" .  "~/Documents/Notes/cal-personal.org")
-                                    ("carwin@mobomo.com" .  "~/Documents/Notes/cal-mobomo.org"))))
-
-(add-hook 'org-agenda-mode-hook (lambda () (org-gcal-fetch) ))
-(add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-fetch) ))
-#+end_src
-
-#+begin_src emacs-lisp
-(defun cy/org-gcal-flush-and-refetch ()
-  (interactive)
-;;; Commentary:
-  "Fix duplicates displayed in org gcal.
-Delete agenda files, kill agenda buffers, remove token files, clear tokens in
-Emacs, re-fetch all information with org-gcal."
-;;; Code:
-  ;; Time stamp
-  (defvar ogf-dtstamp)
-  (setq ogf-dtstamp (format-time-string "%Y%m%d_%H%M"))
-
-  ;; Find agenda files
-  (defvar ogf-agendapath "/Path/To/My/Folder/With/AgendaFiles")
-  (defvar ogf-agendafiles)
-  (setq ogf-agendafiles (directory-files ogf-agendapath nil ".org$"))
-
-  ;; Set trash folder
-  (defvar ogf-trashfolder)
-  (setq ogf-trashfolder (concat "~/.Trash/org-gcal-fix_" ogf-dtstamp "/"))
-  (make-directory ogf-trashfolder)
-
-  ;; Clean up loop:
-  (dolist (element ogf-agendafiles)
-    ;; 1) Move agenda files to trash (don't really delete)
-    (rename-file
-     (concat ogf-agendapath "/" element)
-     (concat ogf-trashfolder element))
-    ;; 2) Close buffer
-    (when (get-buffer element)
-      (kill-buffer element))
-    )
-
-  ;; Close agenda buffer
-  (when (get-buffer "*Org Agenda*")
-    (kill-buffer "*Org Agenda*"))
-
-  ;; Remove token file
-  (rename-file
-   "~/.emacs.d/org-gcal/.org-gcal-token"
-   (concat ogf-trashfolder "/org-gcal-token"))
-
-  ;; Clear sync tokens in Emacs
-  (org-gcal-sync-tokens-clear)
-  (unintern 'org-gcal-token-plist)
-
-  ;; Set the browser function to external browser. This is required for
-  ;; obtaining a token (see next step)
-  (defvar ogf-current-browser browse-url-browser-function)
-  (setq browse-url-browser-function 'browse-url-generic)
-
-  ;; Refetch calendar (this should prompt for obtaining a token again)
-  (org-gcal-fetch)
-
-  ;; Restore browser function
-  (setq browse-url-browser-function 'ogf-current-browser)
-
-;; (add-hook 'org-agenda-mode-hook (lambda () (org-gcal-fetch) ))
-;; (add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-fetch) ))
 #+end_src
 
 ** Mail
 *** mu4e
 
-#+begin_src emacs-lisp :noweb yes
-;; (defun cy/run-tangles ()
-;;   (when (string-match "\\(dotfiles/\\)$" (file-name-directory buffer-file-name))
-;;     (shell-command-to-string (concat (file-name-directory buffer-file-name) "tangled/*.sh"))))
+Locate my Email signatures for different accounts.
 
+#+begin_src emacs-lisp :noweb yes
 (defun cy/work-sig ()
   (shell-command-to-string "cat ~/Mail/Work/signature.sig"))
 (defun cy/home-sig ()
   (shell-command-to-string "cat ~/Mail/Home/signature.sig"))
+#+end_src
+
+Configure =mu=, my favorite email client.
+
+#+begin_src emacs-lisp :noweb yes
 
 (use-package mu4e
   :ensure nil
@@ -2681,9 +2468,6 @@ Emacs, re-fetch all information with org-gcal."
 #+end_src
 
 * Desktop Setup
-:PROPERTIES:
-:ID:       f0d8a5d7-514f-49c5-ac69-49011c6091f0
-:END:
 
 #+begin_src emacs-lisp
 (use-package pinentry
