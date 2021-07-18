@@ -31,6 +31,7 @@ sudo pacman -S \
   emacs \
   tmux \
   vim \
+  awesome-terminal-fonts \
   i3-gaps \
   htop \
   wget \
@@ -65,7 +66,6 @@ yay -S \
   feh \
   flac \
   gnupg \
-  i3-gnome-pomodoro-git \
   iotop \
   polybar \
   lando \
@@ -76,12 +76,13 @@ yay -S \
   mpd \
   mpv \
   multimarkdown \
-  mutt \
+  mu \
   ncmpcpp \
   network-manager-applet \
   networkmanager-l2tp \
   networkmanager-libreswan \
   nodejs \
+  noto-fonts \
   npm \
   ntfs-3g \
   nvm \
@@ -120,57 +121,65 @@ yay -S \
 I use a =.profile= file because it's easy to source for my primary shell (=zsh=), works with =bash=, and login managers read it. This covers the absolute basics of my configuration in a lot of instances.
 
 #+begin_src conf :tangle ~/.profile :mkdirp
-EDITOR='vim'
-VISUAL='vim'
-DIFFPROG='vim'
-LANG=en_US.UTF-8
-LC_ALL=en_US.UTF-8
-LC_COLLATE=C
-RANGER_LOAD_DEFAULT_RC=false
+  DIFFPROG='vim'
+  LANG=en_US.UTF-8
+  LC_ALL=en_US.UTF-8
+  LC_COLLATE=C
+  RANGER_LOAD_DEFAULT_RC=false
+  EDITOR="emacsclient --alternate-editor=vim -nw"
+  VISUAL="emacsclient --alternate-editor=vim"
+  ALTERNATE_EDITOR="emacs -Q"
 
-# 256 Colors if we're using xterm.
-[[ "$TERM" == "xterm" ]] && export TERM=xterm-256-color
 
-# Add Ruby gems into path.
-if which ruby >/dev/null && which gem >/dev/null; then
-  PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"
-fi
+  # 256 Colors if we're using xterm.
+  [[ "$TERM" == "xterm" ]] && export TERM=xterm-256-color
 
-# Source Ruby Version Manager (rvm)
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
-[[ -s "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" ]] && source "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+  # Ensure /usr/local/bin is in path.
+  PATH="/usr/local/bin:$PATH"
 
-# Add Rust crates into path.
-if which rustup >/dev/null; then
-  PATH="$HOME/.cargo/bin:$PATH"
-fi
+  # Add Ruby gems into path.
+  if which ruby >/dev/null && which gem >/dev/null; then
+    PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"
+  fi
 
-# Add composer globals into path.
-export PATH="$PATH:$HOME/.config/composer/vendor/bin"
+  # Source Ruby Version Manager (rvm)
+  [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+  [[ -s "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" ]] && source "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" # Load RVM into a shell session *as a function*
 
-# Add cuda stuff into path
-export PATH="$PATH:/opt/cuda/bin"
+  # Add Rust crates into path.
+  if which rustup >/dev/null; then
+    PATH="$HOME/.cargo/bin:$PATH"
+  fi
 
-# Source node version manager
-[[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
-[[ -s /usr/share/nvm/init-nvm.sh ]] && . /usr/share/nvm/init-nvm.sh
-# source /usr/share/nvm/init-nvm.sh
+  # Add composer globals into path.
+  export PATH="$PATH:$HOME/.config/composer/vendor/bin"
 
-# LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
-LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
+  # Add cuda stuff into path
+  export PATH="$PATH:/opt/cuda/bin"
 
-# Add personal binaries into PATH.
-# PATH="$HOME/.local/bin:$PATH"
+  # Source node version manager
+  [[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
+  [[ -s /usr/share/nvm/init-nvm.sh ]] && . /usr/share/nvm/init-nvm.sh
+  # source /usr/share/nvm/init-nvm.sh
 
-# XDG Basedir specification, these for some reason don't go into user-dirs.dirs
-XDG_CONFIG_HOME="$HOME/.config"
-XDG_DATA_HOME="$HOME/.local/share"
-XDG_CACHE_HOME="$HOME/.cache"
-ZDOTDIR="$HOME/.zsh"
+  # LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
+  LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
+
+  # Add personal binaries into PATH.
+  # PATH="$HOME/.local/bin:$PATH"
+
+  # XDG Basedir specification, these for some reason don't go into user-dirs.dirs
+  XDG_CONFIG_HOME="$HOME/.config"
+  XDG_DATA_HOME="$HOME/.local/share"
+  XDG_CACHE_HOME="$HOME/.cache"
+  ZDOTDIR="$HOME/.zsh"
 #+end_src
+
+(when (equal system-name "PUNCHY"))
 
 #+begin_src sh :noweb-ref environment-post-tangle
 # source ~/.profile
+
 #+end_src
 
 ** XDG User Directories
@@ -214,85 +223,102 @@ This is where shells are configured. I primarily use =zsh= but I've also used sp
 There's not much to say here. The primarily interesting thing here is the sourcing of =~/.profile= at the top.
 
 #+begin_src conf :tangle ~/.zshrc :mkdirp yes
-source ~/.profile
-source ${ZDOTDIR:-$HOME}/prompt
+  source ~/.profile
+  source ${ZDOTDIR:-$HOME}/prompt
 
-setopt AUTO_CD # Don't make me use `cd`. You know what I wanted.
-setopt NO_CASE_GLOB # Case insensitive globbing.
+  setopt AUTO_CD # Don't make me use `cd`. You know what I wanted.
+  setopt NO_CASE_GLOB # Case insensitive globbing.
 
-# Save history
-HISTFILE=${ZDOTDIR:-$HOME}/.zhistory
-setopt EXTENDED_HISTORY # timestamp history lines
-SAVEHIST=5000
-HISTSIZE=2000
-setopt SHARE_HISTORY # share history across sessions
-setopt APPEND_HISTORY # just keep adding to history
-setopt INC_APPEND_HISTORY # write all the time, don't wait for shell to close
-setopt HIST_EXPIRE_DUPS_FIRST # expire duplicates first
-setopt HIST_IGNORE_DUPS # do not store duplicates
-setopt HIST_FIND_NO_DUPS # ignore duplicates when searching
-setopt HIST_REDUCE_BLANKS # remove blank lines from history
-setopt HIST_VERIFY # be really sure when using !!
+  # Save history
+  HISTFILE=${ZDOTDIR:-$HOME}/.zhistory
+  setopt EXTENDED_HISTORY # timestamp history lines
+  SAVEHIST=5000
+  HISTSIZE=2000
+  setopt SHARE_HISTORY # share history across sessions
+  setopt APPEND_HISTORY # just keep adding to history
+  setopt INC_APPEND_HISTORY # write all the time, don't wait for shell to close
+  setopt HIST_IGNORE_DUPS # do not store duplicates
+  setopt HIST_IGNORE_ALL_DUPS
+  setopt HIST_EXPIRE_DUPS_FIRST # expire duplicates first
+  setopt HIST_SAVE_NO_DUPS
+  setopt HIST_IGNORE_SPACE
+  setopt HIST_FIND_NO_DUPS # ignore duplicates when searching
+  setopt HIST_REDUCE_BLANKS # remove blank lines from history
+  setopt HIST_VERIFY # be really sure when using !!
 
-# Correction
-setopt CORRECT
-setopt CORRECT_ALL # Correct when using AUTO_CD
+  # Correction
+  setopt CORRECT
+  setopt CORRECT_ALL # Correct when using AUTO_CD
 
-# Autocompletion
-autoload -Uz compinit && compinit
+  # Autocompletion
+  autoload -Uz compinit && compinit
 
-# Fragment completion.
-zstyle ':completion:*' list-suffixes zstyle ':completion:*' expand prefix suffix
+  # Fragment completion.
+  zstyle ':completion:*' list-suffixes zstyle ':completion:*' expand prefix suffix
 
-# Tab completion
-setopt MENU_COMPLETE
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}' # Autocomplete, case insensitive
-zstyle ':completion:*' menu select  # Highlight on tab
+  # Tab completion
+  setopt MENU_COMPLETE
+  zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}' # Autocomplete, case insensitive
+  zstyle ':completion:*' menu select  # Highlight on tab
 
-# Color dirs
-export LS_COLORS # I don't know why this is necessary here, but colors don't work without it.
-zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+  # Color dirs
+  export LS_COLORS # I don't know why this is necessary here, but colors don't work without it.
+  zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 
-alias ls='ls --color=auto'
-alias 7zultra='7z a -t7z -m0=lzma2 -mx=0 -mfb=64 -md=32m -ms=on'
-alias curlheaders='curl -I'
-alias curlheadersproxy='curl --socks5 localhost:11080 -I'
-alias scrot='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/foo.png && rm ~/foo.png'
-alias webcam='mplayer tv:// -tv driver=v412:width=1920:height=1080:device=/dev/video0 -fps 15 -vf screenshot'
-alias dots='cd ~/Projects/Home/sys/dotfiles'
-alias work='cd ~/Projects/Work'
-alias notes='cd ~/Documents/Notes'
-alias docs='cd ~/Documents'
-alias mine-rvn='~/Documents/Cryptocurrency/Mining/RVN/t-rex/t-rex -c ~/Documents/Cryptocurrency/Mining/RVN/t-rex-config.json'
-alias mine-nicehash='sudo ~/Documents/Cryptocurrency/Mining/NiceHash/PhoenixMiner/PhoenixMiner'
-#alias startwin='sudo virsh -c qemu:///system start win10'
-#alias stopwin='sudo virsh -c qemu:///system shutdown win10'
+  alias ls='ls --color=auto'
+  alias 7zultra='7z a -t7z -m0=lzma2 -mx=0 -mfb=64 -md=32m -ms=on'
+  alias curlheaders='curl -I'
+  alias curlheadersproxy='curl --socks5 localhost:11080 -I'
+  alias scrot='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/foo.png && rm ~/foo.png'
+  alias webcam='mplayer tv:// -tv driver=v412:width=1920:height=1080:device=/dev/video0 -fps 15 -vf screenshot'
+  alias dots='cd ~/Projects/home/dotfiles'
+  alias work='cd ~/Projects/work'
+  alias notes='cd ~/Notes'
+  alias docs='cd ~/Documents'
+  alias em='emacsclient'
+  alias emc='emacsclient -c &'
+  #alias startwin='sudo virsh -c qemu:///system start win10'
+  #alias stopwin='sudo virsh -c qemu:///system shutdown win10'
+
+
+  export GPG_TTY=$(tty)
+
+  # System dependent variables:
+  if [[ "$(< /proc/sys/kernel/osrelease)" == *microsoft* ]]; then
+      export $(dbus-launch)
+      export LIBGL_ALWAYS_INDIRECT=1
+      export WSL_VERSION=$(wsl.exe -l -v | grep -a '[*]' | sed 's/[^0-9]*//g')
+      export WSL_HOST=$(tail -1 /etc/resolv.conf | cut -d' ' -f2)
+      export DISPLAY=$(ipconfig.exe | grep IPv4 | head -1 | rev | awk '{print $1}' | rev | tr -d '\r'):0.0
+
+      # Handle pinentry for gpg password prompting in various scenarios.
+      # In Ubuntu-20.04 WSL2, I've essentially given up on getting pinentry
+      # in Emacs directly, opting instead for the pinentry-gtk2 package.
+      kill -0 $SSH_AGENT_PID &> /dev/null
+      if [[ $? -eq 1 ]]; then
+          eval $( gpg-agent \
+              --daemon \
+              --allow-emacs-pinentry \
+              --allow-loopback-pinentry \
+              --enable-ssh-support);
+      fi
+
+      # Start Docker daemon when logging in if not runnint
+      RUNNING=`ps aux | grep dockerd | grep -v grep`
+      if [ -z "$RUNNING" ]; then
+          sudo dockerd > /dev/null 2>&1 &
+          disown
+      fi
+
+
+  else
+      export DISPLAY=:0
+  fi
 #+end_src
 
 My custom prompt for =zsh=.
 
 #+begin_src conf :tangle ~/.zsh/prompt :mkdirp yes
-
-# Setup ruby prompt
-#count_rbs=`find . -maxdepth 1 -type f -name "*.rb" | wc -l`;
-#count_gemfile=`find . -maxdepth 1 -type f -name "Gemfile" | wc -l`;
-
-# function ruby_version()
-# {
-#   if [ $count_rbs != 0 ] || [ $count_gemfile != 0 ]; then
-#     if which rvm-prompt &> /dev/null; then
-#         #echo "%F{225}(%F{212} $(rvm-prompt i v g) %F{225})"
-#         rvm-prompt i v g
-#     else
-#       if which rbenv &> /dev/null; then
-#         rbenv version | sed -e "s/ (set.*$//"
-#       fi
-#     fi
-#   else
-#     false
-#   fi
-# }
-
 # Left prompt
 export PS1="%F{223}%n%F{224}@%F{211}%m %F{179}%~%b%F{255} › "
 
@@ -331,7 +357,8 @@ Xcursor.size: 18
 
 ! special
 *.foreground:   #d8dee8
-*.background:   #2f343f
+!*.background:   #2f343f
+*.background: #080808
 *.cursorColor:  #b48ead
 
 ! black
@@ -402,12 +429,14 @@ URxvt*iso14755:   false
 URxvt*urgentOnBell:  true
 
 ! appearance
-URxvt*depth:   24
+URxvt*depth:   32
 URxvt*scrollBar:  false
 URxvt*scrollBar_right: false
 URxvt*internalBorder: 24
 URxvt*externalBorder: 0
 URxvt.geometry:   84x22
+URxvt*transparent: true
+URxvt*shading: 25
 
 ! perl extensions
 URxvt.perl-ext-common: default,clipboard,url-select,keyboard-select,selection-clipboard,matcher
@@ -540,181 +569,194 @@ Writes out my global =git= configuration.
 *** i3
 
 #+begin_src conf :tangle ~/.config/i3/config :mkdirp yes
-# i3 config file (v4)
-#
-# Please see https://i3wm.org/docs/userguide.html for a complete reference!
-set $mod Mod1
-# Font for window titles. Will also be used by the bar unless a different font
-# is used in the bar {} block below.
-font pango:monospace 8
-# exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
-exec --no-startup-id nm-applet
-# Common app binds
-bindsym Print exec scrot
-# Use pactl to adjust volume in PulseAudio.
-set $refresh_i3status killall -SIGUSR1 i3status
-bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && $refresh_i3status
-bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10% && $refresh_i3status
-bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle && $refresh_i3status
-bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && $refresh_i3status
-# Keybindings to control MPD
-bindsym XF86AudioPlay exec "mpc toggle"
-bindsym XF86AudioStop exec "mpc stop"
-bindsym XF86AudioNext exec "mpc next"
-# Use Mouse+$mod to drag floating windows to their wanted position
-floating_modifier $mod
-# start a terminal
-bindsym $mod+Return exec i3-sensible-terminal
-# kill focused window
-bindsym $mod+Shift+q kill
-# start dmenu (a program launcher)
-# bindsym $mod+d exec ~/Scripts/rofia.sh
-bindsym $mod+d exec ~/.config/rofi/rofia.sh
-# change focus
-bindsym $mod+h focus left
-bindsym $mod+j focus down
-bindsym $mod+k focus up
-bindsym $mod+l focus right
-# move focused window
-bindsym $mod+Shift+h move left
-bindsym $mod+Shift+j move down
-bindsym $mod+Shift+k move up
-bindsym $mod+Shift+l move right
-# alternatively, you can use the cursor keys:
-bindsym $mod+Shift+Left move left
-bindsym $mod+Shift+Down move down
-bindsym $mod+Shift+Up move up
-bindsym $mod+Shift+Right move right
-# split in horizontal orientation
-bindsym $mod+apostrophe split h
-# split in vertical orientation
-bindsym $mod+minus split v
-# enter fullscreen mode for the focused container
-bindsym $mod+f fullscreen toggle
-# change container layout (stacked, tabbed, toggle split)
-bindsym $mod+s layout stacking
-bindsym $mod+w layout tabbed
-bindsym $mod+e layout toggle split
-# toggle tiling / floating
-bindsym $mod+Shift+space floating toggle
-# change focus between tiling / floating windows
-bindsym $mod+space focus mode_toggle
-# focus the parent container
-bindsym $mod+a focus parent
-# focus the child container
-#bindsym $mod+d focus child
+  # i3 config file (v4)
+  #
+  # Please see https://i3wm.org/docs/userguide.html for a complete reference!
+  set $mod Mod1
+  # Font for window titles. Will also be used by the bar unless a different font
+  # is used in the bar {} block below.
+  font pango:monospace 8
+  # exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
+  exec --no-startup-id nm-applet
+  # Common app binds
+  bindsym Print exec scrot
+  # Use pactl to adjust volume in PulseAudio.
+  set $refresh_i3status killall -SIGUSR1 i3status
+  bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && $refresh_i3status
+  bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10% && $refresh_i3status
+  bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle && $refresh_i3status
+  bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && $refresh_i3status
+  # Keybindings to control MPD
+  bindsym XF86AudioPlay exec "mpc toggle"
+  bindsym XF86AudioStop exec "mpc stop"
+  bindsym XF86AudioNext exec "mpc next"
 
-# Define names for default workspaces for which we configure key bindings later on.
-set $prim "primary"
-set $comm "comm."
-set $net "internet"
-set $game "game"
-set $mail "mail"
-set $ws2 "2"
-set $ws3 "3"
-set $ws4 "4"
-set $ws5 "5"
-set $ws6 "6"
-set $ws7 "7"
-set $ws8 "8"
-set $ws9 "9"
-set $ws10 "10"
-# Switch to workspace
-bindsym $mod+1 workspace $prim
-bindsym $mod+2 workspace number $ws2
-bindsym $mod+3 workspace number $ws3
-bindsym $mod+4 workspace number $ws4
-bindsym $mod+5 workspace number $ws5
-bindsym $mod+6 workspace number $ws6
-bindsym $mod+7 workspace number $ws7
-bindsym $mod+8 workspace number $ws8
-bindsym $mod+9 workspace number $ws9
-bindsym $mod+0 workspace number $ws10
-bindsym $mod+c workspace $comm
-bindsym $mod+n workspace $net
-bindsym $mod+g workspace $game
-bindsym $mod+m workspace $mail
-# move focused container to workspace
-bindsym $mod+Shift+1 move container to workspace $prim
-bindsym $mod+Shift+2 move container to workspace number $ws2
-bindsym $mod+Shift+3 move container to workspace number $ws3
-bindsym $mod+Shift+4 move container to workspace number $ws4
-bindsym $mod+Shift+5 move container to workspace number $ws5
-bindsym $mod+Shift+6 move container to workspace number $ws6
-bindsym $mod+Shift+7 move container to workspace number $ws7
-bindsym $mod+Shift+8 move container to workspace number $ws8
-bindsym $mod+Shift+9 move container to workspace number $ws9
-bindsym $mod+Shift+0 move container to workspace number $ws10
-bindsym $mod+Shift+c move container to workspace $comm
-bindsym $mod+Shift+n move container to workspace $net
-bindsym $mod+Shift+g move container to workspace $game
-bindsym $mod+Shift+m move container to workspace $mail
-# reload the configuration file
-bindsym $mod+Shift+Control+c reload
-# restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
-bindsym $mod+Shift+r restart
-# exit i3 (logs you out of your X session)
-bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
-# resize window (you can also use the mouse for that)
-mode "resize" {
-        # These bindings trigger as soon as you enter the resize mode
-        bindsym j resize shrink width 10 px or 10 ppt
-        bindsym k resize grow height 10 px or 10 ppt
-        bindsym l resize shrink height 10 px or 10 ppt
-        bindsym semicolon resize grow width 10 px or 10 ppt
+  exec xautolock -time 10 -locker "i3lock -i ~/Pictures/Wallpaper/pp0vfkij80y31.png"
+  bindsym XF86ScreenSaver exec "i3lock -i ~/Pictures/Wallpaper/pp0vfkij80y31.png"
 
-        # same bindings, but for the arrow keys
-        bindsym Left resize shrink width 10 px or 10 ppt
-        bindsym Down resize grow height 10 px or 10 ppt
-        bindsym Up resize shrink height 10 px or 10 ppt
-        bindsym Right resize grow width 10 px or 10 ppt
+  # Use Mouse+$mod to drag floating windows to their wanted position
+  floating_modifier $mod
+  # start a terminal
+  bindsym $mod+Return exec i3-sensible-terminal
+  # kill focused window
+  bindsym $mod+Shift+q kill
+  # start dmenu (a program launcher)
+  # bindsym $mod+d exec ~/Scripts/rofia.sh
+  bindsym $mod+d exec ~/.config/rofi/rofia.sh
+  # bindsym $mod+space exec rofi -show combi -modi combi -font "Open Sans 14" -lines 10 -matching fuzzy daemon
 
-        # back to normal: Enter or Escape or $mod+r
-        bindsym Return mode "default"
-        bindsym Escape mode "default"
-        bindsym $mod+r mode "default"
-}
-bindsym $mod+r mode "resize"
-# Start i3bar to display a workspace bar (plus the system information i3status
-# finds out, if available)
-# bar {
-#         colors {
-#         background #2f343f
-#         statusline #2f343f
-#         separator #4b5262
-#         # colour of border, background, and text
-#         focused_workspace       #2f343f #bf616a #d8dee8
-#         active_workspace        #2f343f #2f343f #d8dee8
-#         inactive_workspace      #2f343f #2f343f #d8dee8
-#         urgent_workspacei       #2f343f #ebcb8b #2f343f
-#     }
-#         status_command i3status
-# }
-# window rules, you can find the window class using xprop
-for_window [class=".*"] border pixel 1
-for_window [class=feh|Pavucontrol] floating enable
-for_window [class=zoom title="^Participants"] floating enable
-for_window [class=zoom title="^Zoom Meeting"] floating enable
-for_window [class=zoom title="^Zoom - Licensed Account"] floating enable
-for_window [class=firefox] move --no-auto-back-and-forth container to workspace $net
-for_window [class=Google-chrome window_role=browser] move container to workspace $net
-for_window [class=Google-chrome window_role=pop-up] move container to workspace $comm
-for_window [class=Signal] move container to workspace $comm
-for_window [class=Emacs] move container to workspace $prim
-# Autostart applications and other things
-exec --no-startup-id ~/.fehbg &
-# exec --no-startup-id xsettingsd &
-# exec --no-startup-id ~/.screenlayout/home_triple.sh &
-exec --no-startup-id dunst &
-exec --no-startup-id picom -b
-exec --no-startup-id ~/.config/polybar/launch.sh --hack
-# colour of border, background, text, indicator, and child_border
-client.focused              #bf616a #2f343f #d8dee8 #bf616a #ff91a4
-client.focused_inactive     #2f343f #2f343f #d8dee8 #2f343f #2f343f
-client.unfocused            #2f343f #2f343f #d8dee8 #2f343f #2f343f
-client.urgent               #2f343f #2f343f #d8dee8 #2f343f #2f343f
-client.placeholder          #2f343f #2f343f #d8dee8 #2f343f #2f343f
-client.background           #2f343f
+  # change focus
+  bindsym $mod+h focus left
+  bindsym $mod+j focus down
+  bindsym $mod+k focus up
+  bindsym $mod+l focus right
+  # move focused window
+  bindsym $mod+Shift+h move left
+  bindsym $mod+Shift+j move down
+  bindsym $mod+Shift+k move up
+  bindsym $mod+Shift+l move right
+  # alternatively, you can use the cursor keys:
+  bindsym $mod+Shift+Left move left
+  bindsym $mod+Shift+Down move down
+  bindsym $mod+Shift+Up move up
+  bindsym $mod+Shift+Right move right
+  # split in horizontal orientation
+  bindsym $mod+apostrophe split h
+  # split in vertical orientation
+  bindsym $mod+minus split v
+  # enter fullscreen mode for the focused container
+  bindsym $mod+f fullscreen toggle
+  # change container layout (stacked, tabbed, toggle split)
+  bindsym $mod+s layout stacking
+  bindsym $mod+w layout tabbed
+  bindsym $mod+e layout toggle split
+  # toggle tiling / floating
+  bindsym $mod+Shift+space floating toggle
+  # change focus between tiling / floating windows
+  bindsym $mod+space focus mode_toggle
+  # focus the parent container
+  bindsym $mod+a focus parent
+  # focus the child container
+  #bindsym $mod+d focus child
+
+  # Define names for default workspaces for which we configure key bindings later on.
+  set $prim "1: I"
+  set $ws2 "2: II"
+  set $ws3 "3: III"
+  set $ws4 "4: IV"
+  set $ws5 "5: V"
+  set $ws6 "6: VI"
+  set $ws7 "7: VII"
+  set $ws8 "8: VIII"
+  set $ws9 "9: IX"
+  set $ws10 "10: X"
+  set $comm "comm."
+  set $net "internet"
+  set $game "game"
+  set $mail "mail"
+
+  # Switch to workspace
+  bindsym $mod+1 workspace $prim
+  bindsym $mod+2 workspace number $ws2
+  bindsym $mod+3 workspace number $ws3
+  bindsym $mod+4 workspace number $ws4
+  bindsym $mod+5 workspace number $ws5
+  bindsym $mod+6 workspace number $ws6
+  bindsym $mod+7 workspace number $ws7
+  bindsym $mod+8 workspace number $ws8
+  bindsym $mod+9 workspace number $ws9
+  bindsym $mod+0 workspace number $ws10
+  bindsym $mod+c workspace $comm
+  bindsym $mod+n workspace $net
+  bindsym $mod+g workspace $game
+  bindsym $mod+m workspace $mail
+  # move focused container to workspace
+  bindsym $mod+Shift+1 move container to workspace $prim
+  bindsym $mod+Shift+2 move container to workspace number $ws2
+  bindsym $mod+Shift+3 move container to workspace number $ws3
+  bindsym $mod+Shift+4 move container to workspace number $ws4
+  bindsym $mod+Shift+5 move container to workspace number $ws5
+  bindsym $mod+Shift+6 move container to workspace number $ws6
+  bindsym $mod+Shift+7 move container to workspace number $ws7
+  bindsym $mod+Shift+8 move container to workspace number $ws8
+  bindsym $mod+Shift+9 move container to workspace number $ws9
+  bindsym $mod+Shift+0 move container to workspace number $ws10
+  bindsym $mod+Shift+c move container to workspace $comm
+  bindsym $mod+Shift+n move container to workspace $net
+  bindsym $mod+Shift+g move container to workspace $game
+  bindsym $mod+Shift+m move container to workspace $mail
+  # reload the configuration file
+  bindsym $mod+Shift+Control+c reload
+  # restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
+  bindsym $mod+Shift+r restart
+  # exit i3 (logs you out of your X session)
+  bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
+  # resize window (you can also use the mouse for that)
+  mode "resize" {
+          # These bindings trigger as soon as you enter the resize mode
+          bindsym j resize shrink width 10 px or 10 ppt
+          bindsym k resize grow height 10 px or 10 ppt
+          bindsym l resize shrink height 10 px or 10 ppt
+          bindsym semicolon resize grow width 10 px or 10 ppt
+
+          # same bindings, but for the arrow keys
+          bindsym Left resize shrink width 10 px or 10 ppt
+          bindsym Down resize grow height 10 px or 10 ppt
+          bindsym Up resize shrink height 10 px or 10 ppt
+          bindsym Right resize grow width 10 px or 10 ppt
+
+          # back to normal: Enter or Escape or $mod+r
+          bindsym Return mode "default"
+          bindsym Escape mode "default"
+          bindsym $mod+r mode "default"
+  }
+  bindsym $mod+r mode "resize"
+  # Start i3bar to display a workspace bar (plus the system information i3status
+  # finds out, if available)
+  # bar {
+  #         colors {
+  #         background #2f343f
+  #         statusline #2f343f
+  #         separator #4b5262
+  #         # colour of border, background, and text
+  #         focused_workspace       #2f343f #bf616a #d8dee8
+  #         active_workspace        #2f343f #2f343f #d8dee8
+  #         inactive_workspace      #2f343f #2f343f #d8dee8
+  #         urgent_workspacei       #2f343f #ebcb8b #2f343f
+  #     }
+  #         status_command i3status
+  # }
+  # window rules, you can find the window class using xprop
+  for_window [class=".*"] border pixel 1
+  for_window [class=feh|Pavucontrol] floating enable
+  for_window [class=zoom title="^Participants"] floating enable
+  for_window [class=zoom title="^Zoom Meeting"] floating enable
+  for_window [class=zoom title="^Zoom - Licensed Account"] floating enable
+  for_window [class=firefox] move --no-auto-back-and-forth container to workspace $net
+  for_window [class=Google-chrome window_role=browser] move container to workspace $net
+  for_window [class=Google-chrome window_role=pop-up] move container to workspace $comm
+  for_window [class=Signal] move container to workspace $comm
+  for_window [class=Emacs] move container to workspace $prim
+  # Autostart applications and other things
+  exec --no-startup-id ~/.fehbg &
+  exec --no-startup-id xmodmap ~/.Xmodmap
+  # exec --no-startup-id xsettingsd &
+  # exec --no-startup-id ~/.screenlayout/home_triple.sh &
+  exec --no-startup-id dunst &
+  exec --no-startup-id picom -b
+  exec --no-startup-id ~/.config/polybar/launchbars.sh
+  # colour of border, background, text, indicator, and child_border
+  client.focused              #bf616a #2f343f #d8dee8 #bf616a #ff91a4
+  client.focused_inactive     #2f343f #2f343f #d8dee8 #2f343f #2f343f
+  client.unfocused            #2f343f #2f343f #d8dee8 #2f343f #2f343f
+  client.urgent               #2f343f #2f343f #d8dee8 #2f343f #2f343f
+  client.placeholder          #2f343f #2f343f #d8dee8 #2f343f #2f343f
+  client.background           #2f343f
+
+  gaps inner 10
+  gaps outer 0
+  gaps horizontal 0
+  gaps vertical 25
 #+end_src
 
 *** i3status
@@ -801,6 +843,306 @@ general {
     color_bad = '#ba5e57'
 }
 
+#+end_src
+
+*** Polybar
+#+begin_src sh :tangle ~/.config/polybar/launchbars.sh :mkdirp yes :tangle-mode (identity #o755)
+#!/bin/sh
+
+killall polybar
+
+if type "xrandr"; then
+  for m in $(xrandr --query | grep " connected" | cut -d" " -f1); do
+      MONITOR=$m polybar topbar -c ~/.config/polybar/topbar.conf &
+      MONITOR=$m polybar bottombar -c ~/.config/polybar/bottombar.conf &
+  done
+else
+    polybar topbar -c ~/.config/polybar/topbar.conf &
+    polybar bottombar -c ~/.config/polybar/bottombar.conf &
+fi
+#+end_src
+
+**** Bottom bar
+#+begin_src conf :tangle ~/.config/polybar/bottombar.conf :mkdirp yes
+  [bar/bottombar]
+  monitor = ${env:MONITOR:LVDS1}
+  width = 100%
+  height = 25
+  bottom = true
+
+  background = #00000000
+  foreground = #88FFFFFF
+
+  font-0 = Open Sans:pixelsize=10;1
+  font-1 = FontAwesome:pixelsize=10;1
+
+  separator = "  "
+  modules-left =
+  modules-center = battery temperature cpu memory volume wireless-network
+  modules-right =
+
+  tray-position = right
+  tray-padding = 0
+
+  override-redirect = true
+  wm-restack = i3
+
+  [module/volume]
+  type = internal/alsa
+
+  format-volume = <ramp-volume> <label-volume>
+  ;label-volume = VOL
+  label-volume-foreground = #d7d7d7
+
+  format-muted-prefix = " "
+  format-muted-foreground = #f0f0f0
+  ;label-muted = muted
+
+  bar-volume-width = 10
+  bar-volume-foreground-0 = #55aa55
+  bar-volume-foreground-1 = #55aa55
+  bar-volume-foreground-2 = #55aa55
+  bar-volume-foreground-3 = #55aa55
+  bar-volume-foreground-4 = #55aa55
+  bar-volume-foreground-5 = #f5a70a
+  bar-volume-foreground-6 = #ff5555
+  bar-volume-gradient = false
+  bar-volume-indicator = |
+  bar-volume-indicator-font = 2
+  bar-volume-fill = ─
+  bar-volume-fill-font = 2
+  bar-volume-empty = ─
+  bar-volume-empty-font = 2
+  bar-volume-empty-foreground = #ff8f8f
+
+  ; Only applies if <ramp-volume> is used
+  ramp-volume-0 = 
+  ramp-volume-1 = 
+  ramp-volume-2 = 
+
+  [module/eth]
+  type = internal/network
+  interface = enp0s25
+  interval = 3.0
+
+  format-connected-underline = #55aa55
+  format-connected-prefix = " "
+  format-connected-prefix-foreground = ${colors.foreground-alt}
+  label-connected = %local_ip%
+
+  format-disconnected =
+  ;format-disconnected = <label-disconnected>
+  ;format-disconnected-underline = ${self.format-connected-underline}
+  ;label-disconnected = %ifname% disconnected
+  ;label-disconnected-foreground = ${colors.foreground-alt}
+
+  [module/wlan]
+  type = internal/network
+  interface = wlp2s0
+  interval = 3.0
+
+  format-connected = <ramp-signal> <label-connected>
+  format-connected-underline = #9f78e1
+  label-connected =   %essid%
+
+  format-disconnected =
+  ;format-disconnected = <label-disconnected>
+  ;format-disconnected-underline = ${self.format-connected-underline}
+  ;label-disconnected = %ifname% disconnected
+  ;label-disconnected-foreground = ${colors.foreground-alt}
+
+  ; ramp-signal-0 = 
+  ; ramp-signal-1 = 
+  ; ramp-signal-2 = 
+  ; ramp-signal-3 = 
+  ; ramp-signal-4 = 
+  ; ramp-signal-foreground = #ef0aeb
+
+  ;[module/alsa]
+  ;type = internal/alsa
+  ;master-soundcard = default
+  ;speaker-soundcard = default
+
+  ;headphone-soundcard = default
+
+  ;master-mixer = Master
+  ;interval = 5
+
+  ;format-volume = <label-volume>
+  ;label-volume = VOLUME %percentage%%
+
+  [module/wireless-network]
+  type = internal/network
+  ;interface = enp4s0
+  interface = wlp2s0
+  interval = 1.0
+  ping-interval = 10
+
+  format-connected = <ramp-signal> <label-connected>
+  label-connected = %local_ip%    %downspeed%    %upspeed%
+  label-disconnected =    not connected
+  label-disconnected-foreground = #66
+
+  ramp-signal-0 = 
+  ramp-signal-1 = 
+  ramp-signal-2 = 
+  ramp-signal-3 = 
+  ramp-signal-4 = 
+
+  animation-packetloss-0 = 
+  animation-packetloss-0-foreground = #ffa64c
+  animation-packetloss-1 = 
+  animation-packetloss-1-foreground = ${bar/top.foreground}
+  animation-packetloss-framerate = 500
+
+  [module/memory]
+  type = internal/memory
+  interval = 2
+  format-prefix = " "
+  format-prefix-foreground = ${colors.foreground-alt}
+  format-underline = #4bffdc
+  label = %percentage_used%%
+
+  [module/cpu]
+  type = internal/cpu
+  interval = 2
+  format-prefix = " "
+  format-prefix-foreground = ${colors.foreground-alt}
+  format-underline = #f90000
+  label = %percentage%%
+
+  [module/temperature]
+  type = internal/temperature
+  thermal-zone = 0
+  warn-temperature = 60
+
+  format = <ramp> <label>
+  format-underline = #f50a4d
+  format-warn = <ramp> <label-warn>
+  format-warn-underline = ${self.format-underline}
+
+  label = %temperature%
+  label-warn = %temperature%
+  label-warn-foreground = ${colors.secondary}
+
+  ramp-0 = 
+  ramp-1 = 
+  ramp-2 = 
+  ramp-foreground = ${colors.foreground-alt}
+
+  ;[module/temperature]
+  ;type = internal/temperature
+  ;interval = 0.5
+  ;thermal-zone = 0
+  ;warn-temperature = 60
+  ;label = TEMPERATURE %temperature-c%
+  ;label-padding = 10
+
+  ;[module/battery]
+  ;type = internal/battery
+  ;battery = BAT0
+  ;adapter = ADP1
+  ;poll-interval = 5
+  ;label = BATTERY %percentage%
+  ;
+  ;format-charging = <label-charging>
+  ;
+  ;format-discharging = <label-discharging>
+  ;label-charging = CHARGING %percentage%%
+  ;label-discharging = BATTERY %percentage%%
+  ;label-full = BATTERY FULL
+
+  [module/battery]
+  type = internal/battery
+  battery = BAT0
+  adapter = AC
+  full-at = 96
+
+  time-format = %k:%M
+
+  label-discharging = %percentage%% %time%
+  label-charging = %percentage%% %time%
+
+  format-charging = <animation-charging> <label-charging>
+  format-charging-underline = #ffb52a
+
+  format-discharging = <ramp-capacity> <label-discharging>
+  format-discharging-underline = ${self.format-charging-underline}
+
+  format-full-prefix = " "
+  format-full-prefix-foreground = ${colors.foreground-alt}
+  format-full-underline = ${self.format-charging-underline}
+
+  ramp-capacity-0 = 
+  ramp-capacity-1 = 
+  ramp-capacity-2 = 
+  ramp-capacity-3 = 
+  ramp-capacity-4 = 
+  ramp-capacity-foreground = ${colors.foreground-alt}
+
+  animation-charging-0 = 
+  animation-charging-1 = 
+  animation-charging-2 = 
+  animation-charging-3 = 
+  animation-charging-4 = 
+  animation-charging-foreground = ${colors.foreground-alt}
+  animation-charging-framerate = 750
+#+end_src
+
+**** Top bar
+#+begin_src conf :tangle ~/.config/polybar/topbar.conf :mkdirp yes
+[bar/topbar]
+monitor = ${env:MONITOR:LVDS1}
+width = 100%
+height = 25
+offset-x = 0
+offset-y = 0
+padding-right = 7
+padding-left = 7
+
+background = #00000000
+foreground = #88FFFFFF
+
+font-0 = Open Sans:pixelsize=10;1
+font-1 = FontAwesome:pixelsize=10;1
+
+separator = "        "
+modules-left =
+modules-center = i3 date
+modules-right =
+
+override-redirect = true
+wm-restack = i3
+
+scroll-up = i3wm-wsnext
+scroll-down = i3wm-wsprev
+
+[module/i3]
+type = internal/i3
+format = <label-state> <label-mode>
+index-sort = true
+wrapping-scroll = true
+strip-wsnumbers = true
+pin-workspaces = true
+
+label-mode-padding = 5
+
+label-unfocused-foreground = #33FFFFFF
+label-unfocused-padding = 1
+label-visible-foregroud = #AAFFFFFF
+label-visible-padding = 1
+label-focused-foreground = #AAFFFFFF
+label-focused-padding = 1
+label-urgent-padding = 1
+
+[module/date]
+type = internal/date
+interval = 5
+
+date = "%Y-%m-%d"
+time = " %H:%M"
+
+label = %date% %time%
 #+end_src
 
 ** System Post-tangle
@@ -1252,7 +1594,11 @@ use_console_editor = yes
 #+end_src
 ** Mail
 
+Mail on most systems is handled primarily via =mu4e= which is configured in my =Emacs.org= file.
+
 *** Mbsync
+
+=Mbsync= handles synchronization of IMAP inboxes.
 
 #+begin_src conf :tangle ~/.mbsyncrc
 
@@ -1262,15 +1608,15 @@ Expunge Slave
 Remove None
 Sync All
 SyncState *
+CopyArrivalDate yes
 
 #####################
-# carwin@mobomo.com #
+# Work Email        #
 #####################
 IMAPAccount work
 Host imap.gmail.com
 User carwin@mobomo.com
-# PassCmd "~/Scripts/emacs-mail-sync.sh work"
-PassCmd "secret-tool lookup user carwin@mobomo.com host imap.gmail.com"
+PassCmd "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/mobomomail.gpg"
 SSLType IMAPS
 CertificateFile /etc/ssl/certs/ca-certificates.crt
 
@@ -1307,14 +1653,13 @@ Channel work-sent
 Channel work-trash
 
 ##########################
-# narwic@1000needles.net #
+# Home Email             #
 ##########################
 IMAPAccount home
 Host mail.runbox.com
 Port 993
 User narwic@1000needles.net
-# PassCmd "~/Scripts/emacs-mail-sync.sh home"
-PassCmd "secret-tool lookup user narwic@1000needles.net host mail.runbox.com"
+PassCmd "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/personalmail.gpg"
 SSLType IMAPS
 SSLVersions TLSv1.2
 CertificateFile /etc/ssl/certs/ca-certificates.crt
@@ -1325,17 +1670,6 @@ Account home
 MaildirStore home-local
 Path ~/Mail/Home/
 Inbox ~/Mail/Home/inbox/
-# Trash ~/Mail/Home/trash/
-# SubFolders Verbatim
-# Channel home
-# Master :home-remote:
-# Slave :home-local:
-# Patterns *
-# Expunge None
-# CopyArrivalDate yes
-# Sync All
-# Create Both
-# SyncState *
 
 Channel home-inbox
 Master :home-remote:
@@ -1385,7 +1719,7 @@ Channel home-drafts
 defaults
 tls on
 tls_trust_file /etc/ssl/certs/ca-certificates.crt
-logfile ~/msmtp.log
+logfile ~/.local/log/msmtp.log
 
 # Home
 account Home
@@ -1394,6 +1728,7 @@ host mail.runbox.com
 port 587
 from cy@carw.in
 user narwic@1000needles.net
+passwordeval "gpg2 -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/personalmail.gpg"
 
 # Work
 account Work
@@ -1402,58 +1737,9 @@ host smtp.gmail.com
 port 587
 from carwin@mobomo.com
 user carwin@mobomo.com
+passwordeval "gpg2 -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/mobomomail.gpg"
 
 # account default : home
-#+end_src
-
-** OfflineImap
-
-As you might expect, =offlineimap= creates a local database of =IMAP= data for viewing emails offline.
-
-#+begin_src conf :tangle ~/.config/offlineimap/config :mkdirp yes
-[general]
-ui = ttyui
-accounts = 1000needles, Mobomo
-#pythonfile=~/.config/mutt/offlineimap.py
-fsync = False
-
-[Account 1000needles]
-localrepository = 1000needles-Local
-remoterepository = 1000needles-Remote
-postsynchook = notmuch new
-
-[Repository 1000needles-Local]
-type = Maildir
-localfolders = ~/.mail/narwic@1000needles.net
-
-[Repository 1000needles-Remote]
-maxconnections = 1
-type = IMAP
-remotehost = mail.runbox.com
-ssl = yes
-remoteuser = narwic@1000needles.net
-sslcacertfile = /etc/ssl/certs/ca-certificates.crt
-remotepassfile = /tmp/pw.txt
-
-
-[Account Mobomo]
-localrepository = Mobomo-Local
-remoterepository = Mobomo-Remote
-postsynchook = notmuch new
-
-[Repository Mobomo-Local]
-type = Maildir
-localfolders = ~/.mail/carwin-mobomo.com
-
-
-[Repository Mobomo-Remote]
-maxconnections = 1
-type = Gmail
-ssl = yes
-remoteuser = carwin@mobomo.com
-sslcacertfile = /etc/ssl/certs/ca-certificates.crt
-remotepassfile = /tmp/pw-work.txt
-realdelete = no
 #+end_src
 
 ** vim
@@ -1665,131 +1951,6 @@ curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
   https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 #+end_src
 
-** Qutebrowser
-
-=Qutebrowser= is a keyboard based web browser with vim-like keybindings.
-
-#+begin_src python :tangle ~/.config/qutebrowser/config.py :mkdirp yes
-
-# Custom keybindings
-config.unbind('d') # Don't close window when d is pressed
-config.bind('yy', 'yank') # Yank
-config.bind(',.', 'tab-next') # Next tab
-config.bind(",'", 'tab-prev') # Previous tab
-# Vim-style movement keys in command mode
-config.bind('<Ctrl-j>', 'completion-item-focus --history next', mode='command')
-config.bind('<Ctrl-k>', 'completion-item-focus --history prev', mode='command')
-# Play YouTube videos with mpv
-config.bind(",m", "spawn mpv {url}")
-config.bind(",M", "hint links spawn mpv {hint-url}")
-
-# Add a hint group for scrollable elements
-config.set(
-  'hints.selectors',
-  {'scrollable': ['.custom-scrollbar']},
-  pattern='*://10.0.1.43:3000/*',
-)
-config.bind(';c', 'hint scrollable')
-# Add a hint group for jumping to links in the current tab.
-config.set(
-  'hints.selectors',
-  {'jump': ['a']},
-  pattern='*://*',
-)
-config.bind(';j', 'hint jump')
-
-# Fonts & Colors
-c.fonts.web.family.standard = "M+ 1m"
-c.fonts.web.family.serif = "Bitsream Vera Serif"
-c.fonts.web.family.sans_serif = "M+ 1mn"
-c.fonts.web.family.fixed = "Dank Mono"
-c.fonts.statusbar = "18px M+ 1m"
-
-# Save sessions for next time.
-c.auto_save.session = True
-c.session.lazy_restore = True
-
-# Be smooth
-c.scrolling.smooth = True
-
-# Dark mode (doesn't work everywhere)
-c.colors.webpage.darkmode.enabled = True
-
-# Automatically turn on insert mode when a loaded page focuses a text field
-c.input.insert_mode.auto_load = True
-
-# Edit fields in Emacs with Ctrl+E
-c.editor.command = ["emacsclient", "+{line}:{column}", "{file}"]
-
-# Don't allow autoplay media
-c.content.autoplay = False
-
-# Only first-party cookies
-c.content.cookies.accept = "no-unknown-3rdparty"
-
-# Don't tell sites where we came from
-c.content.headers.referer = "same-domain"
-
-# Hint settings
-c.fonts.hints = "bold 20pt monospace"
-
-# Allow viewing pdfs in qutebrowser via pdfjs
-c.content.pdfjs = True
-
-# Expose only public interface via webrtc
-c.content.webrtc_ip_handling_policy = "default-public-interface-only"
-
-with config.pattern('*://*.youtube.com/watch') as p:
-    p.content.javascript.enabled = True
-    p.content.autoplay = False
-
-#+end_src
-
-#+begin_src  conf :tangle ~/.config/qutebrowser/quickmarks :mkdirp yes
-lp https://lastpass.com/?ac=1&lpnorefresh=1
-gh https://github.com/ $0
-type https://www.keybr.com/login/MOma70tyO6
-sab 10.0.1.43:8085
-grafana 10.0.1.43:3000
-comics 10.0.1.43:2202/ubooquity
-sonarr 10.0.1.43:8989
-lidarr 10.0.1.43:8686
-radarr 10.0.1.43:7878
-portainer 10.0.1.43:9000
-pi1 10.0.1.43:192
-pi2 10.0.1.43:193
-znc 10.0.1.43:4378
-#+end_src
-
-#+begin_src conf :tangle ~/.local/share/applications/qute_home.desktop :mkdirp yes
-;;[Desktop Entry]
-;;Type=Application
-;;Version=1.0
-;;Name=Qutebrowser (Home)
-;;Comment=Qutebrowser instance for home.
-;;Exec=qutebrowser --basedir .config/qutebrowser/profile_home
-#+end_src
-
-#+begin_src conf :tangle ~/.local/share/applications/qute_work.desktop :mkdirp yes
-  ;;[Desktop Entry]
-  ;;Type=Application
-  ;;Version=1.0
-  ;;Name=Qutebrowser (Work)
-  ;;Comment=Qutebrowser instance for work.
-  ;;Exec=qutebrowser --basedir .config/qutebrowser/profile_work
-#+end_src
-
-#+begin_src sh :noweb-ref qutebrowser-post-tangle
-#mkdir -p ~/.config/qutebrowser/profile_home/config;
-#mkdir -p ~/.config/qutebrowser/profile_work/config;
-
-#ln -s ~/.config/qutebrowser/config.py ~/.config/qutebrowser/profile_home/config/config.py
-#ln -s ~/.config/qutebrowser/quickmarks ~/.config/qutebrowser/profile_home/config/quickmarks
-
-#ln -s ~/.config/qutebrowser/config.py ~/.config/qutebrowser/profile_work/config/config.py
-#ln -s ~/.config/qutebrowser/quickmarks ~/.config/qutebrowser/profile_work/config/quickmarks
-#+end_src
-
 ** Firefox
 
 Firefox and dark mode generally place well together, but when transitioning between pages, Firefox likes to flash a horrible full-white page that temporarily blinds anyone who gazes upon it. These tweaks solve that, but need to be generalized.
@@ -1836,7 +1997,7 @@ browser[type="content-primary"] {background: #011326 !important}
 
 ** Application post-tangle actions.
 
-#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/Home/dotfiles/tangled/application-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
+#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/application-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
 <<mpd-post-tangle>>
 <<qutebrowser-post-tangle>>
 <<vim-post-tangle>>
@@ -1853,53 +2014,14 @@ User level =Systemd= configurations live in =~/.config/systemd/user/=
 Emacs ships with a systemd unit (at least in Arch), so there's really not much to tangle out. On a fresh system, one need simply enable the service and start it.
 
 #+begin_src sh :noweb-ref emacs-post-tangle
-systemctl --user enable --now emacs
-systemctl --user start emacs
-#+end_src
-
-** OneDrive Sync
-
-On Arch, I use the AUR package =onedrive-abraunegg= to sync my OneDrive files to my local machine. These end up in =~/OneDrive= and get symlinked around.
-
-First, set up a service that can be run as needed.
-
-#+begin_src conf :tangle ~/.config/systemd/user/onedrive-sync.service :mkdirp yes
-[Unit]
-Description=Syncs OneDrive
-
-[Service]
-ExecStart=/usr/bin/onedrive --synchronize
-
-[Install]
-WantedBy=default.target
-#+end_src
-
-Now, set up a timer to run the service hourly.
-
-#+begin_src conf :tangle ~/.config/systemd/user/onedrive-sync.timer :mkdirp yes
-[Unit]
-Description=Run OneDrive synchronization hourly
-
-[Timer]
-OnBootSec=15min
-OnUnitActiveSec=1h
-
-[Install]
-WantedBy=timers.target
-#+end_src
-
-Once these files have been tangled out, some kind of action needs to enable the timer via: ~systemctl --user enable onedrive-sync.timer~
-
-#+begin_src sh :noweb-ref onedrive-post-tangle
-# systemctl --user enable onedrive-sync.timer
-# systemctl --user start onedrive-sync.timer
+# systemctl --user enable --now emacs
+# systemctl --user start emacs
 #+end_src
 
 ** Post-tangle
 
 #+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/Home/dotfiles/tangled/systemd-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
 <<emacs-post-tangle>>
-<<onedrive-post-tangle>>
 #+end_src
 
 * Other
