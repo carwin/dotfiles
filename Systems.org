@@ -12,6 +12,7 @@
   - [[#guts][guts]]
   - [[#buster][buster]]
   - [[#punchy][punchy]]
+  - [[#cutman][cutman]]
 - [[#system-settings-get][system-settings-get]]
 :END:
 
@@ -74,9 +75,22 @@ Some settings need to be customized on a per-system basis without tweaking indiv
 
 =buster= is a ThinkPad x201s that runs =Arch Linux=. This is a side machine that more or less acts as a backup when other machines are down for service or when I have a need to test out equipment in the network closet via a cabled interface. Most of the time it gets used for Music and Movie watching in the background.
 
+*System Settings*
+
+#+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep
+(when (equal system-name "buster")
+  '((desktop/dpi . 90)
+    (emacs/default-face-size . 110)
+    (emacs/variable-face-size . 110)
+    (emacs/fixed-face-size . 110)))
+#+end_src
+
+
 ** punchy
 
-=punchy= is a ThinkPad p43s that I use primarily for my day job, but has also become a go-to favorite generally. It runs =Arch Linux=. The screen is wonderful, but there are some HiDPI quirks that make using =i3= and =gtk= applications somewhat annoying.
+=punchy= is a ThinkPad p43s that I use primarily for my day job, but has also become a go-to favorite generally. It runs =Arch Linux= and =Windows 10=. The screen is wonderful, but there are some HiDPI quirks that make using =i3= and =gtk= applications somewhat annoying.
+
+I've been experimenting with using WSL2 to run Emacs and forward the X sessions out to =guts= or Windows 10 locally. It works pretty well.
 
 *System Settings*
 
@@ -86,7 +100,18 @@ Some settings need to be customized on a per-system basis without tweaking indiv
     (emacs/default-face-size . 110)
     (emacs/variable-face-size . 110)
     (emacs/fixed-face-size . 110)))
+;; When booted into Windows
+(when (equal system-name "PUNCHY")
+  '((desktop/dpi . 89)
+    (emacs/variable-face-size . 1.1)
+    (emacs/fixed-face-size . 1.1)
+    (emacs/default-face-size . 100)))
+
 #+end_src
+
+** cutman
+
+=cutman= is a Pixel 5. I've yet to get into figuring out how to use Emacs with it.
 
 * =system-settings-get=
 
