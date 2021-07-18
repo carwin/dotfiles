@@ -1,12 +1,45 @@
 #+TITLE:   Carwin's Emacs settings file
 #+AUTHOR:  Carwin Young
-#+EMAIL:   carwinyoung@gmail.com
+#+EMAIL:   cy@carw.in
 #+PROPERTY: header-args:emacs-lisp :tangle ~/.emacs.d/init.el :mkdirp yes
 
 This is Carwin's Emacs configuration. The goal is that it's portable enough to be moved around between machines.
 
+Packages and stuff to check out:
+- https://github.com/howardabrams/dot-files
+- darkroom
+- eshell
+- vterm
+- https://github.com/jinnovation/dotemacs
+- multi-term
+- tracking
+- Telegram
+- elcord
+- ERC (IRC client!)
+- https://writequit.org/org/
+- RSS with elfeed
+- https://github.com/dakrone/dakrone-dotfiles/blob/master/zsh.org
+
+* Table of Contents
+:PROPERTIES:
+:TOC: :include all :ignore this
+:END:
+
+* General
+:PROPERTIES:
+:ID:       0b11c88d-1c08-4fe6-b61f-61d313240992
+:END:
+
 #+begin_src emacs-lisp
 (load-file "~/.emacs.d/per-system-settings.el")
+#+end_src
+
+#+begin_src emacs-lisp
+;; only start emacs server when it's not started, I hate warnings.
+(setq server-socket-file "/tmp/emacs1000/server")
+(unless (file-exists-p server-socket-file)
+  (server-start))
+
 #+end_src
 
 #+begin_src emacs-lisp
@@ -16,6 +49,9 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 #+end_src
 
 * Package Management
+:PROPERTIES:
+:ID:       25b067cb-6690-4e95-98de-744ae84018fc
+:END:
 
 #+begin_src emacs-lisp
 (require 'package)
@@ -25,6 +61,7 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
                          ("elpa" . "https://elpa.gnu.org/packages/")))
 
 (package-initialize)
+
 (unless package-archive-contents
   (package-refresh-contents))
 
@@ -39,6 +76,9 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 * Configure Emacs paths
 
 ** Ensure Emacs' PATH is the same as my shell's
+:PROPERTIES:
+:ID:       654dbb95-33cc-4eeb-b4fe-c3037b0be5cd
+:END:
 
 #+begin_src emacs-lisp
 (use-package exec-path-from-shell
@@ -47,7 +87,19 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
     (exec-path-from-shell-initialize)))
 #+end_src
 
+** Ensure Emacs knows about mu4e later.
+:PROPERTIES:
+:ID:       234adf8b-a36a-4e9d-922c-e8526d661cb1
+:END:
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu4e")
+#+end_src
+
 * Keep .emacs.d Clean
+:PROPERTIES:
+:ID:       e91f88be-04c4-4122-b093-73dea9b77826
+:END:
 
 #+begin_src emacs-lisp
 (setq custom-file
@@ -106,12 +158,15 @@ I've been using the comma (,) key as my leader key for almost a decade in vim. T
 (use-package general
   :config
   (general-create-definer cy/leader-key-def
-    :keymaps `(normal insert visual emacs org-roam org-agenda)
+    :keymaps `(normal insert visual emacs org-roam org-agenda term)
     :prefix ","
     :global-prefix "C-,"))
 #+end_src
 
 ** Turn on Evil mode
+:PROPERTIES:
+:ID:       19e53e2a-d531-493f-9bec-603788d60267
+:END:
 
 Evil mode is essentially vim keybindings for Emacs. Emacs is essentially unusable for me without this.
 
@@ -120,46 +175,55 @@ Evil mode is essentially vim keybindings for Emacs. Emacs is essentially unusabl
 I don't remember what org-evil does, but I've had it in my config since I started using Org. Probably pretty important.
 
 #+begin_src emacs-lisp
-;; Tell me when I do a bad thing.
-(defun cy/dont-arrow-me-bro ()
-  (interactive)
-  (message "Arrow keys are bad, m'kay?"))
+  ;; Tell me when I do a bad thing.
+  (defun cy/evil-hook ()
+    (dolist (mode '(custom-mode
+                    eshell-mode
+                    git-rebase-mode
+                    erc-mode
+                    sauron-mode
+                    term-mode))
+      (add-to-list 'evil-emacs-state-modes mode)))
 
-(use-package evil
-  :ensure t
-  :init
-  (setq evil-want-integration t)
-  (setq evil-want-C-u-scroll t)
-  (setq evil-want-fine-undo 'fine)
-  ;(setq evil-want-C-i-jump t)
-  :config
-  (evil-mode 1)
-  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
-  (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
-  ;; Use visual line motions even outside of visual-line-mode buffers
-  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
-  ;; Set the undo system Evil should use.
-  (evil-set-undo-system 'undo-redo)
-  ;; Disable arrow keys in normal and visual modes.
-  (define-key evil-normal-state-map (kbd "<left>") 'cy/dont-arrow-me-bro)
-  (define-key evil-normal-state-map (kbd "<down>") 'cy/dont-arrow-me-bro)
-  (define-key evil-normal-state-map (kbd "<up>") 'cy/dont-arrow-me-bro)
-  (define-key evil-normal-state-map (kbd "<right>") 'cy/dont-arrow-me-bro)
-  (evil-global-set-key 'motion (kbd "<left>") 'cy/dont-arrow-me-bro)
-  (evil-global-set-key 'motion (kbd "<down>") 'cy/dont-arrow-me-bro)
-  (evil-global-set-key 'motion (kbd "<up>") 'cy/dont-arrow-me-bro)
-  (evil-global-set-key 'motion (kbd "<right>") 'cy/dont-arrow-me-bro)
-  ;; Make sure we're in normal mode, not insert mode when we are in these Emacs modes.
-  (evil-set-initial-state 'messages-buffer-mode 'normal)
-  (evil-set-initial-state 'dashboard-mode 'normal))
+  (defun cy/dont-arrow-me-bro ()
+    (interactive)
+    (message "Arrow keys are bad, m'kay?"))
 
-(use-package evil-collection
-    :after evil
+  (use-package evil
     :ensure t
+    :init
+    (setq evil-want-integration t)
+    (setq evil-want-C-u-scroll t)
+    (setq evil-want-fine-undo 'fine)
+    ;(setq evil-want-C-i-jump t)
     :config
-    (evil-collection-init)
-    (evil-collection-init 'dashboard)) ;;Make sure Evil bindings work on the Dashboard.
+    (evil-mode 1)
+    (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+    (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
+    ;; Use visual line motions even outside of visual-line-mode buffers
+    (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+    (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+    ;; Set the undo system Evil should use.
+    (evil-set-undo-system 'undo-redo)
+    ;; Disable arrow keys in normal and visual modes.
+    (define-key evil-normal-state-map (kbd "<left>") 'cy/dont-arrow-me-bro)
+    (define-key evil-normal-state-map (kbd "<down>") 'cy/dont-arrow-me-bro)
+    (define-key evil-normal-state-map (kbd "<up>") 'cy/dont-arrow-me-bro)
+    (define-key evil-normal-state-map (kbd "<right>") 'cy/dont-arrow-me-bro)
+    (evil-global-set-key 'motion (kbd "<left>") 'cy/dont-arrow-me-bro)
+    (evil-global-set-key 'motion (kbd "<down>") 'cy/dont-arrow-me-bro)
+    (evil-global-set-key 'motion (kbd "<up>") 'cy/dont-arrow-me-bro)
+    (evil-global-set-key 'motion (kbd "<right>") 'cy/dont-arrow-me-bro)
+    ;; Make sure we're in normal mode, not insert mode when we are in these Emacs modes.
+    (evil-set-initial-state 'messages-buffer-mode 'normal)
+    (evil-set-initial-state 'dashboard-mode 'normal))
+
+  (use-package evil-collection
+      :after evil
+      :ensure t
+      :config
+      (evil-collection-init)
+      (evil-collection-init 'dashboard)) ;;Make sure Evil bindings work on the Dashboard.
 
 #+end_src
 
@@ -232,8 +296,8 @@ Set frame transparency and maximize windows by default.
 #+begin_src emacs-lisp
 (set-frame-parameter (selected-frame) 'alpha cy/frame-transparency)
 (add-to-list 'default-frame-alist `(alpha . ,cy/frame-transparency))
-(set-frame-parameter (selected-frame) 'fullscreen 'maximized)
-(add-to-list 'default-frame-alist '(fullscreen . maximized))
+;; (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
+;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (add-to-list 'default-frame-alist '(cy/system-settings-get 'desktop/dpi))
 (add-to-list 'default-frame-alist '(cy/system-settings-get 'emacs/default-face-size))
 #+end_src
@@ -301,7 +365,7 @@ Configure a personal custom themes directory using a directory within the dotfil
 #+begin_src emacs-lisp
 (add-to-list 'custom-theme-load-path
   (concat
-    "~/Projects/Home/dotfiles/" "emacs-themes"))
+    "~/Projects/home/dotfiles/" "emacs-themes"))
 #+end_src
 
 Use the =doom-themes= package to get some very nice themes. Some of these themes need explicit bold / italic display support turned on as part of the package's configuration.
@@ -441,7 +505,7 @@ Here automatic saving of buffers is enabled. The exclusion list excludes the ent
 
 #+begin_src emacs-lisp
 (defun cy/auto-save-exclude-dir-list ()
-  (directory-files "~/Projects/Home/dotfiles" t "\\.org$"))
+  (directory-files "~/Projects/home/dotfiles" t "\\.org$"))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -570,20 +634,26 @@ This is important for projects tracked with Git.
 #+end_src
 
 ** Bindings for Configuration Files
+:PROPERTIES:
+:ID:       9914a048-e668-41a3-96c8-4b66e278a69f
+:END:
 
 This is where I define keybindings to quickly jump to settings files.
 
 #+begin_src emacs-lisp
-  (cy/leader-key-def
-    "fd" '(:ignore t :which-key "dotfiles")
-    "fde" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Emacs.org"))) :which-key "edit config")
-    "fdE" '((lambda () (interactive) (cy/org-file-show-headings "~/Projects/Home/sys/dotfiles/Emacs.org")) :which-key "edit config")
-    "fdD" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Desktop.org"))) :which-key "workflow")
-    "fdS" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Systems.org"))) :which-key "workflow")
-    "fdW" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Workflow.org"))) :which-key "workflow"))
+  ;; (cy/leader-key-def
+  ;;   "fd" '(:ignore t :which-key "dotfiles")
+  ;;   "fde" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Emacs.org"))) :which-key "edit config")
+  ;;   "fdE" '((lambda () (interactive) (cy/org-file-show-headings "~/Projects/Home/sys/dotfiles/Emacs.org")) :which-key "edit config")
+  ;;   "fdD" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Desktop.org"))) :which-key "workflow")
+  ;;   "fdS" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Systems.org"))) :which-key "workflow")
+  ;;   "fdW" '((lambda () (interactive) (find-file (expand-file-name "~/Projects/Home/sys/dotfiles/Workflow.org"))) :which-key "workflow"))
 #+end_src
 
 * Stateful Keymaps with Hydra
+:PROPERTIES:
+:ID:       957af07b-4fdf-4439-9f5b-e5680fde197c
+:END:
 
 #+begin_src emacs-lisp
 (use-package hydra
@@ -614,13 +684,14 @@ ivy-rich adds extra columns to some Counsel commands to provide more information
 
 #+begin_src emacs-lisp
 (use-package counsel
-  :bind (("C-M-j" . 'counsel-switch-buffer)
+  :bind (("C-S-j" . 'counsel-switch-buffer)
          :map minibuffer-local-map
          ("C-r" . 'counsel-minibuffer-history))
   :custom
   (counsel-linux-app-format-function #'counsel-linux-app-format-function-name-only)
   :config
   (setq ivy-initial-inputs-alist nil) ;; Don't start searches with ^
+  (setq ivy-use-selectable-prompt t) ;; Allows creation of org-roam notes that begin with a substring of another note.
   (counsel-mode 1))
 
 
@@ -650,7 +721,7 @@ ivy-rich adds extra columns to some Counsel commands to provide more information
   ;; Use different regex strategies per completion command.
   (push '(completion-at-point . ivy--regex-fuzzy) ivy-re-builders-alist) ;; this doesn't seem to work.
   (push '(swiper . ivy--regex-ignore-order) ivy-re-builders-alist)
-  (push '(counsel-M-x . ivy--regex-ignore-order) ivy-re-builders-alist)
+  (push '(counsel-S-x . ivy--regex-ignore-order) ivy-re-builders-alist)
   ;; Set minibuffer height for different commands.
   (setf (alist-get 'counsel-projectile-ag ivy-height-alist) 15)
   (setf (alist-get 'counsel-projectile-rg ivy-height-alist) 15)
@@ -737,18 +808,33 @@ ivy-rich adds extra columns to some Counsel commands to provide more information
 
 #+end_src
 
+** Flycheck
+:PROPERTIES:
+:ID:       1602af4d-c193-4a29-9e4b-880ec66bb733
+:END:
+#+begin_src emacs-lisp
+  (use-package flycheck
+    :init (add-hook 'after-init-hook #'global-flycheck-mode))
+#+end_src
+
 * Window Management
 
 ** Window Selection with ace-window
+:PROPERTIES:
+:ID:       e29c446d-bfb7-4de9-8efe-7166bb22b6e0
+:END:
 
 #+begin_src emacs-lisp
-(use-package ace-window
-  :bind (("M-o" . ace-window))
-  :config
-  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
+;; (use-package ace-window
+;;   :bind (("M-o" . ace-window))
+;;   :config
+;;   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
 #+end_src
 
 ** Window History with winner-mode
+:PROPERTIES:
+:ID:       859e9760-c9c5-4dd4-90d8-16bffa370f65
+:END:
 
 #+begin_src emacs-lisp
 (winner-mode)
@@ -772,18 +858,26 @@ ivy-rich adds extra columns to some Counsel commands to provide more information
 #+end_src
 
 * Expand Region
+:PROPERTIES:
+:ID:       8c0a90d4-fd7c-4433-97af-510d797215b9
+:END:
 
-This is a really great selection tool. Basically it starts at the pointer then /expands/ to select the word, then the next boundary, then the next boundary, and so on.
+According to sources, this is a really great selection tool. Basically it starts at the pointer then /expands/ to select the word, then the next boundary, then the next boundary, and so on.
+
+@todo: I don't really get it, and the bindings I have in here don't seem to do much.
 
 #+begin_src emacs-lisp
-(use-package expand-region
-  :bind (("C-e" . er/expand-region)
-         ("C-(" . er/mark-outside-pairs)))
+;; (use-package expand-region
+;;   :bind (("C-e" . er/expand-region)
+;;          ("C-(" . er/mark-outside-pairs)))
 #+end_src
 
 * File Browsing
 
 ** Dired
+:PROPERTIES:
+:ID:       3c3b6ddb-a5fd-4f5a-b4d0-f3e6d833279c
+:END:
 
 #+begin_src emacs-lisp
 (use-package dired
@@ -873,40 +967,55 @@ This is a really great selection tool. Basically it starts at the pointer then /
   "d"   '(:ignore t :which-key "dired")
   "dd"  '(dired :which-key "Here")
   "dh"  `(,(cy/dired-link "~") :which-key "Home")
-  "di"  `(,(cy/dired-link "~/Documents/Notes/Inbox.org") :which-key "Inbox")
-  "dj"  `(,(cy/dired-link "~/Documents/Notes/Journal.org") :which-key "Journal")
-  "dn"  `(,(cy/dired-link "~/Documents/Notes") :which-key "Notes")
+  "di"  `(,(cy/dired-link "~/Notes/Inbox.org") :which-key "Inbox")
+  "dj"  `(,(cy/dired-link "~/Notes/Journal.org") :which-key "Journal")
+  "dn"  `(,(cy/dired-link "~/Notes") :which-key "Notes")
   "do"  `(,(cy/dired-link "~/Downloads") :which-key "Downloads")
   "dp"  `(,(cy/dired-link "~/Pictures") :which-key "Pictures")
   "dv"  `(,(cy/dired-link "~/Videos") :which-key "Videos")
-  "d."  `(,(cy/dired-link "~/Projects/Home/sys/dotfiles") :which-key "dotfiles"))
+  "d."  `(,(cy/dired-link "~/Projects/home/dotfiles") :which-key "dotfiles"))
 #+end_src
 
 ** Deft
+:PROPERTIES:
+:ID:       7eb5033a-54e3-4c32-8634-98ac02f4ee7b
+:END:
 
 A nice way to browse files, specifically installed for org-roam. If this ever gets super slow, look into installing the Notdeft fork.
 
+@todo: I need to figure out the best way to access this. Leader+"o"rg+"r"oam+"d"eft seems like the natural way, but it is very long.
+
 #+begin_src emacs-lisp
-;;(use-package deft
-;;  :after org
-;;  :bind
-;;  ("C-c n d" . deft)
-;;  :custom
-;;  (deft-recursive t)
-;;  (deft-use-filter-string-for-filename t)
-;;  (deft-default-extension "org")
-;;  (deft-directory "~/Documents/Notes/"))
-;;  (evil-leader/set-key
-;;    "d" 'deft)
+  ;; (use-package deft
+  ;;   :commands (deft)
+  ;;   :config (setq deft-directory "~/Notes/Roam"
+  ;;                 deft-recursive t
+  ;;                 deft-extensions '("org")))
+
+  (use-package deft
+    :after org
+    :bind
+    ("C-c n d" . deft)
+    :custom
+    (deft-recursive t)
+    (deft-use-filter-string-for-filename t)
+    (deft-default-extension "org")
+    (deft-directory "~/Notes/Roam-v1"))
+
+  (cy/leader-key-def
+    "<SPC>" '(deft :which-key "deft"))
 #+end_src
 
 * Org Mode
+:PROPERTIES:
+:ID:       f1c3d85f-4206-45dc-a2a6-8e6d07933b6b
+:END:
 
 Set up Org Mode's basic configuration, then expand on it in other sections.
 
 #+begin_src emacs-lisp
 ;; @todo: Move this to another section.
-(setq-default fill-column 800)
+(setq-default fill-column 80)
 
 ;; Turn on indentation and auto-fill mode for Org files.
 (defun cy/org-mode-setup ()
@@ -917,7 +1026,8 @@ Set up Org Mode's basic configuration, then expand on it in other sections.
   (setq evil-auto-indent nil)
   (diminish org-indent-mode))
 
-(global-set-key (kbd "C-c q") 'auto-fill-mode)
+;; @todo
+;; (global-set-key (kbd "C-c q") 'auto-fill-mode)
 
 (use-package org
   :defer t
@@ -927,20 +1037,29 @@ Set up Org Mode's basic configuration, then expand on it in other sections.
   (setq org-ellipses " ▾"
         org-hide-emphasis-markers t
         org-src-fontify-natively t
-        org-src-tab-acts-natively t ;; Really? @todo
-        org-edit-src-content-indentation 0
+        org-fontify-quote-and-verse-blocks t
+        org-src-tab-acts-natively t ;; This relates to Tab in source block edit mode(s).
+        org-edit-src-content-indentation 2
         org-hide-block-startup nil
         org-src-preserve-indentation nil
+        org-blank-before-new-entry '((heading . t) (plain-list-item . nil))
         org-startup-folded 'content
+        org-return-follows-link t
         org-image-actual-width nil ;; Useful for inline org images that are huge.
         org-cycle-separator-lines 2)
+
   (setq org-modules
-    '(org-habit org-refile))
+    '(org-habit
+      org-bookmark
+      org-irc
+      org-refile))
   ;; @todo: Investigate this.
-  (setq org-refile-targets '((nil :maxlevel . 3)
-                            (org-agenda-files :maxlevel . 3)))
+  ;; Previous refile-targets maxlevel was 3 for both.
+  (setq org-refile-targets '((nil :maxlevel . 1)
+                            (org-agenda-files :maxlevel . 1)))
+
   (setq org-outline-path-complete-in-steps nil)
-  (setq org-refile-use-outline-path t) ;; @todo: This seems dangerous.
+  (setq org-refile-use-outline-path t)
 
   ;; A little evil tweaking.
   (evil-define-key '(normal insert visual) org-mode-map (kbd "C-j") 'org-next-visible-heading)
@@ -948,24 +1067,42 @@ Set up Org Mode's basic configuration, then expand on it in other sections.
   (evil-define-key '(normal insert visual) org-mode-map (kbd "s-j") 'org-metadown)
   (evil-define-key '(normal insert visual) org-mode-map (kbd "s-k") 'org-metaup)
 
+
   ;; @IMPORTANT: Subsequent sections are still part of this use-package block.
 #+end_src
 
 **  Configure Babel Languages
+:PROPERTIES:
+:ID:       b57451c5-d8d0-4a50-a838-6fed561f4b3f
+:END:
 
 To execute or export code in org-mode code blocks, you'll need to set up org-babel-load-languages for each language you'd like to use. This [[https://orgmode.org/worg/org-contrib/babel/languages.html][page]] documents all of the languages you can use with org-babel.
 
+~verbatim?~
+
+=verbatim=
+
 #+begin_src emacs-lisp
-  (org-babel-do-load-languages
-    'org-babel-load-languages
-    '((emacs-lisp . t)
-      (shell .t)
-      (python .t)
-      (ledger . t))) ; @todo: Ledger for accounting, forgot about that program.
+  (with-eval-after-load "org"
+    (org-babel-do-load-languages
+      'org-babel-load-languages
+      '((emacs-lisp . t)
+        (shell . t)
+        (php . t)
+        (css . t)
+        (sass . t)
+        (js . t)
+        (makefile . t)
+        (python . t)
+        (ledger .t))))
+
   (push '("conf-unix" . conf-unix) org-src-lang-modes)
 #+end_src
 
 ** Workflow Configuration
+:PROPERTIES:
+:ID:       63af966a-710b-4971-906b-6d94190c2758
+:END:
 
 I don't have a workflow configuration yet, but, if I did - I'd define it in a separate Workflow.org file like daviwil does.
 
@@ -982,83 +1119,89 @@ Automatically tangle when saved without having to worry about =org-confirm-babel
     >>                     (expand-file-name user-emacs-directory))
 
 #+begin_src emacs-lisp
-  (defun cy/org-babel-tangle-dont-ask ()
-    ;; Dynamic scoping to the rescue
-    (let ((org-confirm-babel-evaluate nil))
-      (org-babel-tangle)))
-  (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'cy/org-babel-tangle-dont-ask
-                                                'run-at-end 'only-in-org-mode)))
+(defun cy/org-babel-tangle-dont-ask ()
+  ;; Dynamic scoping to the rescue
+  (let ((org-confirm-babel-evaluate nil))
+    (org-babel-tangle)))
+
+(add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'cy/org-babel-tangle-dont-ask
+                                              'run-at-end 'only-in-org-mode)))
 #+end_src
 
 ** Fonts and Bullets
+:PROPERTIES:
+:ID:       fbdf9e80-9486-4989-b761-fef7a28f75c2
+:END:
+
+- Note taken on [2021-07-14 Wed 18:43] \\
+  Space around headings is terrible.
 
 Uses org-superstar. I switch between this and org-bullets mode. org-bullets sometimes gives me weird issues.
 
 #+begin_src emacs-lisp
-(use-package org-superstar
-  :after org
-  :hook (org-mode . org-superstar-mode)
-  :custom
-  (org-superstar-remove-leading-stars t)
-  (org-superstar-headline-bullets-list '("☰" "☷" "☵" "☲"  "☳" "☴"  "☶"  "☱")))
+  (use-package org-superstar
+    :after org
+    :hook (org-mode . org-superstar-mode)
+    :custom
+    (org-superstar-remove-leading-stars t)
+    (org-superstar-headline-bullets-list '("☰" "☷" "☵" "☲"  "☳" "☴"  "☶"  "☱")))
 
-;; Turn the list hyphen into a dot.
-(font-lock-add-keywords 'org-mode
-                          '(("^ *\\([-]\\) "
-                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+  ;; Turn the list hyphen into a dot.
+  ;; (font-lock-add-keywords 'org-mode
+  ;;                           '(("^ *\\([-]\\) "
+  ;;                              (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 
-;; Set faces for heading levels
-(dolist (face '((org-level-1 . 1.35)
-                (org-level-2 . 1.2)
-                (org-level-3 . 1.15)
-                (org-level-4 . 1.1)
-                (org-level-5 . 1.1)
-                (org-level-6 . 1.1)
-                (org-level-7 . 1.1)
-                (org-level-8 . 1.0)))
-    (set-face-attribute (car face) nil :font "M+ 1p" :weight 'regular :height (cdr face)))
+  ;; Set faces for heading levels
+  (dolist (face '((org-level-1 . 1.35)
+                  (org-level-2 . 1.2)
+                  (org-level-3 . 1.15)
+                  (org-level-4 . 1.1)
+                  (org-level-5 . 1.1)
+                  (org-level-6 . 1.1)
+                  (org-level-7 . 1.1)
+                  (org-level-8 . 1.0)))
+      (set-face-attribute (car face) nil :font "M+ 1p" :weight 'regular :height (cdr face)))
 
-;; Make sure org-indent face is available.
-(require 'org-indent)
-;; '(org-indent ((t (:inherit (org-hide fixed-pitch)))))
+  ;; Make sure org-indent face is available.
+  (require 'org-indent)
 
-;; Ensure that anything that should be fixed-pitch in Org files appears that way.
-(set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
-;; (set-face-attribute 'org-agenda nil :foreground nil :inherit 'fixed-pitch)
-(set-face-attribute 'org-code nil :foreground nil :inherit '(shadow fixed-pitch))
-;; (set-face-attribute 'org-table nil :foreground nil :inherit '(fixed-pitch))
-(set-face-attribute 'org-table nil :inherit 'fixed-pitch :foreground "#83a598")
-(set-face-attribute 'org-verbatim nil :foreground nil :inherit '(shadow-fixed-pitch))
-(set-face-attribute 'org-special-keyword nil :foreground nil :inherit '(font-lock-comment-face fixed-pitch))
-(set-face-attribute 'org-meta-line nil :foreground nil :inherit '(font-lock-comment-face fixed-pitch))
-(set-face-attribute 'org-checkbox nil :foreground nil :inherit 'fixed-pitch)
+  ;; Ensure that anything that should be fixed-pitch in Org files appears that way.
+  (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+  (set-face-attribute 'org-table nil :inherit 'fixed-pitch :foreground "#83a598")
+  (set-face-attribute 'org-formula nil :inherit 'fixed-pitch :foreground "#83a598")
+  (set-face-attribute 'org-code nil :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
+  (set-face-attribute 'org-verbatim nil :inherit '(shadow-fixed-pitch))
+  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-checkbox nil :foreground nil :inherit 'fixed-pitch)
 
-
-;; Technically this belongs with the rest of the face attributes above. But
-;; I actually sort of like having some more breating room in my text.
-;; (set-face-attribute 'org-indent nil :foreground nil :inherit '(org-hide variable-pitch))
-
-;; @todo: Others to consider
-;; '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
-;; '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
-;; '(org-property-value ((t (:inherit fixed-pitch))) t)
-;; '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
-;; (set-face-attribute '(org-table ((t (:inherit fixed-pitch :foreground "#83a598")))))
-;; '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
-;; '(org-verbatim ((t (:inherit (shadow fixed-pitch))))))
+  ;; Get rid of background on column views.
+  (set-face-attribute 'org-column nil :background nil)
+  (set-face-attribute 'org-column-title nil :background nil)
 
 
-;; Using org-bullets
-;; (use-package org-bullets
-;;   :after org
-;;   :hook (org-mode . org-bullets-mode)
-;;   :custom
-;;   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+  ;; Technically this belongs with the rest of the face attributes above. But
+  ;; I actually sort of like having some more breathing room in my text.
+  ;; (set-face-attribute 'org-indent nil :foreground nil :inherit '(org-hide variable-pitch))
 
+  ;; @todo: Others to consider
+  ;; '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+  ;; '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+  ;; '(org-property-value ((t (:inherit fixed-pitch))) t)
+  ;; '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+  ;; (set-face-attribute '(org-table ((t (:inherit fixed-pitch :foreground "#83a598")))))
+  ;; '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
+  ;; '(org-verbatim ((t (:inherit (shadow fixed-pitch))))))
+  ;; (set-face-attribute 'org-agenda nil :foreground nil :inherit 'fixed-pitch)
+  ;; (set-face-attribute 'org-table nil :foreground nil :inherit '(fixed-pitch))
 #+end_src
 
 ** Structure Templates
-Org Mode’s structure templates feature enables you to quickly insert code blocks into your Org files in combination with org-tempo by typing "<" followed by the template name like el or py and then press TAB. For example, to insert an empty emacs-lisp block below, you can type "<" el and press TAB to expand into such a block.
+:PROPERTIES:
+:ID:       bebac89d-723c-4eb7-b18c-59efe14312f7
+:END:
+Org Mode’s structure templates feature enables you to quickly insert code blocks into your Org files in combination with =org-tempo= by typing =<= followed by the template name like =el= or =py= and then press =TAB=. For example, to insert an empty emacs-lisp block below, you can type =<el= and press =TAB= to expand into such a block.
 
 You can add more src block templates below by copying one of the lines and changing the two strings at the end, the first to be the template name and the second to contain the name of the language as it is known by Org Babel.
 
@@ -1076,11 +1219,9 @@ You can add more src block templates below by copying one of the lines and chang
 #+end_src
 
 ** Pomodoro
-:LOGBOOK:
-CLOCK: [2021-03-23 Tue 04:44]
-CLOCK: [2020-12-06 Sun 16:46]--[2020-12-06 Sun 17:11] =>  0:25
+:PROPERTIES:
+:ID:       202a3af1-9a1f-45e2-a38e-00bca04114ff
 :END:
-
 I use a Pomodoro timer when working to chunk my work into manageable blocks of time. This is a lot better than having to use the various terrible options for i3 that I've found in the past.
 
 #+begin_src emacs-lisp
@@ -1097,49 +1238,74 @@ I use a Pomodoro timer when working to chunk my work into manageable blocks of t
 #+end_src
 
 ** Protocol
+:PROPERTIES:
+:ID:       13106fb6-3be1-4ba1-9dcb-571c870a8d82
+:END:
+
+Probably not needed if using custom functions invoked through =emacsclient=.
 
 #+begin_src emacs-lisp
-(require 'org-protocol)
+;; (require 'org-protocol)
 #+end_src
 
 ** Searching
+:PROPERTIES:
+:ID:       b9c33599-8a5a-4529-b46c-725f49589318
+:END:
 
 @TODO: This doesn't work.
 #+begin_src emacs-lisp
-(defun cy/search-org-files ()
-  (interactive)
-  (counsel-rg "" "~/Documents/Notes" nil "Search Notes: "))
+;; (defun cy/search-org-files ()
+;;   (interactive)
+;;   (counsel-rg "" "~/Notes" nil "Search Notes: "))
 #+end_src
 
 ** Bindings
+:PROPERTIES:
+:ID:       9356024c-a6f3-45ac-9bd5-d02ac363f4a9
+:END:
 
 Originally when I started using Org and Evil, I was using a package called `org-evil` for some nice relevant bindings. That package doesn't interfere or make any assumptions about what your leader key is. It doesn't use it at all.
 
 I'm trying out daviwil's bindings using evil-org.
 
 #+begin_src emacs-lisp
-(use-package evil-org
-  :after org
-  :hook ((org-mode . evil-org-mode)
-         (org-agenda-mode . evil-org-mode)
-         (evil-org-mode . (lambda () (evil-org-set-key-theme '(navigation todo insert textobjects additional)))))
-  :config
-  (require 'evil-org-agenda)
-  (evil-org-agenda-set-keys))
+  ;; Bind S-Return to insert new headings or list items because forwarded X sessions of emacs can't capture the M- key properly in all cases.
+  (define-key org-mode-map (kbd "S-<return>") nil)
+  (define-key org-mode-map (kbd "S-<return>") 'org-meta-return)
 
-(cy/leader-key-def
-  "o"   '(:ignore t :which-key "org-mode")
-  "oi"  '(:ignore t :which-key "insert")
-  "oil" '(:ignore t :which-key "insert link")
-  "on"  '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
-  "os"  '(cy/counsel-org-files :which-key "search notes")
-  "oa"  '(org-agenda :which-key "status")
-  "c"  '(org-capture t :which-key "capture")
-  "ox"  '(org-export-dispatch t :which-key "export"))
+  ;;; Package -- Org stuff from Evil.
+  ;;; Commentary:
+  ;;;   Really useful documentation is here: https://github.com/Somelauw/evil-org-mode/tree/master
 
+  ;;; Code:
+  (use-package evil-org
+    :ensure t
+    :after org
+    :hook ((org-mode . evil-org-mode)
+           (org-agenda-mode . evil-org-mode)
+           (evil-org-mode . (lambda () (evil-org-set-key-theme '(navigation todo insert textobjects additional)))))
+    :config
+    (require 'evil-org-agenda)
+    (evil-org-agenda-set-keys))
+
+  (cy/leader-key-def
+    "o"   '(:ignore t :which-key "org-mode")
+    "oi"  '(:ignore t :which-key "insert")
+    "oo"  'org-open-at-point
+    "oil" '(org-insert-link :which-key "insert link")
+    "on"  '(org-toggle-narrow-to-subtree :which-key "toggle narrow")
+    "os"  '(cy/search-org-files :which-key "search notes") ;; @TODO: BROKEN
+    "oa"  '(org-agenda :which-key "status")
+    "ot"  '(org-todo-list :which-key "todos")
+    "c"   '(org-capture t :which-key "capture")
+    "ox"  '(org-export-dispatch t :which-key "export"))
 #+end_src
 
 ** End use-package org-mode
+:PROPERTIES:
+:ID:       261b6019-3275-46cd-9c4d-6a87715b2aac
+:END:
 
 All the previous configuration, up to the parent header, has been inside one giant use-package block! Wild.
 
@@ -1180,53 +1346,108 @@ I really dislike the litter, and I haven't yet needed a backup file. Here's hopi
       (org-redisplay-inline-images))))
 #+end_src
 
-** Highlight and indent source code blocks
+** Roam
+:PROPERTIES:
+:ID:       044b9a58-0e37-4d63-998a-ef5adb1d6d6d
+:END:
+
+This is the interface I use primarily for notes in a Zettelkasten style. I found this before I even understood what Org mode was, it's my origin story.
+
+
+  ;; (set-face-attribute 'org-roam-link nil :foreground "#ee9419")
+  ;; (set-face-attribute 'org-roam-link-invalid nil :foreground "#fe4000")
+
+*** V1 Config
+:PROPERTIES:
+:ID:       29d5789a-8b41-4a47-ac99-f4fa99f7a24d
+:END:
+
 #+begin_src emacs-lisp
-(setq org-src-fontify-natively t)
+  (use-package org-roam
+    :ensure t
+    :load-path "~/Projects/home/org-roam-v1"
+    :hook
+    (after-init . org-roam-mode)
+    :after org
+    :init
+    :custom
+    (org-roam-directory (file-truename "~/Notes/Roam"))
+    (org-roam-completion-everywhere t)
+    (org-roam-completion-system 'ivy)
+    (org-roam-graph-executable "neato")
+    (org-roam-buffer-position 'right)
+    (org-roam-buffer-width .18)
+    (org-roam-buffer-window-parameters '((no-delete-other-windows . t)))
+    (org-roam-index "~/Notes/Roam/Index.org")
+    (org-roam-dailies-directory "Journal/")
+    (org-roam-link-use-custom-faces t)
+    (org-roam-graph-exclude-matcher '("journal"))
+    (org-roam-graph-viewer 'eww-open-file)
+    (org-roam-capture-templates
+      '(("d" "default" plain "%?"
+         :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+                              "#+title: ${title}\n")
+         :file-name "%<%Y%m%d%H%M%S>-${slug}"
+         :unnarrowed t)))
+    (org-roam-dailies-capture-templates
+     '(("d" "default" entry
+        #'org-roam-capture--get-point
+        "* %?"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :empty-lines-before 1
+        :empty-lines-after 1
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+       ("t" "Task" entry
+        #'org-roam-capture--get-point
+        "* TODO %?\n  %U\n  %a\n  %i"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :olp ("Tasks")
+        :empty-lines 1
+        :empty-lines-before 1
+        :empty-lines-after 1
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+       ("j" "journal" entry
+        #'org-roam-capture--get-point
+        "* %<%I:%M %p> - Journal  :journal:\n\n%?\n\n"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :olp ("Log")
+        :empty-lines-before 1
+        :empty-lines-after 1
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+       ("l" "log entry" entry
+        #'org-roam-capture--get-point
+        "* %<%I:%M %p> - %?"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :olp ("Log")
+        :empty-lines-before 1
+        :empty-lines-after 1
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")
+       ("m" "meeting" entry
+         #'org-roam-capture--get-point
+        "\n* %<%I:%M %p> - %^{Meeting Title}  :meetings:\n\n%?\n\n"
+        :file-name "Journal/%<%Y-%m-%d>"
+        :olp ("Log")
+        :empty-lines-before 1
+        :empty-lines-after 1
+        :head "#+title: %<%Y-%m-%d %a>\n\n[[roam:%<%Y-%B>]]\n\n")))
+
+    :bind (:map org-roam-mode-map
+        (("C-c n l" . org-roam)
+         ("C-c n f" . org-roam-find-file)
+         ("C-c n g" . org-roam-graph-show))
+        :map org-mode-map
+        (("C-c n i" . org-roam-insert))
+        (("C-c n I" . org-roam-insert-immediate))))
 #+end_src
 
-** Roam
-
-This is the interface I use primarily for notes in a Zettelkasten style.
-
 #+begin_src emacs-lisp
-(use-package org-roam
-  :ensure t
-  :hook
-  (after-init . org-roam-mode)
-  :custom
-  (org-roam-directory "~/Documents/Notes/org-roam")
-  (org-roam-index "~/Documents/Notes/org-roam/Index.org")
-  (org-roam-graph-executable "neato")
-  (org-roam-buffer-window-parameters '((no-delete-other-windows . t)))
-  (org-roam-dailies-directory "daily/")
-  (org-roam-link-use-custom-faces t)
-  (org-roam-dailies-capture-templates
-      '(("d" "default" entry
-         #'org-roam-capture--get-point
-         "* %?"
-         :file-name "daily/%<%Y-%m-%d>"
-         :head "#+title: %<%Y-%m-%d>\n"
-         :olp ("%<%Y>"))
-        ("j" "journal" entry
-         #'org-roam-capture--get-point
-         "* %?"
-         :file-name "daily/%<%Y-%m-%d>"
-         :head "#+title: %<%Y-%m-%d>\n"
-         :olp ("Journal"))))
-
-  (org-roam-graph-exclude-matcher '("dailies"))
-  ; (org-roam-graph-viewer 'eww-open-file)
-  :bind (:map org-roam-mode-map
-      (("C-c n l" . org-roam)
-       ("C-c n f" . org-roam-find-file)
-       ("C-c n g" . org-roam-graph-show))
-      :map org-mode-map
-      (("C-c n i" . org-roam-insert))
-      (("C-c n I" . org-roam-insert-immediate))))
-
   (cy/leader-key-def
     "or"    '(:ignore t :which-key "roam")
+    "orc"   'org-roam-capture
+    "ori"   'org-roam-insert
+    "orf"   'org-roam-find-file
+    "orb"   'org-roam-buffer-toggle
+    "orr"   '(org-roam-ref-add :which-key "add reference")
     "orl"   '(org-roam :which-key "backlinks window")
     "ord"   '(:ignore t :which-key "dailies")
     "ordt"  'org-roam-dailies-find-today
@@ -1235,26 +1456,161 @@ This is the interface I use primarily for notes in a Zettelkasten style.
     "ordc"  '(:ignore t :which-key "capture")
     "ordcT" 'org-roam-dailies-capture-tomorrow
     "ordct" 'org-roam-dailies-capture-today
-    "orf"   'org-roam-find-file
-    "org"   'org-roam-show-graph-show
-    "ori"   'org-roam-insert
-    "orf"   'org-roam-find-file)
+    "org"   '(:ignore t :which-key "graph")
+    "orgs"  'org-roam-graph)
 #+end_src
 
-*** Org Roam Server
+*** V2 Config
+:PROPERTIES:
+:ID:       e2a56f97-d357-47b3-be28-656a646f8130
+:END:
+#+begin_src emacs-lisp
+  ;; (use-package org-roam
+  ;;   :ensure t
+  ;;   :load-path "~/Projects/home/org-roam"
+  ;;   :after org
+  ;;   :init
+  ;;   (setq org-roam-directory (file-truename "~/Notes/Roam")
+  ;;         org-roam-db-gc-threshold most-positive-fixnum
+  ;;         org-id-link-to-org-use-id t)
+  ;;   (add-to-list 'display-buffer-alist
+  ;;                  '("\\*org-roam\\*"
+  ;;                     (display-buffer-in-side-window)
+  ;;                     (side . right)
+  ;;                     (slot . 0)
+  ;;                     (window-width . 0.25)
+  ;;                     (preserve-size . (t . nil))
+  ;;                     (window-parameters . ((no-other-window . t)
+  ;;                                           (no-delete-other-windows . t)))))
+  ;;   :config
+  ;;   (org-roam-setup)
+  ;;   (setq org-roam-graph-viewer #'eww-open-file)
+  ;;   (setq org-roam-completion-anywhere t)
+  ;;   (setq org-roam-mode-sections
+  ;;         (list #'org-roam-backlinks-section
+  ;;               #'org-roam-reflinks-section
+  ;;               ;; #'org-roam-node-insert-section
+  ;;               #'org-roam-unlinked-references-insert-section
+  ;;               ))
+  ;;   (setq org-roam-capture-templates
+  ;;         '(("d" "default" plain
+  ;;            "%?"
+  ;;            :if-new (file+head "${slug}-%<%Y%m%d%H%M%S>.org"
+  ;;                               "#+title: ${title}\n")
+  ;;            :immediate-finish t
+  ;;            :unnarrowed t)))
+  ;;   (setq org-roam-capture-ref-templates
+  ;;         '(("r" "ref" plain
+  ;;            "%?"
+  ;;            :if-new (file+head "${slug}-%<%Y%m%d%H%M%S>.org"
+  ;;                               "#+title: ${title}\n")
+  ;;            :unnarrowed t)))
+  ;;   (setq org-roam-dailies-directory "Journal/")
+  ;;   (setq org-roam-dailies-capture-templates
+  ;;         '(("d" "default" entry
+  ;;            "* %?"
+  ;;            :if-new (file+head "%<%Y-%m-%d>.org"
+  ;;                               "#+title: %<%Y-%m-%d>\n"))))
+  ;;   (require 'org-roam-protocol)
 
+  ;;   :bind (:map org-roam-mode-map
+  ;;               (("C-c n l" . org-roam-buffer-toggle)
+  ;;                ("C-c n f" . org-roam-node-find)
+  ;;                ("C-c n g" . org-roam-graph))
+  ;;          :map org-mode-map
+  ;;               (("C-c n i" . org-roam-node-insert)
+  ;;                ("C-c n I" . org-roam-insert-immediate))))
+
+
+
+  ;;   (org-roam-completion-everywhere t)
+  ;;   (org-roam-completion-system 'default)
+  ;;   ;; (org-roam-buffer "*backlinks*")
+  ;;   (org-roam-buffer-position 'right)
+  ;;   (org-roam-buffer-window-parameters '((no-delete-other-windows . t)))
+  ;;   (org-roam-buffer-width .18)
+  ;;   (org-roam-index "~/Notes/Roam/Index.org")
+  ;;   (org-roam-graph-executable "neato")
+  ;;   ;; (org-roam-graph-viewer "DISPLAY=10.0.1.10:0.0 C:\\Program Files\\Mozilla Firefox\\firefox.exe")
+  ;;   (org-roam-link-use-custom-faces t)
+  ;;   ;; (org-roam-capture-templates
+  ;;   ;;   '(("d" "default" plain "%?"
+  ;;   ;;      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+  ;;   ;;                           "#+title: ${title}\n")
+  ;;   ;;      :file-name "%<%Y%m%d%H%M%S>-${slug}"
+  ;;   ;;      :unnarrowed t)))
+  ;; (org-roam-dailies-directory "Journal/")
+
+  ;;   (org-roam-graph-exclude-matcher '("journal"))
+  ;;   ; (org-roam-graph-viewer 'eww-open-file)
+    ;; :bind (:map org-roam-mode-map
+    ;;     (("C-c n l" . org-roam)
+    ;;      ("C-c n f" . org-roam-find-file)
+    ;;      ("C-c n g" . org-roam-graph-show))
+    ;;     :map org-mode-map
+    ;;     (("C-c n i" . org-roam-insert))
+    ;;     (("C-c n I" . org-roam-insert-immediate))))
+
+    ;; (cy/leader-key-def
+    ;; "or"    '(:ignore t :which-key "roam")
+    ;; "orc"   'org-roam-capture
+    ;; "ori"   'org-roam-node-insert
+    ;; "orf"   'org-roam-node-find
+    ;; "orb"   'org-roam-buffer-toggle
+    ;; "orr"   '(org-roam-ref-add :which-key "add reference")
+    ;; "orl"   '(org-roam :which-key "backlinks window")
+    ;; "ord"   '(:ignore t :which-key "dailies")
+    ;; "ordt"  'org-roam-dailies-find-today
+    ;; "ordT"  'org-roam-dailies-find-tomorrow
+    ;; "ordy"  'org-roam-dailies-find-yesterday
+    ;; "ordc"  '(:ignore t :which-key "capture")
+    ;; "ordcT" 'org-roam-dailies-capture-tomorrow
+    ;; "ordct" 'org-roam-dailies-capture-today
+    ;; "org"   '(:ignore t :which-key "graph")
+    ;; "orgs"  'org-roam-graph)
+
+#+end_src
+
+#+begin_src emacs-lisp
+;;  (cl-defmethod org-roam-node-directories ((node org-roam-node))
+;;    (if-let ((dirs (file-name-directory (file-relative-name (org-roam-node-file node) org-roam-directory))))
+;;        (format "(%s)" (car (f-split dirs)))
+;;      ""))
+;;
+;;  (cl-defmethod org-roam-node-backlinkscount ((node org-roam-node))
+;;    (let* ((count (caar (org-roam-db-query
+;;                         [:select (funcall count source)
+;;                                  :from links
+;;                                  :where (= dest $1)
+;;                                  :and (= type "id")]
+;;                         (org-roam-node-id node)))))
+;;      (format "[%d]" count)))
+
+
+
+  ;; (setq org-roam-node-display-template "${directories:10} (${tags:15}) ${title:*} ${backlinkscount:6}")
+  
+#+end_src
+
+
+*** Org Roam Server
+:PROPERTIES:
+:ID:       4b4a15da-b68b-4cb2-8586-a0b12db46e30
+:END:
 @todo needs a description. Roam server lets me preview my files and see the big map of connected concepts in a browser.
+
+@todo swap the server host based on info about whether I'm in WSL or not.
 
 #+begin_src emacs-lisp
 (use-package org-roam-server
   :ensure t
   :config
-  (setq org-roam-server-host "127.0.0.1"
-        org-roam-server-port 8080
+  (setq org-roam-server-host "0.0.0.0"
+        org-roam-server-port 5000
         org-roam-server-authenticate nil
         org-roam-server-export-inline-images t
         org-roam-server-serve-files nil
-        org-roam-server-served-file-extensions '("pdf" "mp4" "ogv")
+        org-roam-server-served-file-extensions '("pdf" "mp4" "ogv" "png" "jpg" "jpeg")
         org-roam-server-network-poll t
         org-roam-server-network-arrows nil
         org-roam-server-network-label-truncate t
@@ -1263,11 +1619,26 @@ This is the interface I use primarily for notes in a Zettelkasten style.
 #+end_src
 
 *** Org Roam Protocol
+:PROPERTIES:
+:ID:       697965ea-e41e-484a-bfa6-788654d00269
+:END:
 
 Allows opening notes from external applications in Emacs.
 
 #+begin_src emacs-lisp
-(require 'org-roam-protocol)
+(require 'org-protocol)
+#+end_src
+
+** Automatically show/hide markup symbols
+:PROPERTIES:
+:ID:       16c07a10-0170-41b0-b8b1-28ac9dd8e057
+:END:
+
+Now characters won't disappear for stuff like === and =*= text.
+
+#+begin_src emacs-lisp
+(use-package org-appear
+  :hook (org-mode . org-appear-mode))
 #+end_src
 
 * Development
@@ -1821,10 +2192,10 @@ This is a newish section. Expect changes.
         ;; set racer rust source path env var
         (setq racer-rust-path (getenv "RUST_SRC_PATH"))
         (defun cy/racer-mode-hook ()
-          (set (make-local-variable 'company-backends)
-               '((company-capf company-files)))
+          ;; (set (make-local-variable 'company-backends)
+               ;; '((company-capf company-files)))
         ;; enable company and eldoc minor modes in rust-mode
-        (add-hook 'racer-mode-hook 'company-mode)
+        ;; (add-hook 'racer-mode-hook 'company-mode)
         (add-hook 'racer-mode-hook 'eldoc-mode)))
     (add-hook 'rust-mode-hook 'flycheck-mode)
     (add-hook 'rust-mode-hook 'flycheck-rust-setup)
@@ -1839,30 +2210,41 @@ This is a newish section. Expect changes.
 *** Solidity
 
 #+begin_src emacs-lisp
-(use-package solidity-mode
-  :after (flycheck company)
-  :bind ( :map solidity-mode-map
-          (("C-c C-g" . solidity-estimate-gas-at-point)))
-  :config
-  (setq solidity-comment-style 'slash)
-  (progn
-    ;; add flycheck support for Solidity.
-    (use-package solidity-flycheck
-      :config
-      (setq flycheck-solidity-solium-soliumrcfile "~/.soliumrc.json"))
-    ;; Company support
-    (use-package company-solidity)))
+;;  (use-package solidity-mode
+;;    :after (flycheck company)
+;;    :bind ( :map solidity-mode-map
+;;            (("C-c C-g" . solidity-estimate-gas-at-point)))
+;;    :config
+;;    (setq solidity-comment-style 'slash)
+;;    (progn
+;;      ;; add flycheck support for Solidity.
+;;      (use-package solidity-flycheck
+;;        :config
+;;        (setq flycheck-solidity-solium-soliumrcfile "~/.soliumrc.json"))
+;;      ;; Company support
+;;      (use-package company-solidity)))
 #+end_src
 
 ** Productivity
 
+*** Flycheck
+:PROPERTIES:
+:ID:       c041d661-1ff9-4fe8-9773-d8f44009695e
+:END:
+
+#+begin_src emacs-lisp
+(use-package flycheck
+ :defer t
+ :hook (lsp-mode . flycheck-mode))
+#+end_src
+
 *** Snippets
 
 #+begin_src emacs-lisp
-(use-package yasnippet
-  :hook (prog-mode . yas-minor-mode)
-  :config
-  (yas-reload-all))
+;; (use-package yasnippet
+;;   :hook (prog-mode . yas-minor-mode)
+;;   :config
+;;   (yas-reload-all))
 #+end_src
 
 *** Smart Parenthesis
@@ -1901,79 +2283,65 @@ Set the background of HTML color strings in buffers to the color they represent.
          js2-mode))
 #+end_src
 
+*** Origami
+:PROPERTIES:
+:ID:       4280af62-fbd9-47d2-86b2-d003b33061ee
+:END:
+
+Better folding.
+
+#+begin_src emacs-lisp
+  ;; (use-package origami
+  ;;   :defer t
+  ;;   :hook (lsp-mode . origami-mode))
+
+  ;; (cy/leader-key-def
+  ;;   "f"  '(:ignore t :which-key "fold")
+  ;;   "ft" '(origami-toggle-node :which-key "open fold")
+  ;;   "fz" '(origami-toggle-all-nodes :which-key "toggle all")
+  ;;   "fT" '(origami-recursively-toggle-node :which-key "toggle node recursively")
+  ;;   "f1" '(origami-show-only-node :which-key "close all else"))
+#+end_src
+
 ** Tools
 
 *** Company Mode
+:PROPERTIES:
+:ID:       1f543285-1d51-47dd-9086-8c2834a56b97
+:END:
 
 Company Mode provides a nice in-buffer completion interface, makes Emacs feel more IDE-like.
 
 Company Box enhances the look with icons and stuff.
 
 #+begin_src emacs-lisp
-(use-package company
-  :ensure t
-  :after lsp-mode
-  ;:init (global-company-mode)     ;; This gets pretty annoying when you're writing regular files and notes.
-  :hook (lsp-mode . company-mode)
-  :bind (:map company-active-map
-              ("<tab>" . company-select-next)
-              ("<tab>" . company-select-previous))
-  :config (setq company-idle-delay 0.0
-                company-tooltip-align-annotations t
-                company-minimum-prefix-length 1
-                create-lockfiles nil   ;; Lock file creation can crash debuggers.
-                ;; Easy navigation to candidates with M-<n>
-                company-show-numbers t
-                company-dabbrev-downcase nil)
-  :diminish company-mode)
+     (use-package company
+       :ensure t
+       :after lsp-mode
+       ;:init (global-company-mode)     ;; This gets pretty annoying when you're writing regular files and notes.
+       :hook (lsp-mode . company-mode)
+       :bind (:map company-active-map
+                   ("<tab>" . company-select-next)
+                   ("<tab>" . company-select-previous))
+       :config (setq company-idle-delay 0.0
+                     company-tooltip-align-annotations t
+                     company-minimum-prefix-length 1
+                     create-lockfiles nil   ;; Lock file creation can crash debuggers.
+                     ;; Easy navigation to candidates with M-<n>
+                     company-show-numbers t
+                     company-dabbrev-downcase nil))
 
-(use-package company-box
-  :hook (company-mode . company-box-mode))
+  (use-package company-posframe
+    :hook (company-mode . company-posframe-mode))
+
+    ;; (use-package company-box
+    ;;   :hook (company-mode . company-box-mode))
 #+end_src
 
 *** Treemacs
-
-Like NeoVim but Emacs-y-er.
-
-#+begin_src emacs-lisp
-(use-package treemacs
-  :ensure t
-  :defer t
-  :init
-  (with-eval-after-load 'winum
-    (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
-  :config
-  (progn
-    (setq treemacs-collapse-dirs               3
-          treemacs-deferred-git-apply-delay    0.5
-          treemacs-display-in-side-window      t
-          treemacs-indentation                 2
-          treemacs-indentation-string          " "
-          treemacs-no-delete-other-windows     t
-          treemacs-position                    'left
-          treemacs-width                       45
-          treemacs-sorting                     'alphabetic-asc
-          treemacs-resize-icons                44
-          treemacs-follow-mode                 t
-          treemacs-filewatch-mode              t
-          treemacs-fringe-indicator-mode       'always)
-          (pcase (cons (not (null (executable-find "git")))
-                       (not (null treemacs-python-executable)))
-            (`(t . t)
-              (treemacs-git-mode 'deferred))
-            (`(t . _)
-              (treemacs-git-mode 'simple))))
-  :bind
-  (:map global-map
-        ("M-0"       . treemacs-select-window)
-        ("C-x t 1"   . treemacs-delete-other-windows)
-        ("C-x t t"   . treemacs)
-        ("C-x t B"   . treemacs-bookmark)
-        ("C-x t C-t" . treemacs-find-file)
-        ("C-x t M-t" . treemacs-find-tag)))
-#+end_src
-
-**** Evil Tree
+:PROPERTIES:
+:ID:       40382653-230f-41cd-81a6-01c368460996
+:END:
 #+begin_src emacs-lisp
 (use-package treemacs-evil
   :after treemacs evil
@@ -2129,7 +2497,7 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
     (setq cfw:org-agenda-schedule-args '(:timestamp))))
 
 (cy/leader-key-def
-  "C"  '(cfw:open-org-calendar :which-key "calendar"))
+  "Cv"  '(cfw:open-org-calendar :which-key "view"))
 
 
 ;; ;; Google Calendar
@@ -2205,6 +2573,8 @@ Emacs, re-fetch all information with org-gcal."
   ;; Restore browser function
   (setq browse-url-browser-function 'ogf-current-browser)
 
+;; (add-hook 'org-agenda-mode-hook (lambda () (org-gcal-fetch) ))
+;; (add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-fetch) ))
 #+end_src
 
 ** Mail
@@ -2311,11 +2681,21 @@ Emacs, re-fetch all information with org-gcal."
 #+end_src
 
 * Desktop Setup
+:PROPERTIES:
+:ID:       f0d8a5d7-514f-49c5-ac69-49011c6091f0
+:END:
+
+#+begin_src emacs-lisp
+(use-package pinentry
+    :config
+    (pinentry-start))
+(setq epa-pinentry-mode 'loopback)
+#+end_src
 
 Some test paths for regex:
-=/home/narwic/Projects/Home/dotfiles/tangled/application-post-tangle.sh=
-=/home/narwic/Projects/Home/dotfiles/tangled/environment-post-tangle.sh=
-=/home/narwic/Projects/Home/dotfiles/tangled/systemd-post-tangle.sh=
+=/home/narwic/Projects/home/dotfiles/tangled/application-post-tangle.sh=
+=/home/narwic/Projects/home/dotfiles/tangled/environment-post-tangle.sh=
+=/home/narwic/Projects/home/dotfiles/tangled/systemd-post-tangle.sh=
 
 Only auto-tangle on =guts=, =punchy=, or =buster=. Windows machines are too difficult to deal with.
 
