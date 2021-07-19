@@ -1277,11 +1277,11 @@ This is the interface I use primarily for notes in a Zettelkasten style. I found
     (org-roam-graph-exclude-matcher '("journal"))
     (org-roam-graph-viewer 'eww-open-file)
     (org-roam-capture-templates
-      '(("d" "default" plain "%?"
-         :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
-                              "#+title: ${title}\n")
-         :file-name "%<%Y%m%d%H%M%S>-${slug}"
-         :unnarrowed t)))
+      '(("d" "default" plain (function org-roam--capture-get-point)
+             "%?"
+             :file-name "%<%Y%m%d%H%M%S>-${slug}"
+             :head "#+title: ${title}\n"
+             :unnarrowed t)))
     (org-roam-dailies-capture-templates
      '(("d" "default" entry
         #'org-roam-capture--get-point
