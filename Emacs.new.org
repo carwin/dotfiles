@@ -1,0 +1,1558 @@
+#+AUTHOR:  Carwin Young
+#+TITLE:   Carwin's Emacs settings file
+#+EMAIL:   cy@carw.in
+#+PROPERTY: header-args:emacs-lisp :tangle ~/.emacs.d/init.el :mkdirp yes
+
+* Bootstrap
+
+** Server
+:PROPERTIES:
+:ID:       ba057737-828c-42c0-8b06-60e373847f87
+:END:
+
+Firstly, configure Emacs to run as a server, to be connected to via ~emacsclient
+-nc~ or similar.
+
+Only start the server when it isn't currently running.
+
+#+begin_src emacs-lisp
+;; (setq server-socket-file "/tmp/emacs1000/server")
+;; (unless (file-exists-p server-socket-file)
+;;   (server-start))
+#+end_src
+
+** Packages
+:PROPERTIES:
+:ID:       61bb683b-a829-45d6-86c1-56184a6b0def
+:END:
+
+| =package=                           | Built-in                                |
+| =use-package=                       | https://github.com/jwiegley/use-package |
+| =use-package-ensure-system-package= |                                         |
+
+Setup MELPA.
+
+#+begin_src emacs-lisp
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
+(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
+
+(package-initialize)
+#+end_src
+
+Install the =use-package= dependency.
+
+#+begin_src emacs-lisp
+(unless (package-installed-p 'use-package)
+   (package-refresh-contents)
+   (package-install 'use-package t))
+(setq-default
+   use-package-always-defer t
+   use-package-always-ensure t)
+#+end_src
+
+Extend =use-package= to allow /ensuring/ system packages as well.
+
+#+begin_src emacs-lisp
+(use-package use-package-ensure-system-package
+  :ensure t)
+#+end_src
+
+** Better Default Settings
+:PROPERTIES:
+:ID:       35236214-a783-411a-9e93-fd70e42c2f1f
+:END:
+
+Here are some updated defaults mostly taken from =@angrybacon= on GitHub.
+
+#+begin_src emacs-lisp
+(setq evil-want-keybinding nil)
+
+(setq-default
+ ad-redefinition-action               'accept           ; Silence warnings for redefinition
+ auto-save-list-file-prefix           nil               ; Prevent tracking for auto-saves
+ cursor-in-non-selected-windows       nil               ; Hide the cursor in inactive windows
+ cursor-type                          '(hbar . 2)       ; Underline-shaped cursor
+ custom-unlispify-menu-entries        nil               ; Prefer kebab-case for titles
+ custom-unlispify-tag-names           nil               ; Prefer kebab-case for symbols
+ delete-by-moving-to-trash            t                 ; Delete files to trash
+ fill-column                          80                ; Set width for automatic line breaks
+ gc-cons-threshold                    (* 8 1024 1024)   ; Better garbage collection, we're not using Game Boys.
+ help-window-select                   t                 ; Focus help windows when opened
+ indent-tabs-mode                     nil               ; Stop using tabs to indent
+ inhibit-startup-screen               t                 ; Disable start-up screen
+ initial-scratch-message              ""                ; Empty the initial *scratch* buffer
+ mouse-yank-at-point                  t                 ; Yank at point rather than pointer
+ read-process-output-max              (* 1024 1024)     ; Increase read size per process
+ recenter-positions                   '(5 top bottom)   ; Set re-centering positions
+ require-final-newline                t                 ; Ensure files end with a singular newline
+ scroll-conservatively                101               ; Avoid recentering when scrolling far
+ scroll-margin                        2                 ; Add a margin when scrolling vertically
+ select-enable-clipboard              t                 ; Merge system's and Emacs' clipboards
+ sentence-end-double-space            nil               ; Use a single space after dots
+ show-help-function                   nil               ; Disable help text everywhere
+ tab-always-indent                    'complete         ; Tab indents first then tries completions
+ tab-width                            2                 ; Smaller width for tab characters
+ tooltip-mode                         nil               ; Disable tooltips
+ uniquify-buffer-name-style           'forward          ; Uniquify buffer names
+ visual-bell                          t                 ; Turn off pings, dings, and dongs
+ warning-minimum-level                :error            ; Skip warning buffers
+ window-combination-resize            t                 ; Resize windows proportionally
+ x-stretch-cursor                     t)                ; Stretch cursor to the glyph width
+(global-auto-revert-mode 1)                             ; Revert files changed elsewhere
+(menu-bar-mode -1)                                      ; Disable the menu bar
+(tool-bar-mode -1)                                      ; Disable the toolbar
+(scroll-bar-mode -1)                                    ; Disable scroll bar.
+(blink-cursor-mode 0)                                   ; Prefer a still cursor
+(delete-selection-mode 1)                               ; Replace region when inserting text
+(fset 'yes-or-no-p 'y-or-n-p)                           ; Replace yes/no prompts with y/n
+(global-subword-mode 1)                                 ; Iterate through CamelCase words
+(mouse-avoidance-mode 'exile)                           ; Avoid collision of mouse with point
+(put 'downcase-region 'disabled nil)                    ; Enable downcase-region
+(put 'upcase-region 'disabled nil)                      ; Enable upcase-region
+(set-default-coding-systems 'utf-8)                     ; Default to utf-8 encoding
+#+end_src
+
+Change a few indenting behaviors.
+
+#+begin_src emacs-lisp
+(put 'add-function 'lisp-indent-function 2)
+(put 'advice-add 'lisp-indent-function 2)
+(put 'plist-put 'lisp-indent-function 2)
+#+end_src
+
+** Cache
+:PROPERTIES:
+:ID:       457d43e9-35a9-42c7-98b3-1fc738a905a2
+:END:
+
+Use =.cache/= to contain local data and avoid cluttering the Emacs directory.
+
+#+begin_src emacs-lisp
+(defconst cy/cache-directory
+  (expand-file-name ".cache/")
+  "Directory where all cache files should be saved.")
+
+(defun cy/cache-concat (name)
+  "Return the absolute path of NAME under `cy/cache-directory'."
+  (let* ((directory (file-name-as-directory cy/cache-directory))
+         (path (convert-standard-filename (concat directory name))))
+    (make-directory (file-name-directory path) t)
+    path))
+#+end_src
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'request
+  (setq-default request-storage-directory (cy/cache-concat "request/")))
+(with-eval-after-load 'tramp
+  (setq-default tramp-persistency-file-name (cy/cache-concat "tramp.eld")))
+(with-eval-after-load 'url
+  (setq-default url-configuration-directory (cy/cache-concat "url/")))
+#+end_src
+
+Run garbage collection on focus-out, Emacs /should/ feel snappier overall.
+
+#+begin_src emacs-lisp
+(add-function :after after-focus-change-function
+  (defun cy/garbage-collect-maybe ()
+    (unless (frame-focus-state)
+      (garbage-collect))))
+#+end_src
+
+There should be only one, singular source of truth for Emacs configurations.
+I've chosen this document and its companions for that, so the following block
+should disable the =customize-*= routines and redirect the writing of them to
+=/dev/null=
+
+#+begin_src emacs-lisp
+(setq-default custom-file null-device)
+#+end_src
+
+** Key Binding Adjustments
+:PROPERTIES:
+:ID:       e5ff8226-1d42-4661-9bd6-7cc422ad5ff8
+:END:
+
+| =general= | https://github.com/ |
+
+Set the =ESC= key to cancel most things.
+
+#+begin_src emacs-lisp
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+#+end_src
+
+Set =,= as the /leader/ key.
+
+Using the =general= package, set up a definer function that can be used
+throughout the document to create new bindings off of the leader.
+
+#+begin_src emacs-lisp
+(use-package general
+  :config
+  (general-create-definer cy/leader-key-def
+                          :keymaps `(normal insert visual emacs org-roam org-agenda term)
+                          :prefix ","
+                          :global-prefix "C-,"))
+#+end_src
+
+Unbind the =<C-u>= ~universal-argument~ binding. This will allow =evil= to
+provide =<C-u>='s typical =vim=-like behavior. Rebind to =<C-s-u>=.
+
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-s-u") 'universal-argument)
+#+end_src
+
+Provide leader based key bindings for Emacs 27+'s tab bar feature.
+Use =,-.= to move to the next tab and =,-'= to move the the previous tab.
+
+#+begin_src emacs-lisp
+(cy/leader-key-def
+  "." '(tab-bar-switch-to-next-tab :which-key "next tab")
+  "'" '(tab-bar-switch-to-prev-tab :which-key "prev tab"))
+#+end_src
+
+Provide a leader based key binding for evaluating a blocks.
+
+#+begin_src emacs-lisp
+(cy/leader-key-def
+  "e" '(:ignore t :which-key "evaluate")
+  "eh" '(eval-last-sexp :which-key "here")
+  "eb" '(eval-buffer :which-key "buffer")
+  "er" '(eval-region :which-key "region"))
+#+end_src
+
+Set a general parent binding for UI toggling. On its own, it will do nothing,
+but it acts as a grouping method for later key bindings related to UI toggling.
+
+#+begin_src emacs-lisp
+(cy/leader-key-def
+  "t" '(:ignore t :which-key "toggle"))
+#+end_src
+
+
+*** Evil
+:PROPERTIES:
+:ID:       fbb60340-debf-4eb7-baea-1e3fc82f6bfb
+:END:
+
+| =evil=                | https://github.com/emacs-evil/evil            |
+| =evil-collection=     | https://github.com/emacs-evil/evil-collection |
+| =evil-surround=       | https://github.com/emacs-evil/evil-surround   |
+| =evil-nerd-commenter= | @todo                                         |
+
+Configure =evil-mode=, which emulates and manages Vim states and motions in Emacs.
+
+Additionally, disable arrow keys. They're a crutch that facilitates avoidance of
+learning proper keystrokes for things.
+
+#+begin_src emacs-lisp
+(defun cy/evil-hook ()
+  (dolist (mode '(custom-mode
+                  eshell-mode
+                  git-rebase-mode
+                  erc-mode
+                  sauron-mode
+                  term-mode))
+    (add-to-list 'evil-emacs-state-modes mode)))
+
+(defun cy/dont-arrow-me ()
+  (interactive)
+  (message "Arrow keys are bad, you're better than this."))
+
+(use-package evil
+  :ensure t
+  :init
+  (setq evil-want-integration t)
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-fine-undo 'fine)
+  ;; :hook
+  ;; (after-init . evil-mode)
+  ;; :custom
+  ;; (evil-echo-state nil)
+  ;; (evil-emacs-state-cursor (default-value 'cursor-type))
+  ;; (evil-undo-system 'undo-redo)
+  ;; (evil-visual-state-cursor 'hollow)
+  ;; (evil-want-keybinding nil)
+  :config
+  (evil-mode 1)
+  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+  (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
+  ;; Use visual line motions even outside of visual-line-mode buffers
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+  ;; Set the undo system Evil should use.
+  (evil-set-undo-system 'undo-redo)
+  ;; Disable arrow keys in normal and visual modes.
+  (define-key evil-normal-state-map (kbd "<left>") 'cy/dont-arrow-me)
+  (define-key evil-normal-state-map (kbd "<down>") 'cy/dont-arrow-me)
+  (define-key evil-normal-state-map (kbd "<up>") 'cy/dont-arrow-me)
+  (define-key evil-normal-state-map (kbd "<right>") 'cy/dont-arrow-me)
+  (evil-global-set-key 'motion (kbd "<left>") 'cy/dont-arrow-me)
+  (evil-global-set-key 'motion (kbd "<down>") 'cy/dont-arrow-me)
+  (evil-global-set-key 'motion (kbd "<up>") 'cy/dont-arrow-me)
+  (evil-global-set-key 'motion (kbd "<right>") 'cy/dont-arrow-me)
+  ;; (add-to-list 'evil-emacs-state-modes 'dired-mode)
+  ;; (add-to-list 'evil-emacs-state-modes 'with-editor-mode)
+  ;; (add-to-list 'evil-emacs-state-modes 'helpful-mode)
+  ;; Make sure we're in normal mode, not insert mode when we are in these Emacs modes.
+  (evil-set-initial-state 'messages-buffer-mode 'normal)
+  (evil-set-initial-state 'dashboard-mode 'normal))
+#+end_src
+
+Add keybindings for bits of Emacs which are not properly covered by =evil-mode= using the =evil-collection= package.
+
+#+begin_src emacs-lisp
+(use-package evil-collection
+  :after evil
+  :ensure t
+  :config
+  (evil-collection-init)
+  (evil-collection-init 'dashboard))
+  ;; :custom (evil-collection-setup-minibuffer t)
+  ;; :init (evil-collection-init))
+  ;;:config
+  ;;(evil-collection-init)
+  ;;(evil-collection-init 'dashboard)) ;; Ensure Evil bindings work on the Dashboard.
+#+end_src
+
+Rebind =evil='s ~q~ to have it quit the current buffer instead of exiting Emacs.
+
+To quit Emacs, use ~:quit~.
+
+#+begin_src emacs-lisp
+(defun cy/ex-kill-buffer-and-close ()
+  (interactive)
+  (unless (char-equal (elt (buffer-name) 0) ?*)
+    (kill-this-buffer)))
+
+(defun cy/ex-save-kill-buffer-and-close ()
+  (interactive)
+  (save-buffer)
+  (kill-this-buffer))
+
+(with-eval-after-load 'evil
+  (evil-ex-define-cmd "q" 'cy/ex-kill-buffer-and-close)
+  (evil-ex-define-cmd "wq" 'cy/ex-save-kill-buffer-and-close)
+  (evil-ex-define-cmd "quit" 'evil-quit))
+
+#+end_src
+
+Emulate =vim-surround= to take actions with surrounding pairs.
+
+The functionality I use the most is, when in [Normal] mode, finding a word or
+function and typing ~ysw~ and then the character I want to surround the target
+with. I've always remembered this keystroke from an older =vim= package called
+YouSurroundWith (I think).
+
+Another way to surround text is in [Visual] mode. The primary difference in
+usage between it and [Normal] mode is that instead of the ~ysw~ train, simply
+use ~S~.
+
+#+begin_src emacs-lisp
+(use-package evil-surround
+  :config
+  (global-evil-surround-mode 1))
+#+end_src
+
+Bind =<C-/>= to comment lines in a much better way than Emacs' default =comment-dwim= (bound to =<M-;>=)
+
+#+begin_src emacs-lisp
+(use-package evil-nerd-commenter
+  :bind ("C-/" . evilnc-comment-or-uncomment-lines))
+#+end_src
+
+
+** Theme
+:PROPERTIES:
+:ID:       9b74f6ac-becf-414c-ab72-bbd4b3a0c0fb
+:END:
+
+I primarily use the =doom-themes= package to get some very nice themes. Some of
+these themes need explicit bold / italic display support turned on as part of
+the package's configuration.
+
+#+begin_src emacs-lisp
+(use-package doom-themes
+  :config
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
+  (doom-themes-org-config))
+#+end_srC
+
+FOR themes outside of =doom-themes=, this section configures a personal custom
+themes directory within the dotfiles repository for keeping themes together.
+
+#+begin_src emacs-lisp
+(add-to-list 'custom-theme-load-path
+             (concat
+              "~/Projects/home/dotfiles/" "emacs-themes"))
+#+end_src
+
+Enable one of the themes, either from the custom theme directory or from the
+themes provided by =doom-themes=.
+
+#+begin_src emacs-lisp
+(load-theme 'doom-horizon t)
+#+end_src
+
+Prettify fringe bitmaps.
+
+#+begin_src emacs-lisp
+(define-fringe-bitmap 'left-curly-arrow [255] nil nil '(center t))
+#+end_src
+
+Configure a leader based key binding for choosing and toggling theemes under the =<leader>-t= parent.
+
+#+begin_src emacs-lisp
+(cy/leader-key-def
+  "tc" '(load-theme :which-key "choose theme"))
+#+end_src
+
+* Languages
+
+** CSS
+:PROPERTIES:
+:ID:       f6c7bf12-8231-4a88-b5fb-d0aa170e7f71
+:END:
+
+| =css-mode=  | Built-in |
+| =scss-mode= | Built-in |
+
+#+begin_src emacs-lisp
+(use-package css-mode
+  :ensure nil
+  :custom
+  (css-indent-offset 2))
+#+end_src
+
+** JavaScript and TypeScript
+:PROPERTIES:
+:ID:       6b48c2e1-0dd3-4624-a76a-50e708a16f32
+:END:
+
+| =typescript-mode= | @todo                              |
+| =js2-mode=        | @todo                              |
+| =web-mode=        | https://github.com/fxbois/web-mode |
+
+Configure JavaScript and TypeScript language modes.
+
+#+begin_src emacs-lisp
+(use-package typescript-mode
+  :mode "\\.ts\\'"
+  :config
+  (setq typescript-indent-level 2))
+
+(use-package js-doc)
+
+(use-package js2-mode
+  :ensure nil
+  :mode (rx ".js" eos)
+  :custom
+  (js-indent-level 2)
+  (js-switch-indent-offset 2)
+  (js2-highlight-level 3)
+  (js2-idle-timer-delay 0)
+  (js2-mode-show-parse-errors nil)
+  (js2-mode-show-strict-warnings nil)
+  :config
+  ;; Also use js2-mode for Node scripts
+  (add-to-list 'magic-mode-alist '("#!/usr/bin/env node" . js2-mode)))
+#+end_src
+
+** JSON
+:PROPERTIES:
+:ID:       fae1bf6c-7239-439d-ace5-21198fd45430
+:END:
+
+| =json-mode= | https://github.com/joshwnj/json-mode |
+
+#+begin_src emacs-lisp
+(use-package json-mode
+  :mode (rx ".json" eos))
+#+end_src
+
+** Lisp
+:PROPERTIES:
+:ID:       474d9406-5b7f-4cab-b9cd-bec6aa74c7a6
+:END:
+
+| =elisp-mode= | Built-in |
+| =ielm=       | Built-in |
+| =lisp-mode=  | Built-in |
+
+#+begin_src emacs-lisp
+(use-package elisp-mode
+  :ensure nil
+  :hook
+  (emacs-lisp-mode . outline-minor-mode))
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package ielm
+  :ensure nil
+  :hook
+  (ielm-mode . (lambda () (setq-local scroll-margin 0))))
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package lisp-mode
+  :ensure nil
+  :mode ((rx ".eld" eos) . lisp-data-mode))
+#+end_src
+
+** Markdown
+:PROPERTIES:
+:ID:       443275ea-8b0e-4939-8497-d38460cf6845
+:END:
+
+| =markdown-mode= | https://github.com/jrblevin/markdown-mode |
+
+#+begin_src emacs-lisp
+(use-package markdown-mode
+  :mode (rx (or "INSTALL" "CONTRIBUTORS" "LICENSE" "README" ".mdx") eos)
+  :custom
+  (markdown-asymmetric-header t)
+  (markdown-split-window-direction 'right))
+#+end_src
+
+** Org
+:PROPERTIES:
+:ID:       b7c463e5-5f1d-4478-949c-eabd441c88fc
+:END:
+
+| =org=       | Built-in                             |
+| =org-roam=  | https://github.org/org-roam/org-roam |
+| =org-tempo= | @todo                                |
+   
+Org is life.
+
+#+begin_src emacs-lisp
+(use-package org
+  :ensure org-plus-contrib
+  :bind
+  (:map org-mode-map
+        ("<C-return>" . nil))
+  :custom
+  (org-indent-mode)
+  (org-adapt-indentation nil)
+  (org-confirm-babel-evaluate nil)
+  (org-cycle-separator-lines 0)
+  (org-descriptive-links t)
+  (org-edit-src-content-indentation 0)
+  (org-edit-src-persistent-message nil)
+  (org-fontify-done-headline t)
+  (org-fontify-quote-and-verse-blocks t) ;; Relates to Tab in source block edit mode(s).
+  (org-image-actual-width nil) ;; Useful for inline images that are huge.
+  (org-return-follows-link t) ;; @todo - this only sort of works with evil, and only in Evil's insert mode.
+  (org-src-tab-acts-natively t)
+  (org-src-window-setup 'current-window)
+  (org-startup-folded 'content)
+  (org-startup-truncated nil)
+  (org-support-shift-select 'always)
+  :custom-face
+  (org-ellipsis ((t (:foreground "#5396f8" :underline nil))))
+  :config
+  (setq org-ellipsis " ▾"
+        org-blank-before-new-entry '((heading . t) (plain-list-item . nil))
+        org-hide-block-startup nil
+        org-hide-emphasis-markers t)
+  (setq org-modules
+        '(org-habit
+          ol-bookmark
+          ol-bibtex
+          org-refile))
+  (setq org-refile-targets '((nil :maxlevel . 1)
+                             (org-agenda-files :maxlevel . 1)))
+  (require 'ob-shell)
+  (add-to-list 'org-babel-load-languages '((shell . t)
+                                           (emacs-lisp . t)
+                                           (php . t)
+                                           (css . t)
+                                           (js . t)
+                                           (makefile . t)
+                                           (python . t)))
+  (push '("conf-unix" . conf-unix) org-src-lang-modes)
+  (modify-syntax-entry ?' "'" org-mode-syntax-table))
+#+end_src
+
+Add leader-based keybindings for =org= documents.
+
+#+begin_src emacs-lisp
+(cy/leader-key-def
+  "o"    '(:ignore t :which-key "org-mode")
+  "oi"   '(:ignore t :which-key "insert")
+  "oil"  '(org-insert-link :which-key "insert link")
+  "oo"   '(org-open-at-point :which-key "open")
+  "on"   '(org-toggle-narrow-to-subtree :which-key "narrow to subtree")
+  "oa"   '(org-agenda :which-key "agenda")
+  "ot"   '(org-todo-list :which-key "todos")
+  "c"    '(org-capture :which-key "capture"))
+#+end_src
+
+*** Structure Templates
+:PROPERTIES:
+:ID:       5690e71d-409c-44b8-9035-76943ceefaaf
+:END:
+
+Org Mode's structure templates feature enables you to quickly insert code blocks
+into your org files in combination with =org-tempo= by typing a ~<~ followed by
+the template name (e.g.: ~el~, ~py~) and pressing ~TAB~.
+
+#+begin_src emacs-lisp
+(require 'org-tempo)
+(add-to-list 'org-structure-template-alist '("sh" . "src shell"))
+(add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+(add-to-list 'org-structure-template-alist '("py" . "src python"))
+(add-to-list 'org-structure-template-alist '("ts" . "src typescript"))
+(add-to-list 'org-structure-template-alist '("js" . "src javascript"))
+(add-to-list 'org-structure-template-alist '("jsn" . "src json"))
+(add-to-list 'org-structure-template-alist '("php" . "src php"))
+(add-to-list 'org-structure-template-alist '("cnf" . "src conf-unix"))
+#+end_src
+
+*** Org-Roam
+:PROPERTIES:
+:ID:       abbc9b81-f990-4a0e-9ae9-84ce07b35709
+:END:
+
+=org-roam= is the reason I started using Emacs. 
+
+#+begin_src emacs-lisp
+(setq org-roam-v2-ack t)
+(use-package org-roam
+  :ensure t
+  ;; :load-path "~/Projects/home/org-roam"  ;; For testing the latest changes.
+  :after org
+  :init
+  (setq org-roam-directory (file-truename "~/Notes/Roam-v2")
+        org-roam-db-gc-threshold most-positive-fixnum
+        org-id-link-to-org-use-id t)
+  (add-to-list 'display-buffer-alist
+               '("\\*org-roam\\*"
+                 (display-buffer-in-side-window)
+                 (side . right)
+                 (slot . 0)
+                 (window-width . 0.25)
+                 (preserve-size . (t . nil))
+                 (window-parameters . ((no-other-window . t)
+                                       (no-delete-other-windows . t)))))
+  :config
+  (org-roam-setup)
+  (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
+    "Return the node's TITLE, as well as it's HIERACHY."
+    (let* ((title (org-roam-node-title node))
+          (olp (mapcar (lambda (s) (if (> (length s) 10) (concat (substring s 0 10)  "...") s)) (org-roam-node-olp node)))
+          (level (org-roam-node-level node))
+          (filetitle (org-roam-get-keyword "TITLE" (org-roam-node-file node)))
+          (shortentitle (if (> (length filetitle) 10) (concat (substring filetitle 0 10)  "...") filetitle))
+          (separator (concat " " (all-the-icons-material "chevron_right") " ")))
+      (cond
+       ((= level 1) (concat (propertize (format "=level:%d=" level) 'display (all-the-icons-material "list" :face 'all-the-icons-green)) " "
+                            (propertize shortentitle 'face 'org-roam-dim) separator title))
+       ((= level 2) (concat (propertize (format "=level:%d=" level) 'display (all-the-icons-material "list" :face 'all-the-icons-dpurple)) " "
+                             (propertize (concat shortentitle separator (string-join olp separator)) 'face 'org-roam-dim) separator title))
+       ((> level 2) (concat (propertize (format "=level:%d=" level) 'display (all-the-icons-material "list" :face 'all-the-icons-dsilver)) " "
+                             (propertize (concat shortentitle separator (string-join olp separator)) 'face 'org-roam-dim) separator title))
+       (t (concat (propertize (format "=level:%d=" level) 'display (all-the-icons-material "insert_drive_file" :face 'all-the-icons-yellow)) " " title)))))
+
+  (cl-defmethod org-roam-node-functiontag ((node org-roam-node))
+    "Return the FUNCTION TAG for each node. These tags are intended to be unique to each file, and represent the note's function."
+    (let* ((specialtags '("project" "company" "concept" "person" "character" "location" "writing" "event"))
+           (tags (seq-filter (lambda (tag) (not (string= tag "ATTACH"))) (org-roam-node-tags node)))
+           (functiontag (seq-intersection specialtags tags 'string=)))
+      (concat
+       (if functiontag
+           (propertize "=has:functions=" 'display (all-the-icons-octicon "gear" :face 'all-the-icons-silver :v-adjust 0.02))
+         (propertize "=not-functions=" 'display (all-the-icons-octicon "gear" :face 'org-roam-dim :v-adjust 0.02)))
+       " " (string-join functiontag ", "))))
+
+  (cl-defmethod org-roam-node-othertags ((node org-roam-node))
+    "Return the OTHER TAGS of each notes."
+    (let* ((tags (seq-filter (lambda (tag) (not (string= tag "ATTACH"))) (org-roam-node-tags node)))
+           (specialtags '("project" "company" "concept" "person" "character" "location" "writing" "event"))
+           (othertags (seq-difference tags specialtags 'string=)))
+      (concat
+       (if othertags
+           (propertize "=has:tags=" 'display (all-the-icons-faicon "tags" :face 'all-the-icons-dgreen :v-adjust 0.02))) " "
+                   (propertize (string-join othertags ", ") 'face 'all-the-icons-dgreen))))
+
+  (cl-defmethod org-roam-node-backlinkscount ((node org-roam-node))
+    (let* ((count (caar (org-roam-db-query
+                         [:select (funcall count source)
+                          :from links
+                          :where (= dest $s1)
+                          :and (= type "id")]
+                         (org-roam-node-id node)))))
+      (if (> count 0)
+        (concat (propertize "=has:backlinks=" 'display (all-the-icons-material "link" :face 'all-the-icons-dblue)) (format "%d" count))
+        (concat (propertize "=not-backlinks=" 'display (all-the-icons-material "link" :face 'org-roam-dim))  " "))))
+
+  (setq org-roam-node-display-template
+        (concat  "${backlinkscount:16} ${functiontag:27} ${hierarchy} ${othertags}"))
+  ;; (setq org-roam-node-display-template (concat "${backlinkscount-v2:4} " "${firsttag:13} " "${title:10}" "${cleantags:20}" "${hierarchy:*}"))
+  ;; (setq org-roam-graph-viewer #'eww-open-file)
+  (setq org-roam-completion-anywhere t)
+  (setq org-roam-completion-system 'corfu)
+  (setq org-roam-mode-sections
+        (list #'org-roam-backlinks-section
+              #'org-roam-reflinks-section))
+  (setq org-roam-capture-templates
+        '(("d" "default" plain
+           "%?"
+           :if-new (file+head "${slug}-%<%Y%m%d%H%M%S>.org"
+                              "#+title: ${title}\n")
+           :immediate-finish t
+           :unnarrowed t)))
+  (setq org-roam-capture-ref-templates
+        '(("r" "ref" plain
+           "%?"
+           :if-new (file+head "${slug}-%<%Y%m%d%H%M%S>.org"
+                              "#+title: ${title}\n")
+           :unnarrowed t)))
+  (setq org-roam-dailies-directory "Journal/")
+  (setq org-roam-dailies-capture-templates
+        '(("d" "default" entry
+           "* %?"
+           :if-new (file+head "%<%Y-%m-%d>.org"
+                              "#+title: %<%Y-%m-%d>\n"))))
+  :bind
+  (:map org-roam-mode-map
+        (("C-c r l" . org-roam-buffer-toggle)
+         ("C-c r f" . org-roam-node-find)
+         ("C-c r g" . org-roam-graph)))
+  (:map org-mode-map
+              (("C-c n i" . org-roam-node-insert)
+               ("C-c n I" . org-roam-node-insert-immediate))))
+#+end_src
+
+Configure leader key bindings for =org-roam=:
+
+#+begin_src emacs-lisp
+(cy/leader-key-def
+  "or"      '(:ignore t :which-key "roam")
+  "orc"     '(org-roam-capture :which-key "capture")
+  "ori"     '(org-roam-node-insert :which-key "insert")
+  "orf"     '(org-roam-node-find :which-key "find")
+  "orb"     '(org-roam-buffer-toggle :which-key "backlinks window")
+  "ort"     '(org-roam-tag-add :which-key "add tag")
+  "ora"     '(org-roam-alias-add :which-key "add alias")
+  "orr"     '(org-roam-ref-add :which-key "add reference")
+  "ord"     '(:ignore t :which-key "dailies")
+  "ordy"    '(org-roam-dailies-find-yesterday :which-key "yesterday")
+  "ordt"    '(org-roam-dailies-find-today :which-key "today")
+  "ordT"    '(org-roam-dailies-find-tomorrow :which-key "tomorrow")
+  "ordc"    '(:ignore t :which-key "capture")
+  "ordct"   '(org-roam-dailies-capture-today :which-key "today")
+  "ordcT"   '(org-roam-dailies-capture-tomorrow :which-key "tomorrow")
+  "org"     '(org-roam-graph :which-key "show graph"))
+#+end_src
+
+** YAML
+:PROPERTIES:
+:ID:       24d3260f-1763-4b74-9973-d3326ba8c30c
+:END:
+
+| =yaml-mode= | @todo |
+
+Set =yaml-mode= when in YAML files.
+
+#+begin_src emacs-lisp
+(use-package yaml-mode
+  :mode "\\.ya?ml\\'")
+#+end_src
+
+* Features
+** Buffers and Windows
+:PROPERTIES:
+:ID:       bf686ae4-bf76-4224-90a6-db260d343ef1
+:END:
+
+| =desktop=  | Built-in                            |
+| =olivetti= | https://github.com/rnkn/olivetti    |
+| =shackle=  | https://github.com/wasamasa/shackle |
+| =windmove= | Built-in                            |
+| =winner=   | Built-in                            |
+
+Bind keys to manage windows and buffers that are more popular.
+
+#+begin_src emacs-lisp
+(global-set-key (kbd "s-w") #'delete-window)
+(global-set-key (kbd "s-W") #'kill-this-buffer)
+#+end_src
+
+@todo: This seems to cause problems with server mode.
+Save and restore Emacs status, including buffers, point, and window configurations.
+
+#+begin_src emacs-lisp
+;; (use-package desktop
+;;   :ensure nil
+;;   :hook
+;;   (after-init . desktop-read)
+;;   (after-init . desktop-save-mode)
+;;   :custom
+;;   (desktop-base-file-name (cy/cache-concat "desktop"))
+;;   (desktop-base-lock-name (cy/cache-concat "desktop.lock"))
+;;   (desktop-restore-eager 4)
+;;   (desktop-restore-forces-onscreen nil)
+;;   (desktop-restore-frames t))
+#+end_src
+
+=Olivetti= allows the centering of buffers for aesthetics. This configuration
+turns it on automatically when visiting a single buffer, and disables itself
+otherwise.
+
+The configuration conveniently silences left clicks on each of the two margins.
+
+#+begin_src emacs-lisp
+(use-package olivetti
+  :hook (text-mode . olivetti-mode)
+  :config
+  (setq-default olivetti-body-width 140))
+#+end_src
+
+Window management.
+
+** File Browsing
+:PROPERTIES:
+:ID:       210e3c29-2c6a-447e-8959-756645a245e8
+:END:
+
+| =dired=    | Built-in                                     |
+| =treemacs= | https://github.com/Alexander-Miller/treemacs |
+| =deft=     | @todo                                        |
+
+=dired= is the primary built-in file browsing mechanism for Emacs.
+
+#+begin_src emacs-lisp
+(use-package all-the-icons-dired
+  :after (all-the-icons dired)
+  :hook (dired-mode . all-the-icons-dired-mode))
+
+(use-package dired
+  :ensure nil
+  :after (dired-collapse)
+  :commands (dired dired-jump)
+  :init
+  (with-eval-after-load 'dired
+    '(progn
+       ;; use please give me hjkl
+       (evil-make-overriding-map dired-mode-map 'normal)
+       (evil-add-hjkl-bindings dired-mode-map 'normal
+         "J" 'dired-goto-file
+         "K" 'dired-do-kill-lines
+         "r" 'dired-do-redisplay
+         ";" (lookup-key dired-mode-map ":"))))
+  :config
+  ;; Provide some =evil-mode= keybindings for =dired=.
+  ;; (evil-make-overriding-map dired-mode-map 'normal)
+  ;; (evil-set-initial-state 'dired-mode 'normal)
+  (evil-collection-define-key 'normal 'dired-mode-map
+                              "h" 'dired-single-up-directory
+                              "H" 'dired-omit-mode
+                              "l" 'dired-single-buffer
+                              "y" 'dired-ranger-copy
+                              "X" 'dired-ranger-move
+                              "p" 'dired-ranger-paste)
+
+  (setq dired-listing-switches "-agho --group-directories-first"
+        dired-omit-files "^\\.[^.].*"
+        dired-omit-verbose nil
+        dired-hide-details-hide-symlink-targets nil)
+  (autoload 'dired-omit-mode "dired-x")
+  :hook ((dired-load . (lambda ()
+                         (interactive)
+                         (dired-collapse)))))
+#+end_src
+
+Show files which are the only child of their parent directories on the same level as the directory to which they belong.
+
+#+begin_src emacs-lisp
+(use-package dired-collapse
+  :defer t)
+#+end_src
+
+Provide more customizable highlighting for files in dired listings with =dired-rainbow=
+
+#+begin_src emacs-lisp
+(use-package dired-rainbow
+  :after dired-collapse
+  :config
+  (dired-rainbow-define-chmod directory "#6cb2eb" "d.*")
+  (dired-rainbow-define html "#eb5286" ("css" "less" "sass" "scss" "htm" "html" "jhtm" "mht" "eml" "mustache" "xhtml"))
+  (dired-rainbow-define xml "#f2d024" ("xml" "xsd" "xsl" "xslt" "wsdl" "bib" "json" "msg" "pgn" "rss" "yaml" "yml" "rdata"))
+  (dired-rainbow-define document "#9561e2" ("docm" "doc" "docx" "odb" "odt" "pdb" "pdf" "ps" "rtf" "djvu" "epub" "odp" "ppt" "pptx"))
+  (dired-rainbow-define markdown "#ffed4a" ("org" "etx" "info" "markdown" "md" "mkd" "nfo" "pod" "rst" "tex" "textfile" "txt"))
+  (dired-rainbow-define database "#6574cd" ("xlsx" "xls" "csv" "accdb" "db" "mdb" "sqlite" "nc"))
+  (dired-rainbow-define media "#de751f" ("mp3" "mp4" "mkv" "MP3" "MP4" "avi" "mpeg" "mpg" "flv" "ogg" "mov" "mid" "midi" "wav" "aiff" "flac"))
+  (dired-rainbow-define image "#f66d9b" ("tiff" "tif" "cdr" "gif" "ico" "jpeg" "jpg" "png" "psd" "eps" "svg"))
+  (dired-rainbow-define log "#c17d11" ("log"))
+  (dired-rainbow-define shell "#f6993f" ("awk" "bash" "bat" "sed" "sh" "zsh" "vim"))
+  (dired-rainbow-define interpreted "#38c172" ("py" "ipynb" "rb" "pl" "t" "msql" "mysql" "pgsql" "sql" "r" "clj" "cljs" "scala" "js"))
+  (dired-rainbow-define compiled "#4dc0b5" ("asm" "cl" "lisp" "el" "c" "h" "c++" "h++" "hpp" "hxx" "m" "cc" "cs" "cp" "cpp" "go" "f" "for" "ftn" "f90" "f95" "f03" "f08" "s" "rs" "hi" "hs" "pyc" ".java"))
+  (dired-rainbow-define executable "#8cc4ff" ("exe" "msi"))
+  (dired-rainbow-define compressed "#51d88a" ("7z" "zip" "bz2" "tgz" "txz" "gz" "xz" "z" "Z" "jar" "war" "ear" "rar" "sar" "xpi" "apk" "xz" "tar"))
+  (dired-rainbow-define packaged "#faad63" ("deb" "rpm" "apk" "jad" "jar" "cab" "pak" "pk3" "vdf" "vpk" "bsp"))
+  (dired-rainbow-define encrypted "#ffed4a" ("gpg" "pgp" "asc" "bfe" "enc" "signature" "sig" "p12" "pem"))
+  (dired-rainbow-define fonts "#6cb2eb" ("afm" "fon" "fnt" "pfb" "pfm" "ttf" "otf"))
+  (dired-rainbow-define partition "#e3342f" ("dmg" "iso" "bin" "nrg" "qcow" "toast" "vcd" "vmdk" "bak"))
+  (dired-rainbow-define vc "#0074d9" ("git" "gitignore" "gitattributes" "gitmodules"))
+  (dired-rainbow-define-chmod executable-unix "#38c172" "-.*x.*"))
+
+#+end_src
+
+Provide a way to reuse the current dired buffer to visit another directory instead of opening a new buffer for the new directory.
+
+#+begin_src emacs-lisp
+(use-package dired-single
+  :defer t)
+#+end_src
+
+Replicate some useful features of the =ranger= file browser in =dired=.
+
+Specifically allows for a better copy/paste process: copying a file or files to a "clipboard" and them pasting them into a target location, which cannot be done with =dired=.
+
+#+begin_src emacs-lisp
+(use-package dired-ranger
+  :defer t
+  :after dired)
+#+end_src
+
+Add =<leader>= based keybindings in =dired= for quickly navigating to common directories.
+
+#+begin_src emacs-lisp
+(require 'cl)
+(defun cy/dired-link (path)
+   "Opens a `dired' buffer at the given PATH"
+  (lexical-let ((target path))
+               (lambda () (interactive) (message "Path: %s" target) (dired target))))
+
+(cy/leader-key-def
+  "d"   '(:ignore t :which-key "dired")
+  "dd"  '(dired :which-key "Here")
+  "dh"  `(,(cy/dired-link "~") :which-key "Home")
+  "di"  `(,(cy/dired-link "~/Notes/Inbox.org") :which-key "Inbox")
+  "dj"  `(,(cy/dired-link "~/Notes/Journal.org") :which-key "Journal")
+  "dn"  `(,(cy/dired-link "~/Notes") :which-key "Notes")
+  "do"  `(,(cy/dired-link "~/Downloads") :which-key "Downloads")
+  "dp"  `(,(cy/dired-link "~/Pictures") :which-key "Pictures")
+  "dv"  `(,(cy/dired-link "~/Videos") :which-key "Videos")
+  "d."  `(,(cy/dired-link "~/Projects/home/dotfiles") :which-key "dotfiles"))
+
+#+end_src
+
+Set up =treemacs=, a file browser and project explorer like =NerdTree= for =vim= that displays in a side window.
+
+#+begin_src emacs-lisp
+(use-package treemacs
+  :ensure t
+  :after (dired)
+  :init
+  (with-eval-after-load 'winum
+    (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+  :config
+  (progn
+    (setq treemacs-collapse-dirs                  (if treemacs-python-executable 3 0)
+          treemacs-deferred-git-apply-delay       0.5
+          treemacs-directory-name-transformer     #'identity
+          treemacs-display-in-side-window         t
+          treemacs-eldoc-display                  t
+          treemacs-file-event-delay               5000
+          treemacs-indentation                    2
+          treemacs-litter-directories             '("/node_modules/" "/.venv" "/.cask")
+          treemacs-width                          35
+          treemacs-width-is-initially-locked      t
+          treemacs-no-delete-other-windows        t)
+    (treemacs-follow-mode t)
+    (treemacs-filewatch-mode t)
+    (treemacs-fringe-indicator-mode 'always)))
+
+(use-package treemacs-evil
+  :after (treemacs evil)
+  :ensure t)
+
+(use-package treemacs-projectile
+  :after (treemacs projectile)
+  :ensure t)
+
+(use-package treemacs-icons-dired
+  :after (treemacs dired)
+  :ensure t
+  :config (treemacs-icons-dired-mode))
+
+;; (use-package treemacs-magit
+;;   :after (treemacs magit)
+;;   :ensure t)
+
+#+end_src
+
+Set leader based keybindings for =treemacs=. The key should be a sub-key of the general UI Toggles binding of =<leader>-t=.
+
+#+begin_src emacs-lisp
+(cy/leader-key-def
+  "tt" '(treemacs :which-key "treemacs"))
+#+end_src
+
+** Completion
+| =which-key=          | https://github.com/justbur/emacs-which-key |
+| =consult=            | https://github.com/minad/consult           |
+| =vertico= deprecated | https://github.com/minad/vertico           |
+| =corfu=              | https://github.com/minad/corfu             |
+| =marginalia=         | https://github.com/minad/marginalia        |
+| =orderless=          | https://github.com/oantolin/orderless      |
+| =selectrum=          | https://github.com/raxod502/selectrum      |
+*** Consult
+
+Provide various commands to quickly select items from lists of candidates with completion.
+
+#+begin_quote
+Consult offers in particular an advanced buffer switching command consult-buffer
+to switch between buffers and recently opened files. Multiple search commands
+are provided, an asynchronous consult-grep and consult-ripgrep, and
+consult-line, which resembles Swiper.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package consult
+  :hook
+  (org-mode . (lambda () (setq-local consult-fontify-preserve nil)))
+  :init
+  (with-eval-after-load 'evil
+    (evil-global-set-key 'motion "gm" 'consult-mark)
+    (evil-global-set-key 'motion "gM" 'consult-imenu)
+    (evil-global-set-key 'motion "go" 'consult-outline)))
+#+end_src
+
+*** Vertico
+:PROPERTIES:
+:ID:       1ef49659-8c1e-4180-96a8-d347c50f0b31
+:END:
+
+A performant vertical completion UI. =vertico= and =corfu= together seem to be a
+decent replacement for =Ivy=.
+
+#+begin_src emacs-lisp
+(use-package vertico
+  :init
+  (vertico-mode)
+  (setq vertico-resize t) ;; Grow and shrink the vertico buffer
+  (setq vertico-cycle t))  ;; Enable cycling for `vertico-next' and `vertico-previous'.
+#+end_src
+
+*** Corfu
+:PROPERTIES:
+:ID:       63f363ac-0aba-4fee-bc98-83956c46855e
+:END:
+
+Minimal completion-at-point. Everyone else seems to be doing it, why not Zoidburg?
+
+#+begin_src emacs-lisp
+(use-package corfu
+  :hook
+  (after-init . corfu-global-mode))
+#+end_src
+
+*** Marginalia
+:PROPERTIES:
+:ID:       a63befdb-05b9-43d5-a959-07721276b052
+:END:
+
+=marginalia= provides rich annotations in the minibuffer.
+
+#+begin_src emacs-lisp
+(use-package marginalia
+  :bind
+  (:map minibuffer-local-map
+        ("s-T" . marginalia-cycle))
+  :hook
+  (selectrum-mode . marginalia-mode))
+#+end_src
+
+*** Orderless
+:PROPERTIES:
+:ID:       35e513b3-0744-4028-8fc3-4138b15942ef
+:END:
+
+Use an advanced completion style that allows completion based on space-separated tokens, out of order.
+
+#+begin_src emacs-lisp
+(use-package orderless
+  :custom
+  (completion-styles '(orderless))
+  (orderless-component-separator 'orderless-escapable-split-on-space))
+#+end_src
+
+*** Selectrum
+:PROPERTIES:
+:ID:       9bff5d67-63c7-4ad8-9ad6-ee1e0c28b2be
+:END:
+
+Prettify the completion minibuffer and augment incremental narrowing features with live-reload
+
+#+begin_src emacs-lisp
+(use-package selectrum
+  :bind
+  ("C-x C-z" . selectrum-repeat)
+  :hook
+  (after-init . selectrum-mode)
+  :custom
+  (selectrum-extend-current-candidate-highlight t)
+  (selectrum-fix-vertical-window-height t)
+  (selectrum-max-window-height .15))
+#+end_src
+
+** Text Editing Features
+:PROPERTIES:
+:ID:       0f6f92cf-1089-4ba3-9371-5fe6b7b2fabe
+:END:
+
+| =paren=     | @todo |
+| =ws-butler= | @todo |
+
+Highlight matching braces with =paren=.
+
+@todo - this doesn't appear to do anything.
+
+#+begin_src emacs-lisp
+(use-package paren
+  :config
+  (set-face-attribute 'show-paren-match-expression nil :background "#363e4a")
+  (show-paren-mode 1))
+#+end_src
+
+Using the =ws-butler= package, automatically remove excessive whitespace.
+
+#+begin_src emacs-lisp
+(use-package ws-butler
+  :hook ((text-mode . ws-butler-mode)
+         (prog-mode . ws-butler-mode)))
+#+end_src
+
+** Mode Line
+:PROPERTIES:
+:ID:       1ec22ac0-dce9-4575-8d75-6aab608b49c4
+:END:
+
+Enable diminishing in modelines to hide excessive content.
+
+#+begin_src emacs-lisp
+(use-package diminish)
+#+end_src
+
+Add a menu to the modeline to visualize and change enabled common minor-modes.
+
+#+begin_src emacs-lisp
+(use-package minions
+  :diminish
+  :hook (doom-modeline-mode . minions-mode)
+  :custom
+  (minions-mode-line-lighter ""))
+#+end_src
+
+Configure and prettify the modeline(s).
+
+#+begin_src emacs-lisp
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1)
+  :custom-face
+  (mode-line ((t (:height 0.85))))
+  (mode-line-inactive ((t (:height 0.85))))
+  :custom
+  (doom-modeline-height 15)
+  (doom-modeline-bar-width 6)
+  (doom-modeline-lsp t)
+  (doom-modeline-github nil)
+  (doom-modeline-mu4e t)
+  (doom-modeline-irc nil)
+  (doom-modeline-minor-modes t)
+  (doom-modeline-persp-name nil)
+  (doom-modeline-buffer-file-name-style 'truncate-except-project)
+  (doom-modeline-major-mode-icon nil))
+#+end_src
+
+#+begin_src emacs-lisp
+;; (use-package doom-modeline
+;;   :demand t
+;;   :custom
+;;   (doom-modeline-bar-width 1)
+;;   (doom-modeline-buffer-file-name-style 'truncate-with-project)
+;;   ;; (doom-modeline-height (cy/secret 'mode-line-height 30))
+;;   (doom-modeline-enable-word-count t)
+;;   (doom-modeline-major-mode-icon nil)
+;;   (doom-modeline-percent-position nil)
+;;   (doom-modeline-vcs-max-length 28)
+;;   (doom-modeline-mu4e t)
+;;   :custom-face
+;;   (doom-modeline-bar ((t (:inherit mode-line))))
+;;   (doom-modeline-bar-inactive ((t (:background nil :inherit mode-line-inactive))))
+;;   :config
+;;   (doom-modeline-def-segment cy/buffer
+;;     "The buffer description and major mode icon."
+;;     (concat (doom-modeline-spc)
+;;             (doom-modeline--buffer-name)
+;;             (doom-modeline-spc)))
+;;   (doom-modeline-def-segment cy/buffer-position
+;;     "The buffer position."
+;;     (let* ((active (doom-modeline--active))
+;;            (face (if active 'mode-line 'mode-line-inactive)))
+;;       (propertize (concat (doom-modeline-spc)
+;;                           (format-mode-line "%l:%c")
+;;                           (doom-modeline-spc))
+;;                   'face face)))
+;;   (doom-modeline-def-segment cy/buffer-simple
+;;     "The buffer name but simpler."
+;;     (let* ((active (doom-modeline--active))
+;;            (face (cond ((and buffer-file-name (buffer-modified-p)) 'doom-modeline-buffer-modified)
+;;                        (active 'doom-modeline-buffer-file)
+;;                        (t 'mode-line-inactive))))
+;;       (concat (doom-modeline-spc)
+;;               (propertize "%b" 'face face)
+;;               (doom-modeline-spc))))
+;;   (doom-modeline-def-segment cy/default-directory
+;;     "The buffer directory."
+;;     (let* ((active (doom-modeline--active))
+;;            (face (if active 'doom-modeline-buffer-path 'mode-line-inactive)))
+;;       (concat (doom-modeline-spc)
+;;               (propertize (abbreviate-file-name default-directory) 'face face)
+;;               (doom-modeline-spc))))
+;;   (doom-modeline-def-segment cy/flymake
+;;     "The error status with color codes and icons."
+;;     (when (bound-and-true-p flymake-mode)
+;;       (let ((active (doom-modeline--active))
+;;             (icon doom-modeline--flymake-icon)
+;;             (text doom-modeline--flymake-text))
+;;         (concat
+;;          (when icon
+;;            (concat (doom-modeline-spc)
+;;                    (if active icon (doom-modeline-propertize-icon icon 'mode-line-inactive))))
+;;          (when text
+;;            (concat (if icon (doom-modeline-vspc) (doom-modeline-spc))
+;;                    (if active text (propertize text 'face 'mode-line-inactive))))
+;;          (when (or icon text)
+;;            (doom-modeline-spc))))))
+;;   (doom-modeline-def-segment cy/info
+;;     "The topic and nodes in Info buffers."
+;;     (let ((active (doom-modeline--active)))
+;;       (concat
+;;        (propertize " (" 'face (if active 'mode-line 'mode-line-inactive))
+;;        (propertize (if (stringp Info-current-file)
+;;                        (replace-regexp-in-string
+;;                         "%" "%%"
+;;                         (file-name-sans-extension (file-name-nondirectory Info-current-file)))
+;;                      (format "*%S*" Info-current-file))
+;;                    'face (if active 'doom-modeline-info 'mode-line-inactive))
+;;        (propertize ") " 'face (if active 'mode-line 'mode-line-inactive))
+;;        (when Info-current-node
+;;          (propertize (concat (replace-regexp-in-string "%" "%%" Info-current-node)
+;;                              (doom-modeline-spc))
+;;                      'face (if active 'doom-modeline-buffer-path 'mode-line-inactive))))))
+;;   (doom-modeline-def-segment cy/major-mode
+;;     "The current major mode, including environment information."
+;;     (let* ((active (doom-modeline--active))
+;;            (face (if active 'doom-modeline-buffer-major-mode 'mode-line-inactive)))
+;;       (concat (doom-modeline-spc)
+;;               (propertize (format-mode-line mode-name) 'face face)
+;;               (doom-modeline-spc))))
+;;   (doom-modeline-def-segment cy/process
+;;     "The ongoing process details."
+;;     (let ((result (format-mode-line mode-line-process)))
+;;       (concat (if (doom-modeline--active)
+;;                   result
+;;                 (propertize result 'face 'mode-line-inactive))
+;;               (doom-modeline-spc))))
+;;   (doom-modeline-def-segment cy/space
+;;     "A simple space."
+;;     (doom-modeline-spc))
+;;   (doom-modeline-def-segment cy/vcs
+;;     "The version control system information."
+;;     (when-let ((branch doom-modeline--vcs-text))
+;;       (let ((active (doom-modeline--active))
+;;             (text (concat ":" branch)))
+;;         (concat (doom-modeline-spc)
+;;                 (if active text (propertize text 'face 'mode-line-inactive))
+;;                 (doom-modeline-spc)))))
+;;   (doom-modeline-mode 1)
+;;   (doom-modeline-def-modeline 'info
+;;     '(bar modals cy/buffer cy/info cy/buffer-position selection-info)
+;;     '(irc-buffers matches cy/process debug cy/major-mode workspace-name))
+;;   (doom-modeline-def-modeline 'main
+;;     '(bar modals cy/buffer remote-host cy/buffer-position cy/flymake selection-info)
+;;     '(irc-buffers matches cy/process cy/vcs debug cy/major-mode workspace-name))
+;;   (doom-modeline-def-modeline 'message
+;;     '(bar modals cy/buffer-simple cy/buffer-position selection-info)
+;;     '(irc-buffers matches cy/process cy/major-mode workspace-name))
+;;   (doom-modeline-def-modeline 'org-src
+;;     '(bar modals cy/buffer-simple cy/buffer-position cy/flymake selection-info)
+;;     '(irc-buffers matches cy/process debug cy/major-mode workspace-name))
+;;   (doom-modeline-def-modeline 'package
+;;     '(bar modals cy/space package)
+;;     '(irc-buffers matches cy/process debug cy/major-mode workspace-name))
+;;   (doom-modeline-def-modeline 'project
+;;     '(bar modals cy/default-directory)
+;;     '(irc-buffers matches cy/process debug cy/major-mode workspace-name))
+;;   (doom-modeline-def-modeline 'special
+;;     '(bar modals cy/buffer cy/buffer-position selection-info)
+;;     '(irc-buffers matches cy/process debug cy/major-mode workspace-name))
+;;   (doom-modeline-def-modeline 'vcs
+;;     '(bar modals cy/buffer remote-host cy/buffer-position selection-info)
+;;     '(irc-buffers matches cy/process debug cy/major-mode workspace-name)))
+#+end_src
+
+** Dashboard
+:PROPERTIES:
+:ID:       73bc4cb0-7a7d-4656-92fc-a468a660fd03
+:END:
+
+| =dashboard= | https://github.com/emacs-dashboard/emacs-dashboard |
+
+Set up a dashboard to use as a starting point when Emacs' launches without a recoverable session.
+
+#+begin_src emacs-lisp
+(use-package dashboard
+  :after evil
+  :ensure t
+  :init
+  (dashboard-setup-startup-hook)
+  :config
+  (setq dashboard-banner-logo-title "Carwin's Dashboard")
+  (setq dashboard-startup-banner 'logo)
+  (setq dashboard-set-init-info t)
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+  (setq dashboard-items '((recents . 10)
+                          (bookmarks . 5)
+                          (projects . 5)
+                          (agenda . 5))))
+#+end_src
+
+Set the initial buffer when Emacs starts up to the Dashboard.
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'dashboard
+  (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*"))))
+#+end_src
+
+
+** Agendas and Capture Templates
+:PROPERTIES:
+:ID:       39bd59e3-7637-479e-b75d-0495a1d95cd6
+:END:
+
+| =cy-workflow.el= | ./Workflow.org |
+
+These features are outlined in the =Workflows.org= file and imported here.
+
+#+begin_src emacs-lisp
+(require 'cy-workflow (concat user-emacs-directory "elisp/cy-workflow.el"))
+#+end_src
+
+** Automatically Tangle on Save
+:PROPERTIES:
+:ID:       9d913ee5-38a1-42d1-ac30-ff1a91e5509e
+:END:
+
+Automatically tangle when saved without having to worry about =org-confirm-babel-evaluate-all=. Instead, do it some time around the =after-save= hook.
+
+#+begin_src emacs-lisp
+(defun cy/org-babel-tangle-dont-ask ()
+  "Dynamic scoping functino to automatically tangle files on save"
+  (let ((org-confirm-babel-evaluate nil))
+    (org-babel-tangle)))
+
+(add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'cy/org-babel-tangle-dont-ask
+                                              'run-at-end 'only-in-org-mode)))
+#+end_src
+
+* TO ORGANIZE
+
+** Linters
+:PROPERTIES:
+:ID:       199db5fe-220f-48d8-8232-7a84aceaa7de
+:END:
+
+| prettier | @todo |
+
+#+begin_src emacs-lisp
+(use-package prettier
+  :config
+  (add-to-list 'prettier-enabled-parsers 'json-stringify))
+#+end_src
+
+** Icons
+:PROPERTIES:
+:ID:       addbc75b-5955-4d3d-9eca-20f334615983
+:END:
+
+| =all-the-icons= | https://github.com/domtronn/all-the-icons.el |
+
+Provide tons of icons for making Emacs look nice.
+
+#+begin_src emacs-lisp
+(use-package all-the-icons
+  :ensure t)
+#+end_src
+
+** Projects
+
+*** Directory-Local Variables
+:PROPERTIES:
+:ID:       a181feb9-edbb-41c1-8bbc-3036e3f11c52
+:END:
+
+Define standard setups for projects that I use on a daily basis.
+
+In order to customize specifics directories recursively and without polluting
+the Emacs Lisp configuration, one can provide directory-local variables through
+a strategically positioned .dir-locals.el file or resort to directory classes
+for reusability.
+
+#+begin_src emacs-lisp
+;; (dir-locals-set-class-variables 'python
+;;   '((python-mode . ((eval . (eglot-ensure))))))
+#+end_src
+
+#+begin_src emacs-lisp
+(dir-locals-set-class-variables 'react
+ '((js-mode . ((eval . (prettier-mode))))
+   (json-mode . ((eval . (prettier-mode))))
+   (rjsx-mode . ((eval . (prettier-mode))))
+   (scss-mode . ((eval . (prettier-mode))))
+   (web-mode . ((eval . (eglot-ensure))
+                (eval . (prettier-mode))
+                (prettier-parsers . (typescript))))))
+#+end_src
+
+*** Projectile
+
+Projectile brings project-level facilities to Emacs such as grep, find, and replace.
+
+#+begin_quote
+Projectile is a project interaction library for Emacs. Its goal is to provide a
+nice set of features operating on a project level without introducing external
+dependencies (when feasible). For instance - finding project files has a
+portable implementation written in pure Emacs Lisp without the use of GNU find
+(but for performance sake an indexing mechanism backed by external commands
+exists as well).
+
+    — Bozhidar Batsov
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package projectile
+  :hook
+  (after-init . projectile-mode)
+  :init
+  (setq-default
+   projectile-cache-file (cy/cache-concat "projectile/cache")
+   projectile-known-projects-file (cy/cache-concat "projectile/projects.eld"))
+  :custom
+  (projectile-dynamic-mode-line nil)
+  (projectile-enable-caching t)
+  (projectile-indexing-method 'hybrid)
+  (projectile-track-known-projects-automatically nil)
+  (projectile-switch-project-action #'projectile-commander))
+#+end_src
+
+** Mail
+:PROPERTIES:
+:ID:       bfe73830-60ff-499d-8f88-66762b4d8d24
+:END:
+
+Locate my Email signatures for different accounts.
+
+#+begin_src emacs-lisp :noweb yes
+(defun cy/work-sig ()
+  (shell-command-to-string "cat ~/Mail/Work/signature.sig"))
+(defun cy/home-sig ()
+  (shell-command-to-string "cat ~/Mail/Home/signature.sig"))
+#+end_src
+
+Tell Emacs where to find =mu4e=.
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/usr/share/emacs/site-lisp/mu4e")
+#+end_src
+
+Configure two email accounts in =mu4e=: one account for work and another for
+personal mail.
+
+#+begin_src emacs-lisp :noweb yes
+(use-package mu4e
+  :ensure nil
+  :defer 20 ; Wait until 20 seconds after startup
+  :ensure-system-package (mu . "yay -S mu")
+  :config
+  ;; Load org-mode integration
+  (require 'org-mu4e)
+  ;; This is set to 't' to avoid mail syncing issues when using mbsync
+  (setq mu4e-change-filenames-when-moving t
+        ;; Refresh mail using isync every 10 minutes
+        mu4e-update-interval (* 10 60)
+        mu4e-compose-in-new-frame t
+        mu4e-view-show-images t
+        mu4e-get-mail-command "mbsync -a"
+        mu4e-maildir "~/Mail")
+  (setq mu4e-contexts
+       (list
+       ;; Personal account
+       (make-mu4e-context
+        :name "Personal"
+        :match-func
+        (lambda (msg)
+          (when msg
+            (string-prefix-p "/Home" (mu4e-message-field msg :maildir))))
+        :vars '((user-mail-address . "cy@carw.in")
+                (user-full-name    . "Carwin Young")
+                (mu4e-compose-signature . cy/home-sig)
+                (mu4e-drafts-folder  . "/Home/drafts")
+                (mu4e-sent-folder    . "/Home/sent")
+                (mu4e-refile-folder  . "/Home/archive")
+                (mu4e-trash-folder   . "/Home/trash")
+                (mu4e-maildir-shortcuts .  (("/Home/inbox"         . ?i)
+                                            ("/Home/sent"          . ?s)
+                                            ("/Home/quarantine"    . ?q)
+                                            ("/Home/trash"         . ?t)
+                                            ("/Home/drafts"        . ?d)
+                                            ("/Home/archive"       . ?a)))))
+       ;; Work account
+       (make-mu4e-context
+        :name "Work"
+        :match-func
+        (lambda (msg)
+          (when msg
+            (string-prefix-p "/Work" (mu4e-message-field msg :maildir))))
+        :vars '((user-mail-address . "carwin@mobomo.com")
+                (user-full-name    . "Carwin Young")
+                (mu4e-compose-signature . cy/work-sig)
+                (mu4e-drafts-folder  . "/Work/drafts")
+                (mu4e-sent-folder    . "/Work/sent")
+                (mu4e-refile-folder  . "/Work/archive")
+                (mu4e-trash-folder   . "/Work/trash")
+                (mu4e-maildir-shortcuts . (("/Work/inbox"     . ?i)
+                                            ("/Work/sent"     . ?s)
+                                            ("/Work/trash"    . ?t)
+                                            ("/Work/drafts"   . ?d)
+                                            ("/Work/archive"  . ?a))))))))
+
+
+
+(defun cy/org-capture-mail ()
+  (interactive)
+  (call-interactively 'org-store-link)
+  (org-capture nil "m"))
+
+(cy/leader-key-def
+  :keymaps 'mu4e-headers
+  "i" '(cy/org-capture-mail :which-key "capture mail"))
+
+#+end_src
+
+Configure =msmtp= for sending mail.
+
+#+begin_src emacs-lisp
+(setq sendmail-program "/usr/bin/msmtp"
+      message-sendmail-f-is-evil t
+      message-sendmail-extra-arguments '("--read-envelope-from")
+      send-mail-function 'smtpmail-send-it
+      message-send-mail-function 'message-send-mail-with-sendmail)
+#+end_src
