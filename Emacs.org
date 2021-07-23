@@ -404,6 +404,20 @@ Set the background of HTML color strings in buffers to the color they represent.
          js2-mode))
 #+end_src
 
+** Import Sibling Dotfiles
+
+| =cy-workflow= | [[file:Workflow.org][./Workflow.org]] |
+| =cy-mail=     | [[file:Mail.org][./Mail.org]]     |
+| =cy-calendar= | [[file:Calendar.org][./Calendar.org]] |
+
+Provide agenda workflows, =mu4e= configuration, and calendar integration from sibling files.
+
+#+begin_src emacs-lisp
+(require 'cy-workflow (concat user-emacs-directory "cy-workflow.el"))
+(require 'cy-mail (concat user-emacs-directory "cy-mail.el"))
+(require 'cy-calendar (concat user-emacs-directory "cy-calendar.el"))
+#+end_src
+
 * Features
 
 ** Buffers and Windows
