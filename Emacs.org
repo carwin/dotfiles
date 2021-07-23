@@ -1667,6 +1667,18 @@ Add =<leader>=-based keybindings for =org= documents.
   "c"    '(org-capture :which-key "capture"))
 #+end_src
 
+
+#+begin_src emacs-lisp
+(use-package org-superstar
+  :after org
+  :hook (org-mode . (lambda () (org-superstar-mode 1)))
+  :config
+  ;; (setq org-superstart-leading-bullet "​")
+  (setq org-superstar-remove-leading-stars t))
+  ;; (setq org-superstart-leading-bullet ?\s)
+;; )
+#+end_src
+
 Automatically show/hide markup symbols.
 
 Now characters won't disappear for stuff like === and =*= text.
