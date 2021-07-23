@@ -1799,32 +1799,55 @@ this before I even understood what Org mode was, it's my origin story.
 
   (setq org-roam-node-display-template
         (concat  "${backlinkscount:16} ${functiontag:27} ${hierarchy} ${othertags}"))
-  ;; (setq org-roam-node-display-template (concat "${backlinkscount-v2:4} " "${firsttag:13} " "${title:10}" "${cleantags:20}" "${hierarchy:*}"))
-  ;; (setq org-roam-graph-viewer #'eww-open-file)
+
   (setq org-roam-completion-anywhere t)
-  (setq org-roam-completion-system 'corfu)
-  (setq org-roam-mode-sections
-        (list #'org-roam-backlinks-section
-              #'org-roam-reflinks-section))
-  (setq org-roam-capture-templates
-        '(("d" "default" plain
-           "%?"
-           :if-new (file+head "${slug}-%<%Y%m%d%H%M%S>.org"
-                              "#+title: ${title}\n")
-           :immediate-finish t
-           :unnarrowed t)))
-  (setq org-roam-capture-ref-templates
-        '(("r" "ref" plain
-           "%?"
-           :if-new (file+head "${slug}-%<%Y%m%d%H%M%S>.org"
-                              "#+title: ${title}\n")
-           :unnarrowed t)))
-  (setq org-roam-dailies-directory "Journal/")
-  (setq org-roam-dailies-capture-templates
-        '(("d" "default" entry
-           "* %?"
-           :if-new (file+head "%<%Y-%m-%d>.org"
-                              "#+title: %<%Y-%m-%d>\n"))))
+ (setq org-roam-completion-system 'corfu)
+ (setq org-roam-mode-sections
+       (list #'org-roam-backlinks-section
+             #'org-roam-reflinks-section))
+ (setq org-roam-capture-templates
+       '(("d" "default" plain
+          "%?"
+          :if-new (file+head "${slug}-%<%Y%m%d%H%M%S>.org"
+                             "#+title: ${title}\n")
+          :immediate-finish t
+          :unnarrowed t)))
+ (setq org-roam-capture-ref-templates
+       '(("r" "ref" plain
+          "%?"
+          :if-new (file+head "${slug}-%<%Y%m%d%H%M%S>.org"
+                             "#+title: ${title}\n")
+          :unnarrowed t)))
+ (setq org-roam-dailies-directory "Journal/")
+ (setq org-roam-dailies-capture-templates
+       '(("j" "journal" entry
+	  "\n** Journal Entry - %<%I:%M %p> :journal:\n\n%?\n\n"
+	  :if-new (file+head+olp "%<%Y-%m-%d>.org"
+				 "#+title: %<%Y-%m-%d %a>\n#+filetags: dailies\n\n- parent :: [[roam:%<%Y-%B>]]\n\n"
+	                         ("Journal"))
+          :empty-lines 1)
+	 ("t" "task" entry
+		"\n** TODO %?\n %U\n %a\n %i"
+	  :if-new (file+head+olp "%<%Y-%m-%d>.org"
+				 "#+title: %<%Y-%m-%d %a>\n#+filetags: dailies\n\n- parent :: [[roam:%<%Y-%B>]]\n\n"
+				 ( "Tasks" ))
+          :empty-lines-before 0
+          :empty-lines-after 0)
+	 ("m" "meeting" entry
+	  "\n** %<%I:%M %p> - %^{Meeting Title} :meetings:\n\n%?\n\n"
+	  :if-new (file+head+olp "%<%Y-%m-%d>.org"
+				 "#+title: %<%Y-%m-%d %a>\n#+filetags: dailies\n\n- parent :: [[roam:%<%Y-%B>]]\n\n"
+				 ("Meeting Notes"))
+	  :empty-lines 1
+          :prepend t)
+	 ("i" "idea" item
+	  "- %?"
+	  :if-new (file+head+olp "%<%Y-%m-%d>.org"
+				 "#+title: %<%Y-%m-%d %a>\n#+filetags: dailies\n\n- parent :: [[roam:%<%Y-%B>]]\n\n"
+				 ("Ideas"))
+	  :empty-lines 0
+          :prepend t)
+))
   :bind
   (:map org-roam-mode-map
         (("C-c r l" . org-roam-buffer-toggle)
