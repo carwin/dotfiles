@@ -191,6 +191,7 @@ Run garbage collection on focus-out, Emacs /should/ feel snappier overall.
 | =evil-surround=       | @todo |
 | =evil-nerd-commenter= | @todo |
 | =which-key=           | @todo |
+| =evil-org=            | @todo |
 
 Set the =ESC= key to cancel most things.
 
@@ -271,6 +272,18 @@ using the =evil-collection= package.
     :config
     (evil-collection-init)
     (evil-collection-init 'dashboard)) ; Make sure Evil bindings work on the Dashboard.
+#+end_src
+
+Add another collection of =evil= configurations specifically for navigating some =org-mode= areas like the Agenda.
+
+#+begin_src emacs-lisp
+(use-package evil-org
+  :ensure t
+  :after org
+  :hook (org-mode . (lambda () evil-org-mode))
+  :config
+  (require 'evil-org-agenda)
+  (evil-org-agenda-set-keys))
 #+end_src
 
 Rebind =evil='s ~q~ to have it quit the current buffer instead of exiting Emacs.
@@ -1697,6 +1710,7 @@ Add syntax highlighting for Dockerfiles and allow the building of images from th
 
 ** Org Mode
 
+
 | =org=       | Built-in                             |
 | =org-roam=  | https://github.org/org-roam/org-roam |
 | =org-tempo= | @todo                                |
@@ -2015,6 +2029,26 @@ Allows opening notes from external applications in Emacs.
 (require 'org-protocol)
 #+end_src
 
+*** Spaced Repetition
+
+#+begin_src emacs-lisp
+;; (use-package org-fc)
+
+(evil-define-minor-mode-key '(normal insert emacs) 'org-fc-review-flip-mode
+  (kbd "RET") 'org-fc-review-flip
+  (kbd "n") 'org-fc-review-flip
+  (kbd "s") 'org-fc-review-suspend-card
+  (kbd "q") 'org-fc-review-quit)
+
+(evil-define-minor-mode-key '(normal insert emacs) 'org-fc-review-rate-mode
+  (kbd "a") 'org-fc-review-rate-again
+  (kbd "h") 'org-fc-review-rate-hard
+  (kbd "g") 'org-fc-review-rate-good
+  (kbd "e") 'org-fc-review-rate-easy
+  (kbd "s") 'org-fc-review-suspend-card
+  (kbd "q") 'org-fc-review-quit)
+#+end_src
+
 ** Tools
 
 ** LaTeX / PDFs
@@ -2059,26 +2093,6 @@ Force a page break after table of contents
 
 (cy/leader-key-def
   "Cv"  '(cfw:open-org-calendar :which-key "view"))
-#+end_src
-
-** Spaced Repetition
-
-#+begin_src emacs-lisp
-(use-package org-fc)
-
-(evil-define-minor-mode-key '(normal insert emacs) 'org-fc-review-flip-mode
-  (kbd "RET") 'org-fc-review-flip
-  (kbd "n") 'org-fc-review-flip
-  (kbd "s") 'org-fc-review-suspend-card
-  (kbd "q") 'org-fc-review-quit)
-
-(evil-define-minor-mode-key '(normal insert emacs) 'org-fc-review-rate-mode
-  (kbd "a") 'org-fc-review-rate-again
-  (kbd "h") 'org-fc-review-rate-hard
-  (kbd "g") 'org-fc-review-rate-good
-  (kbd "e") 'org-fc-review-rate-easy
-  (kbd "s") 'org-fc-review-suspend-card
-  (kbd "q") 'org-fc-review-quit)
 #+end_src
 
 * Desktop Setup
