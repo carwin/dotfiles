@@ -12,6 +12,14 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 
 * Bootstrap
 
+| =cy-systems=                        | [[file:Systems.org][./Systems.org]] |
+| =use-package=                       | @todo         |
+| =auto-package-update=               | @todo         |
+| =use-package-ensure-system-package= | @todo         |
+| =package=                           | Built-in      |
+
+Load settings for this particular system.
+
 #+begin_src emacs-lisp
 (load-file "~/.emacs.d/per-system-settings.el")
 #+end_src
@@ -68,6 +76,8 @@ Extend =use-package= to allow /ensuring/ that system packages are present, and, 
 
 ** Path Settings
 
+| =exec-path-from-shell= | @todo |
+
 Ensure Emacs' =PATH= is the same as the shell's
 
 #+begin_src emacs-lisp
@@ -78,6 +88,8 @@ Ensure Emacs' =PATH= is the same as the shell's
 #+end_src
 
 ** Secrets
+
+| =pass= | @todo |
 
 Configure an interface for talking to the system's =pass= to manage secrets.
 
@@ -173,6 +185,13 @@ Run garbage collection on focus-out, Emacs /should/ feel snappier overall.
 
 ** Key Binding Adjustments
 
+| =general=             | @todo |
+| =evil=                | @todo |
+| =evil-collection=     | @todo |
+| =evil-surround=       | @todo |
+| =evil-nerd-commenter= | @todo |
+| =which-key=           | @todo |
+
 Set the =ESC= key to cancel most things.
 
 #+begin_src emacs-lisp
@@ -183,10 +202,10 @@ Unbind the =<C-u>= ~universal-argument~ binding. This will allow =evil= to
 provide =<C-u>='s typical =vim=-like behavior. Rebind to =<C-s-u>=.
 
 #+begin_src emacs-lisp
-(global-set-key (kbd "C-s-u") 'universal-argument)
-#+end_src
+(global-set-key (kbd "<C-u>") 'universal-argument)
+#+end_srC
 
-Set =<,>= as the =<leader>= key with =general=. The =<leader>= will act as a launchpad
+Set =<,>= AS the =<leader>= key with =general=. The =<leader>= will act as a launchpad
 for keystroke combination based commands.
 
 Set up a definer function that can be used
@@ -450,7 +469,7 @@ Define a toggle function that can be called to turn transparency on and off.
                     ((numberp (cadr alpha)) (cadr alpha)))
               100)
          '(90 . 90) '(100 . 100)))))
-(global-set-key (kbd "C-c t") 'toggle-transparency)
+(global-set-key (kbd "C-c t") 'cy/toggle-transparency)
 #+end_src
 
 Bind the transparency toggle to the =toggle= parent of the =<leader>= key.
@@ -472,13 +491,6 @@ The configuration conveniently silences left clicks on each of the two margins.
    (add-hook 'text-mode-hook 'olivetti-mode)
    ;(add-hook 'text-mode-hook (lambda () (setq indent-line-function #'indent-relative)))
    (setq-default olivetti-body-width 140))
-#+end_src
-
-Set page break line mode globally.
-
-#+begin_src emacs-lisp
-;; (use-package page-break-lines)
-;; (global-page-break-lines-mode)
 #+end_src
 
 Configure window history with =winner-mode=.
@@ -1193,7 +1205,7 @@ Set up a dashboard to use as a starting point when Emacs' launches without a rec
   ;; (setq dashboard-match-agenda-entry "org-gcal")
   ;; (setq dashboard-filter-agenda 'dashboard-no-filter-agenda)
   ;; (setq dashboard-filter-agenda t)
-  (setq dashboard-filter-agenda-entry #'dashboard-filter-agenda-by-todo)
+  (setq dashboard-filter-agenda-entry #'dashboard-filter-agenda-by-time)
   (setq dashboard-org-agenda-categories '("@home"))
   (setq dashboard-week-agenda t)
   (dashboard-setup-startup-hook))
@@ -1208,6 +1220,103 @@ This is useful if you start Emacs as a server and connect through /emacsclient/.
 
 #+begin_src emacs-lisp
 (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
+#+end_src
+
+** Version Control With Magit
+
+| =magit=              | https://github.com/magit/magit                                |
+| =git-gutter-fringe=  | https://github.com/emacsorphanage/git-gutter-fringe           |
+| =git-commit=         | https://github.com/magit/magit/blob/master/lisp/git-commit.el |
+| =gitattributes-mode= | https://github.com/magit/git-modes#gitattributes-mode         |
+| =gitconfig-mode=     | https://github.com/magit/git-modes#gitconfig-mode             |
+| =gitignore-mode=     | https://github.com/magit/git-modes#gitignore-mode             |
+| =transient=          | https://github.com/magit/transient                            |
+
+Auto-fill commit messages.
+
+#+begin_src emacs-lisp
+(use-package git-commit
+  :hook
+  (git-commit-mode . (lambda () (setq-local fill-column 72))))
+#+end_src
+
+Display indicators for =git= related things in the fringe.
+
+#+begin_src emacs-lisp
+(use-package git-gutter-fringe
+  :preface
+  (defun cy/git-gutter-enable ()
+    (when-let* ((buffer (buffer-file-name))
+                (backend (vc-backend buffer)))
+      (require 'git-gutter)
+      (require 'git-gutter-fringe)
+      (git-gutter-mode 1)))
+  :hook
+  (after-change-major-mode . cy/git-gutter-enable)
+  :config
+  (define-fringe-bitmap 'git-gutter-fr:added [255] nil nil '(center t))
+  (define-fringe-bitmap 'git-gutter-fr:deleted [255 255 255 255] nil nil 'bottom)
+  (define-fringe-bitmap 'git-gutter-fr:modified [255] nil nil '(center t)))
+#+end_src
+
+Provide major-modes for =git= specific files.
+
+#+begin_src emacs-lisp
+(use-package gitattributes-mode)
+(use-package gitconfig-mode)
+(use-package gitignore-mode)
+#+end_src
+
+Magit provides Git facilities directly from within Emacs.
+
+#+begin_quote
+    Magit is an interface to the version control system Git, implemented as an Emacs package. Magit aspires to be a complete Git porcelain. While we cannot (yet) claim that Magit wraps and improves upon each and every Git command, it is complete enough to allow even experienced Git users to perform almost all of their daily version control tasks directly from within Emacs. While many fine Git clients exist, only Magit and Git itself deserve to be called porcelains.
+
+    — Jonas Bernoulli
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package magit
+  :after transient
+  :bind
+  (:map magit-file-section-map
+   ("<return>" . magit-diff-visit-file-other-window)
+   :map magit-hunk-section-map
+   ("<return>" . magit-diff-visit-file-other-window)
+   :map magit-status-mode-map
+   ("M-1" . nil)
+   ("M-2" . nil)
+   ("M-3" . nil)
+   ("M-4" . nil))
+  :hook
+  (magit-post-stage-hook . me/magit-recenter)
+  :custom
+  (epg-pinentry-mode 'loopback)
+  (magit-display-buffer-function 'magit-display-buffer-same-window-except-diff-v1)
+  (magit-diff-highlight-hunk-region-functions
+   '(magit-diff-highlight-hunk-region-using-face))
+  (magit-diff-refine-hunk 'all)
+  (magit-module-sections-nested nil)
+  (magit-section-initial-visibility-alist
+   '((modules . show) (stashes . show) (unpulled . show) (unpushed . show)))
+  :config
+  (magit-add-section-hook
+   'magit-status-sections-hook 'magit-insert-modules-overview 'magit-insert-merge-log)
+  (remove-hook 'magit-section-highlight-hook #'magit-section-highlight))
+#+end_src
+
+Add prerequisite for =magit= package.
+
+#+begin_src emacs-lisp
+(use-package transient
+  :init
+  (setq-default
+   transient-history-file (cy/cache-concat "transient/history.el")
+   transient-levels-file (cy/cache-concat "transient/levels.el")
+   transient-values-file (cy/cache-concat "transient/values.el"))
+  :custom
+  (transient-default-level 5)
+  (transient-mode-line-format nil))
 #+end_src
 
 * Languages
@@ -1576,6 +1685,16 @@ Configure JavaScript and TypeScript language modes.
 #+end_src
 
 
+** Dockerfile
+
+| =dockerfile-mode= | https://github.com/spotify/dockerfile-mode |
+
+Add syntax highlighting for Dockerfiles and allow the building of images from the buffer via =(C-c C-b)=.
+
+#+begin_src emacs-lisp
+(use-package dockerfile-mode)
+#+end_src
+
 ** Org Mode
 
 | =org=       | Built-in                             |
@@ -1726,7 +1845,7 @@ this before I even understood what Org mode was, it's my origin story.
   ;; (set-face-attribute 'org-roam-link-invalid nil :foreground "#fe4000")
 
 #+begin_src emacs-lisp
-;; (setq org-roam-v2-ack t) ;; Tell org-roam I know what I'm doing.
+(setq org-roam-v2-ack t) ;; Tell org-roam I know what I'm doing.
 (use-package org-roam
   :ensure t
   ;; :load-path "~/Projects/home/org-roam"  ;; For testing the latest changes.
@@ -1735,19 +1854,31 @@ this before I even understood what Org mode was, it's my origin story.
   (setq org-roam-directory (file-truename "~/Notes/Roam-v2")
         org-roam-db-gc-threshold most-positive-fixnum
         org-id-link-to-org-use-id 'create-if-interactive)
+  ;; (add-to-list 'display-buffer-alist
+  ;;              '("\\*org-roam\\*"
+  ;;                (display-buffer-in-direction)
+  ;;                (direction . right)
+  ;;                (window-width . 0.33)
+  ;;                (window-height . fit-window-to-buffer)))
+  :config
+  (org-roam-setup)
   (add-to-list 'display-buffer-alist
                '("\\*org-roam\\*"
                  (display-buffer-in-side-window)
                  (side . right)
                  (slot . 0)
-                 (window-width . 0.25)
+                 (window-width . 0.20)
                  (preserve-size . (t . nil))
                  (window-parameters . ((other-window . t)
                                        (no-delete-other-windows . t)))))
-  :config
-  (org-roam-setup)
+  (setq org-roam-completion-anywhere t)
+  (setq org-roam-completion-system 'corfu)
+  (setq org-roam-mode-section-functions
+	(list #'org-roam-backlinks-section
+              #'org-roam-unlinked-references-section
+	      #'org-roam-reflinks-section))
   (setq cy/type-categories
-      '("info" "concept" "project" "quote" "person" "character" "writing" "event" "place"))
+      '("info" "concept" "project" "quote" "person" "character" "writing" "event" "place" "stub"))
   (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
     "Return the node's TITLE, as well as it's HIERACHY."
     (let* ((title (org-roam-node-title node))
@@ -1800,54 +1931,48 @@ this before I even understood what Org mode was, it's my origin story.
   (setq org-roam-node-display-template
         (concat  "${backlinkscount:16} ${functiontag:27} ${hierarchy} ${othertags}"))
 
-  (setq org-roam-completion-anywhere t)
- (setq org-roam-completion-system 'corfu)
- (setq org-roam-mode-sections
-       (list #'org-roam-backlinks-section
-             #'org-roam-reflinks-section))
- (setq org-roam-capture-templates
-       '(("d" "default" plain
-          "%?"
-          :if-new (file+head "${slug}-%<%Y%m%d%H%M%S>.org"
-                             "#+title: ${title}\n")
-          :immediate-finish t
-          :unnarrowed t)))
- (setq org-roam-capture-ref-templates
-       '(("r" "ref" plain
-          "%?"
-          :if-new (file+head "${slug}-%<%Y%m%d%H%M%S>.org"
-                             "#+title: ${title}\n")
-          :unnarrowed t)))
- (setq org-roam-dailies-directory "Journal/")
- (setq org-roam-dailies-capture-templates
-       '(("j" "journal" entry
-	  "\n** Journal Entry - %<%I:%M %p> :journal:\n\n%?\n\n"
-	  :if-new (file+head+olp "%<%Y-%m-%d>.org"
-				 "#+title: %<%Y-%m-%d %a>\n#+filetags: dailies\n\n- parent :: [[roam:%<%Y-%B>]]\n\n"
-	                         ("Journal"))
-          :empty-lines 1)
-	 ("t" "task" entry
-		"\n** TODO %?\n %U\n %a\n %i"
-	  :if-new (file+head+olp "%<%Y-%m-%d>.org"
-				 "#+title: %<%Y-%m-%d %a>\n#+filetags: dailies\n\n- parent :: [[roam:%<%Y-%B>]]\n\n"
-				 ( "Tasks" ))
-          :empty-lines-before 0
-          :empty-lines-after 0)
-	 ("m" "meeting" entry
-	  "\n** %<%I:%M %p> - %^{Meeting Title} :meetings:\n\n%?\n\n"
-	  :if-new (file+head+olp "%<%Y-%m-%d>.org"
-				 "#+title: %<%Y-%m-%d %a>\n#+filetags: dailies\n\n- parent :: [[roam:%<%Y-%B>]]\n\n"
-				 ("Meeting Notes"))
-	  :empty-lines 1
-          :prepend t)
-	 ("i" "idea" item
-	  "- %?"
-	  :if-new (file+head+olp "%<%Y-%m-%d>.org"
-				 "#+title: %<%Y-%m-%d %a>\n#+filetags: dailies\n\n- parent :: [[roam:%<%Y-%B>]]\n\n"
-				 ("Ideas"))
-	  :empty-lines 0
-          :prepend t)
-))
+  (setq org-roam-capture-templates
+        '(("d" "default" plain
+           "%?"
+           :if-new (file+head "${slug}-%<%Y%m%d%H%M%S>.org"
+                              "#+title: ${title}\n")
+           :immediate-finish t
+           :unnarrowed t)))
+  (setq org-roam-capture-ref-templates
+        '(("r" "ref" plain
+           "%?"
+           :if-new (file+head "${slug}-%<%Y%m%d%H%M%S>.org"
+                              "#+title: ${title}\n")
+           :unnarrowed t)))
+  (setq org-roam-dailies-directory "Journal/")
+  (setq org-roam-dailies-capture-templates
+        '(("j" "journal" entry
+  	  "\n** Journal Entry - %<%I:%M %p> :journal:\n\n%?\n\n"
+  	  :if-new (file+head+olp "%<%Y-%m-%d>.org"
+  				 "#+title: %<%Y-%m-%d %a>\n#+filetags: dailies\n\n- parent :: [[roam:%<%Y-%B>]]\n\n"
+  	                         ("Journal"))
+           :empty-lines 1)
+  	 ("t" "task" entry
+  		"\n** TODO %?\n %U\n %a\n %i"
+  	  :if-new (file+head+olp "%<%Y-%m-%d>.org"
+  				 "#+title: %<%Y-%m-%d %a>\n#+filetags: dailies\n\n- parent :: [[roam:%<%Y-%B>]]\n\n"
+  				 ( "Tasks" ))
+           :empty-lines-before 0
+           :empty-lines-after 0)
+  	 ("m" "meeting" entry
+  	  "\n** %<%I:%M %p> - %^{Meeting Title} :meetings:\n\n%?\n\n"
+  	  :if-new (file+head+olp "%<%Y-%m-%d>.org"
+  				 "#+title: %<%Y-%m-%d %a>\n#+filetags: dailies\n\n- parent :: [[roam:%<%Y-%B>]]\n\n"
+  				 ("Meeting Notes"))
+  	  :empty-lines 1
+           :prepend t)
+  	 ("i" "idea" item
+  	  "- %?"
+  	  :if-new (file+head+olp "%<%Y-%m-%d>.org"
+  				 "#+title: %<%Y-%m-%d %a>\n#+filetags: dailies\n\n- parent :: [[roam:%<%Y-%B>]]\n\n"
+  				 ("Ideas"))
+  	  :empty-lines 0
+           :prepend t)))
   :bind
   (:map org-roam-mode-map
         (("C-c r l" . org-roam-buffer-toggle)
@@ -1857,6 +1982,8 @@ this before I even understood what Org mode was, it's my origin story.
               (("C-c n i" . org-roam-node-insert)
                ("C-c n I" . org-roam-node-insert-immediate))))
 #+end_src
+
+~("C-<return>" . (lambda () (interactive) '(org-roam-node-visit t)))~
 
 Configure leader key bindings for =org-roam=:
 
@@ -1900,9 +2027,18 @@ Force a page break after table of contents
 
 * Applications
 
+** Terminal
+
+| =vterm= | https://github.com/akermu/emacs-libvterm |
+
+#+begin_src emacs-lisp
+(use-package vterm
+  :ensure t)
+#+end_src
+
 ** Calendar
 
-calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
+=calfw= is a calendar UI that is able to show all my scheduled Org Agenda items.
 
 #+begin_src emacs-lisp
 (use-package calfw
@@ -1925,7 +2061,39 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
   "Cv"  '(cfw:open-org-calendar :which-key "view"))
 #+end_src
 
+** Spaced Repetition
+
+#+begin_src emacs-lisp
+(use-package org-fc)
+
+(evil-define-minor-mode-key '(normal insert emacs) 'org-fc-review-flip-mode
+  (kbd "RET") 'org-fc-review-flip
+  (kbd "n") 'org-fc-review-flip
+  (kbd "s") 'org-fc-review-suspend-card
+  (kbd "q") 'org-fc-review-quit)
+
+(evil-define-minor-mode-key '(normal insert emacs) 'org-fc-review-rate-mode
+  (kbd "a") 'org-fc-review-rate-again
+  (kbd "h") 'org-fc-review-rate-hard
+  (kbd "g") 'org-fc-review-rate-good
+  (kbd "e") 'org-fc-review-rate-easy
+  (kbd "s") 'org-fc-review-suspend-card
+  (kbd "q") 'org-fc-review-quit)
+#+end_src
+
 * Desktop Setup
+
+| =pinentry= | https://elpa.gnu.org/packages/pinentry.html |
+
+Start pinentry in order for Emacs to be able to prompt for passphrases when necessary.
+
+I'm not sure which of the two following blocks is the one that actually ended up working for =mu4e= and =magit= but it needs to be sorted out.
+
+#+begin_src emacs-lisp
+(use-package pinentry
+  :hook
+  (after-init . pinentry-start))
+#+end_src
 
 #+begin_src emacs-lisp
 (use-package pinentry
@@ -1933,6 +2101,35 @@ calfw is a calendar UI that is able to show all my scheduled Org Agenda items.
     (pinentry-start))
 (setq epa-pinentry-mode 'loopback)
 #+end_src
+
+In the case of GPG-signed commits use the below configuration files.
+
+E.g: In =~./profile=:
+
+#+begin_src shell
+export GPG_TTY=$TTY
+#+end_src
+
+In =~/.gnupg/gpg-agent.conf=
+
+#+begin_src conf
+allow-emacs-pinentry
+allow-loopback-pinentry
+pinentry-program /usr/local/bin/pinentry
+#+end_src
+
+In =~/path/to/my/project/.git/config=
+
+#+begin_src conf
+[user]
+    signingkey = 1234567890ABCDEF
+[commit]
+    gpgsign = true
+#+end_src
+
+* Auto-tangling and running shell scripts.
+
+@todo: Deprecated.
 
 Some test paths for regex:
 =/home/narwic/Projects/home/dotfiles/tangled/application-post-tangle.sh=

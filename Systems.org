@@ -6,6 +6,7 @@
 :END:
 :CONTENTS:
 - [[#systems][Systems]]
+- [[#systems][Systems]]
   - [[#base-configuration][Base Configuration]]
   - [[#machines][Machines]]
     - [[#per-system-settings][Per-System Settings]]
@@ -28,11 +29,20 @@ This base configuration is shared between all of the machines I manage.
 
 Machines are named with shortness and distinguishability in mind. Some of them have been around nearly a decade so I'm rather partial to them.
 
+=link=
+
+#+begin_src emacs-lisp
+(defun test ())
+#+end_src
+
 *** Per-System Settings
+:PROPERTIES:
+:ID:       6a03aecf-4349-4e5f-abcb-c45df05588d0
+:END:
 
 Some settings need to be customized on a per-system basis without tweaking individual configuration files. Thanks to =noweb= this is pretty easy to tweak.
 
-@todo: define a getter function =cy/system-settings-get= to retrieve values appropriately.
+@todo: define a getter function cy/system-settings-get to retrieve values appropriately.
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/per-system-settings.el :noweb yes
 (require 'map) ;; needed for map-merge
@@ -114,6 +124,9 @@ I've been experimenting with using WSL2 to run Emacs and forward the X sessions 
 =cutman= is a Pixel 5. I've yet to get into figuring out how to use Emacs with it.
 
 * =system-settings-get=
+:PROPERTIES:
+:ID:       b4e88d2a-3545-4ed3-9efd-740d1dab500b
+:END:
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/per-system-settings.el :noweb yes
 (defun cy/system-settings-get (setting)
