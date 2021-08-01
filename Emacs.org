@@ -354,15 +354,6 @@ my leader key.
         which-key-idle-delay 0.2))
 #+end_src
 
-Provide leader based key bindings for Emacs 27+'s tab bar feature.
-Use =,-.= to move to the next tab and =,-'= to move the the previous tab.
-
-#+begin_src emacs-lisp
-(cy/leader-key-def
-  "." '(tab-bar-switch-to-next-tab :which-key "next tab")
-  "'" '(tab-bar-switch-to-prev-tab :which-key "prev tab"))
-#+end_src
-
 Provide a leader based key binding for evaluating a blocks.
 
 #+begin_src emacs-lisp
@@ -408,7 +399,8 @@ Enable one of the themes, either from the custom theme directory or from the
 themes provided by =doom-themes=.
 
 #+begin_src emacs-lisp
-(load-theme 'doom-horizon t)
+;(load-theme 'doom-horizon t)
+(load-theme 'doom-wilmersdorf t)
 #+end_src
 
 Prettify fringe bitmaps.
@@ -454,8 +446,9 @@ Provide agenda workflows, =mu4e= configuration, and calendar integration from si
 
 ** Buffers and Windows
 
-| =olivetti=             | https://github.com/rnkn/olivetti                   |
-| =winner=               | Built-in                                           |
+| =olivetti=     | https://github.com/rnkn/olivetti        |
+| =winner=       | Built-in                                |
+| =centaur-tabs= | https://github.com/ema2159/centaur-tabs |
 
 Apply system-specific configurations for font sizes and dpi, among other things provided in =./Systems.org=.
 
@@ -543,6 +536,81 @@ Enable proper Unicode glyph support.
   (unicode-fonts-setup))
 #+end_src
 
+Configure =centaur-tabs= to make grouping buffers a little more simple.
+
+#+begin_src emacs-lisp
+(use-package centaur-tabs
+  :demand
+  :config
+  (centaur-tabs-mode t)
+  (centaur-tabs-group-by-projectile-project)
+  (centaur-tabs-headline-match)
+  (setq centaur-tabs-style "rounded"
+	centaur-tabs-height 32
+	centaur-tabs-set-icons t
+	centaur-tabs-set-modified-marker t
+	centaur-tabs-set-bar 'under
+	x-underline-at-descent-line t
+	centaur-tabs-adjust-buffer-order 'left)
+  (defun centaur-tabs-buffer-groups ()
+    (list
+     (cond
+      ((or
+	(and
+	 (and
+	  (string-equal "*" (substring (buffer-name) 0 1))
+	  (not (string-equal "*mu4e-headers*" buffer-name)))
+	 (memq major-mode '(magit-process-mode
+			    magit-status-mode
+			    magit-diff-mode
+			    magit-log-mode
+			    magit-file-mode
+			    magit-blob-mode
+			    magit-blame-mode)))
+	 "Emacs")
+	((derived-mode-p 'prog-mode)
+	 "Editing")
+	((derived-mode-p 'mu4e-main-mode)
+	 "Mail")
+	((derived-mode-p 'dired-mode)
+	 "Dired")
+	((memq major-mode '(helpful-mode
+			    help-mode))
+	 "Help")
+	((memq major-mode '(org-mode
+			    org-agenda-clockreport-mode
+			    org-src-mode
+			    org-agenda-mode
+			    org-beamer-mode
+			    org-indent-mode
+			    org-bullets-mode
+			    org-cdlatex-mode
+			    org-agenda-log-mode
+			    diary-mode))
+	 "OrgMode")
+	(t
+	 (centaur-tabs-get-group-name (current-buffer))))))
+
+  :hook
+  (dashboard-mode . centaur-tabs-local-mode)
+  (vterm-mode . centaur-tabs-local-mode)
+  (term-mode . centaur-tabs-local-mode)
+  (calendar-mode . centaur-tabs-local-mode)
+  (mu4e-view-mode . centaur-tabs-local-mode)
+  (org-agenda-mode . centaur-tabs-local-mode))
+#+end_src
+
+Provide leader based key bindings for Emacs 27+'s tab bar feature.
+Use =,-.= to move to the next tab and =,-'= to move the the previous tab.
+
+#+begin_src emacs-lisp
+(cy/leader-key-def
+  "." '(centaur-tabs-forward :which-key "next tab")
+  "'" '(centaur-tabs-backward :which-key "prev tab"))
+#+end_src
+
+
+
 # Add a minor mode for rendering bracket links from =org-mode= files in other buffers.
 
 #+begin_src emacs-lisp
@@ -595,12 +663,9 @@ Configure and prettify the modeline(s).
 #+end_src
 
 ** File Browsing
-| =dired=                | Built-in                                           |
-| =deft=                 | @todo                                              |
-| =treemacs=             | @todo                                              |
-| =treemacs-evil=        | @todo                                              |
-| =treemacs-projectile=  | @todo                                              |
-| =treemacs-icons-dired= | @todo                                              |
+| =dired=                | Built-in                                |
+| =deft=                 | @todo                                   |
+| =neotree=              | https://github.com/jaypei/emacs-neotree |
 
 Configure preferred settings for =dired=, the primary built-in file browsing mechanism for Emacs.
 
@@ -722,83 +787,20 @@ If this ever gets super slow, look into installing the Notdeft fork.
   "<SPC>" '(deft :which-key "deft"))
 #+end_src
 
-Configure =treemacs=, a file browser and project explorer like =NerdTree= for =vim= that displays in a side window.
+Configure =neotree=, a file browser and project explorer like =NerdTree= for =vim= that displays in a side window.
 
 #+begin_src emacs-lisp
-(use-package treemacs
-  :ensure t
-  :after (dired)
-  :init
-  (with-eval-after-load 'winum
-    (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+(use-package neotree
   :config
-  (progn
-    (setq treemacs-collapse-dirs                  (if treemacs-python-executable 3 0)
-          treemacs-deferred-git-apply-delay       0.5
-          treemacs-directory-name-transformer     #'identity
-          treemacs-display-in-side-window         t
-          treemacs-eldoc-display                  t
-          treemacs-file-event-delay               5000
-          treemacs-indentation                    2
-          treemacs-litter-directories             '("/node_modules/" "/.venv" "/.cask")
-          treemacs-width                          35
-          treemacs-width-is-initially-locked      t
-          treemacs-no-delete-other-windows        t)
-    (treemacs-follow-mode t)
-    (treemacs-filewatch-mode t)
-    (treemacs-fringe-indicator-mode 'always)))
-
-(use-package treemacs-evil
-  :after (treemacs evil)
-  :ensure t)
-
-(use-package treemacs-projectile
-  :after (treemacs projectile)
-  :ensure t)
-
-(use-package treemacs-icons-dired
-  :after (treemacs dired)
-  :ensure t
-  :config (treemacs-icons-dired-mode))
-
-;; (use-package treemacs-magit
-;;   :after (treemacs magit)
-;;   :ensure t)
-
+  (setq neo-theme (if (display-graphic-p) 'icons 'arrow)))
 #+end_src
 
-Set leader based keybindings for =treemacs=. The key should be a sub-key of the general UI Toggles binding of =<leader>-t=.
+Set leader based keybindings for =neotree=. The key should be a sub-key of the general UI Toggles binding of =<leader>-t=, i.e.: /toggle/-> /tree/.
 
 #+begin_src emacs-lisp
 (cy/leader-key-def
-  "tt" '(treemacs :which-key "treemacs"))
+  "tt" '(neotree-toggle :which-key "tree"))
 #+end_src
-
-#+begin_src emacs-lisp
-;; (use-package treemacs-projectile
-;;   :after treemacs projectile
-;;   :ensure t)
-#+end_src
-
-#+begin_src emacs-lisp
-(use-package treemacs-icons-dired
-  :after treemacs dired
-  :ensure t
-  :config (treemacs-icons-dired-mode))
-#+end_src
-
-
-
-#+begin_src emacs-lisp
-(use-package treemacs-evil
-  :after treemacs evil
-  :ensure t)
-
-(with-eval-after-load 'treemacs
-  (define-key evil-treemacs-state-map (kbd "?") #'treemacs-common-helpful-hydra)
-  (define-key evil-treemacs-state-map (kbd "C-?") #'treemacs-advanced-helpful-hydra))
-#+end_src
-
 
 ** Completion
 
@@ -838,7 +840,19 @@ Minimal completion-at-point. Everyone else seems to be doing it with =corfu=, wh
 #+begin_src emacs-lisp
 (use-package corfu
   :hook
-  (after-init . corfu-global-mode))
+  (after-init . corfu-global-mode)
+  :custom
+  (corfu-cycle t)
+  (corfu-auto t)
+  (corfu-quit-at-boundary t)
+  (corfu-quit-no-match t)
+  :bind (:map corfu-map
+	      ("TAB" . corfu-next)
+	      ([tab] . corfu-next)
+	      ("S-TAB" . corfu-previous)
+	      ([backtab] . corfu-previous))
+  :init
+  (corfu-global-mode))
 #+end_src
 
 Provide rich minibuffer annotations via =marginalia=.
@@ -865,28 +879,32 @@ Use an advanced completion style that allows completion based on space-separated
 
 =company-box= improves the look with icons and other visual enhancements.
 
+Trying out =corfu= as a replacement.
+
 #+begin_src emacs-lisp
-(use-package company
-  :ensure t
-  :after prog-mode
-  ;; :init (global-company-mode)     ;; This gets pretty annoying when you're writing regular files and notes.
-  :hook (lsp-mode . company-mode)
-  :bind (:map company-active-map
-              ("<tab>" . company-select-next)
-              ("<tab>" . company-select-previous))
-  :config (setq company-idle-delay 0.0
-                company-tooltip-align-annotations t
-                company-minimum-prefix-length 1
-                create-lockfiles nil   ;; Lock file creation can crash debuggers.
-                ;; Easy navigation to candidates with M-<n>
-                company-show-numbers t
-                company-dabbrev-downcase nil))
-
-(use-package company-posframe
-  :hook (company-mode . company-posframe-mode))
-
-;; (use-package company-box
-;;   :hook (company-mode . company-box-mode))
+; (use-package company
+;   :ensure t
+;   :after prog-mode
+;   ;; :init (global-company-mode)     ;; This gets pretty annoying when you're writing regular files and notes.
+;   :hook (lsp-mode . company-mode)
+;   :bind (:map company-active-map
+;               ("TAB" . company-select-next)
+;               ([tab] . company-select-next)
+;               ("S-TAB" . company-select-previous)
+;               ([backtab] . company-select-previous))
+;   :config (setq company-idle-delay 0.0
+;                 company-tooltip-align-annotations t
+;                 company-minimum-prefix-length 1
+;                 create-lockfiles nil   ;; Lock file creation can crash debuggers.
+;                 ;; Easy navigation to candidates with M-<n>
+;                 company-show-numbers t
+;                 company-dabbrev-downcase nil))
+;
+; (use-package company-posframe
+;   :hook (company-mode . company-posframe-mode))
+;
+; (use-package company-box
+;   :hook (company-mode . company-box-mode))
 #+end_src
 
 
