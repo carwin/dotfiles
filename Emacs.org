@@ -1814,10 +1814,78 @@ Add =<leader>=-based keybindings for =org= documents.
   "oo"   '(org-open-at-point :which-key "open")
   "on"   '(org-toggle-narrow-to-subtree :which-key "narrow to subtree")
   "oa"   '(org-agenda :which-key "agenda")
-  "ot"   '(org-todo-list :which-key "todos")
-  "c"    '(org-capture :which-key "capture"))
+  "ot"   '(org-todo-list :which-key "todos"))
 #+end_src
 
+#+begin_src emacs-lisp
+(defun cy/capture-roam (choice)
+  "Capture template shortcuts from org-roam-capture"
+  (lexical-let ((choice))
+    (lambda () (interactive) (message "chose: %s" choice) (org-roam-capture- :templates org-roam-dailies-capture-templates :keys choice :node (org-roam-node-create)))))
+
+(defun cy/capture-org (choice)
+  "Capture template shortcuts from org-capture"
+  (lexical-let ((choice))
+    (lambda () (interactive) (message "chose: %s" choice) (org-capture nil choice))))
+;; (defun cy/dired-link (path)
+  ;; (lexical-let ((target path))
+    ;; (lambda () (interactive) (message "Path: %s" target) (dired target))))
+
+(defun cy/capture-task ()
+  (lambda () (interactive) (org-capture nil "t")))
+(defun cy/capture-mail ()
+  (lambda () (interactive) (org-capture nil "m")))
+(defun cy/capture-contact ()
+  (lambda () (interactive) (org-capture nil "c")))
+(defun cy/capture-log ()
+  (lambda () (interactive) (org-capture nil "l")))
+(defun cy/capture-journal ()
+  (lambda ()
+    (interactive)
+    (let ((org-roam directory (expand-file-name org-roam-dailies-directory org-roam-directory)))
+      (org-roam-capture-
+       :templates org-roam-dailies-capture-templates
+       :keys "j"
+       :node (org-roam-node-create)
+       :props (list)))))
+(defun cy/capture-meeting ()
+  (lambda () (interactive) (org-roam-capture- :templates org-roam-dailies-capture-templates :keys "m" :node (org-roam-node-create))))
+(defun cy/capture-idea ()
+  (lambda () (interactive) (org-roam-capture- :templates org-roam-dailies-capture-templates :keys "i" :node (org-roam-node-create))))
+  ;; `(lambda ()
+    ;; (interactive)
+    ;; (org-roam-capture- :templates org-roam-dailies-capture-templates :keys "j" :node (org-roam-node-create))))
+
+;; (defun cy/capture-task () (cy/capture-collection          "org" "t"))
+;; (defun cy/capture-mail () (cy/capture-collection          "org" "m"))
+;; (defun cy/capture-contact () (cy/capture-collection       "org" "c"))
+;; (defun cy/capture-people-log () (cy/capture-collection    "org" "l"))
+
+;; (general-emacs-define-key 'global
+;; :prefix "c"
+;; "j" '(cy/capture-collection "roam" "j"))
+
+(cy/leader-key-def
+  "c"   '(:ignore t :which-key "capture")
+  "ct"  '(:ignore t :which-key "test")
+  "ct"  `(,(cy/capture-task) :which-key "task")
+  "cM"  `(,(cy/capture-mail) :which-key "mail")
+  "cc"  `(,(cy/capture-contact) :which-key "contact")
+  "cl"  `(,(cy/capture-log) :which-key "log")
+  "cj"  `(,(cy/capture-journal) :which-key "journal")
+  "cM"  `(,(cy/capture-meeting) :which-key "meeting")
+  "ci"  `(,(cy/capture-idea) :which-key "idea"))
+#+end_src
+
+(cy/leader-key-def
+  "c"   '(:ignore t :which-key "capture")
+  "ct"  `(,(cy/capture-task) :which-key "task")
+  "cM"  `(,(cy/capture-mail) :which-key "mail")
+  "cc"  `(,(cy/capture-contact) :which-key "contact")
+  "cl"  `(,(cy/capture-log) :which-key "log")
+  "cj"  `(,(cy/capture-journal) :which-key "journal")
+  "cM"  `(,(cy/capture-meeting) :which-key "meeting")
+  "ci"  `(,(cy/capture-idea) :which-key "idea"))
 
 #+begin_src emacs-lisp
 (use-package org-superstar
