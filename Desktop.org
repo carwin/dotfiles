@@ -121,58 +121,63 @@ yay -S \
 I use a =.profile= file because it's easy to source for my primary shell (=zsh=), works with =bash=, and login managers read it. This covers the absolute basics of my configuration in a lot of instances.
 
 #+begin_src conf :tangle ~/.profile :mkdirp
-  DIFFPROG='vim'
-  LANG=en_US.UTF-8
-  LC_ALL=en_US.UTF-8
-  LC_COLLATE=C
-  RANGER_LOAD_DEFAULT_RC=false
-  EDITOR="emacsclient --alternate-editor=vim -nw"
-  VISUAL="emacsclient --alternate-editor=vim"
-  ALTERNATE_EDITOR="emacs -Q"
+DIFFPROG='vim'
+LANG=en_US.UTF-8
+LC_ALL=en_US.UTF-8
+LC_COLLATE=C
+RANGER_LOAD_DEFAULT_RC=false
+EDITOR="emacsclient --alternate-editor=vim -nw"
+VISUAL="emacsclient --alternate-editor=vim"
+ALTERNATE_EDITOR="emacs -Q"
 
 
-  # 256 Colors if we're using xterm.
-  [[ "$TERM" == "xterm" ]] && export TERM=xterm-256-color
+# 256 Colors if we're using xterm.
+[[ "$TERM" == "xterm" ]] && export TERM=xterm-256-color
 
-  # Ensure /usr/local/bin is in path.
-  PATH="/usr/local/bin:$PATH"
+# Ensure /usr/local/bin is in path.
+PATH="/usr/local/bin:$PATH"
 
-  # Add Ruby gems into path.
-  if which ruby >/dev/null && which gem >/dev/null; then
-    PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"
-  fi
+# Add Ruby gems into path.
+if which ruby >/dev/null && which gem >/dev/null; then
+  PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"
+fi
 
-  # Source Ruby Version Manager (rvm)
-  [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
-  [[ -s "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" ]] && source "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+# Source Ruby Version Manager (rvm)
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+[[ -s "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" ]] && source "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" # Load RVM into a shell session *as a function*
 
-  # Add Rust crates into path.
-  if which rustup >/dev/null; then
-    PATH="$HOME/.cargo/bin:$PATH"
-  fi
+# Add Rust crates into path.
+if which rustup >/dev/null; then
+  PATH="$HOME/.cargo/bin:$PATH"
+fi
 
-  # Add composer globals into path.
-  export PATH="$PATH:$HOME/.config/composer/vendor/bin"
+# Add composer globals into path.
+export PATH="$PATH:$HOME/.config/composer/vendor/bin"
 
-  # Add cuda stuff into path
-  export PATH="$PATH:/opt/cuda/bin"
+# Add cuda stuff into path
+export PATH="$PATH:/opt/cuda/bin"
 
-  # Source node version manager
-  [[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
-  [[ -s /usr/share/nvm/init-nvm.sh ]] && . /usr/share/nvm/init-nvm.sh
-  # source /usr/share/nvm/init-nvm.sh
+# Source node version manager
+[[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
+[[ -s /usr/share/nvm/init-nvm.sh ]] && . /usr/share/nvm/init-nvm.sh
+# source /usr/share/nvm/init-nvm.sh
 
-  # LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
-  LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
+# LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
+LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
 
-  # Add personal binaries into PATH.
-  # PATH="$HOME/.local/bin:$PATH"
+# Add personal binaries into PATH.
+# PATH="$HOME/.local/bin:$PATH"
 
-  # XDG Basedir specification, these for some reason don't go into user-dirs.dirs
-  XDG_CONFIG_HOME="$HOME/.config"
-  XDG_DATA_HOME="$HOME/.local/share"
-  XDG_CACHE_HOME="$HOME/.cache"
-  ZDOTDIR="$HOME/.zsh"
+# Input method stuff
+GTK_IM_MODULE=ibus
+XMODIFIERS=@im=ibus
+QT_IM_MODULE=ibus
+
+# XDG Basedir specification, these for some reason don't go into user-dirs.dirs
+XDG_CONFIG_HOME="$HOME/.config"
+XDG_DATA_HOME="$HOME/.local/share"
+XDG_CACHE_HOME="$HOME/.cache"
+ZDOTDIR="$HOME/.zsh"
 #+end_src
 
 (when (equal system-name "PUNCHY"))
@@ -372,42 +377,42 @@ Xcursor.size: 18
 ! ------------------------------------------------------------------------------
 
 ! special
-*.foreground:   #d8dee8
+,*.foreground:   #d8dee8
 !*.background:   #2f343f
-*.background: #080808
-*.cursorColor:  #b48ead
+,*.background: #080808
+,*.cursorColor:  #b48ead
 
 ! black
-*.color0  : #4b5262
-*.color8  : #434a5a
+,*.color0  : #4b5262
+,*.color8  : #434a5a
 
 ! red
-*.color  : #bf616a
-*.color9  : #b3555e
+,*.color  : #bf616a
+,*.color9  : #b3555e
 
 ! green
-*.color2  : #a3be8c
-*.color10 : #93ae7c
+,*.color2  : #a3be8c
+,*.color10 : #93ae7c
 
 ! yellow
-*.color3  : #ebcb8b
-*.color11 : #dbbb7b
+,*.color3  : #ebcb8b
+,*.color11 : #dbbb7b
 
 ! blue
-*.color4  : #81a1c1
-*.color12 : #7191b1
+,*.color4  : #81a1c1
+,*.color12 : #7191b1
 
 ! magenta
-*.color5  : #b48ead
-*.color13 : #a6809f
+,*.color5  : #b48ead
+,*.color13 : #a6809f
 
 ! cyan
-*.color6  : #89d0bA
-*.color14 : #7dbba8
+,*.color6  : #89d0bA
+,*.color14 : #7dbba8
 
 ! white
-*.color7  : #e5e9f0
-*.color15 : #d1d5dc
+,*.color7  : #e5e9f0
+,*.color15 : #d1d5dc
 
 ! ------------------------------------------------------------------------------
 ! Font configuration
@@ -443,6 +448,8 @@ URxvt*saveline:   15000
 URxvt*termName:   rxvt-256color
 URxvt*iso14755:   false
 URxvt*urgentOnBell:  true
+URxvt.inmputMethod: ibus
+URxvt.preeditType: OverTheSpot
 
 ! appearance
 URxvt*depth:   32
@@ -762,6 +769,7 @@ exec --no-startup-id xmodmap ~/.Xmodmap
 exec --no-startup-id dunst &
 exec --no-startup-id picom -b
 exec --no-startup-id ~/.config/polybar/launchbars.sh
+exec --no-startup-id ibus-daemon -drxR
 # colour of border, background, text, indicator, and child_border
 client.focused              #bf616a #2f343f #d8dee8 #bf616a #ff91a4
 client.focused_inactive     #2f343f #2f343f #d8dee8 #2f343f #2f343f
