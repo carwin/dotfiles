@@ -6,7 +6,6 @@
 :END:
 :CONTENTS:
 - [[#systems][Systems]]
-- [[#systems][Systems]]
   - [[#base-configuration][Base Configuration]]
   - [[#machines][Machines]]
     - [[#per-system-settings][Per-System Settings]]
@@ -36,13 +35,8 @@ Machines are named with shortness and distinguishability in mind. Some of them h
 #+end_src
 
 *** Per-System Settings
-:PROPERTIES:
-:ID:       6a03aecf-4349-4e5f-abcb-c45df05588d0
-:END:
 
 Some settings need to be customized on a per-system basis without tweaking individual configuration files. Thanks to =noweb= this is pretty easy to tweak.
-
-@todo: define a getter function cy/system-settings-get to retrieve values appropriately.
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/per-system-settings.el :noweb yes
 (require 'map) ;; needed for map-merge
