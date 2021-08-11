@@ -18,6 +18,17 @@ This is Carwin's Emacs configuration. The goal is that it's portable enough to b
 | =use-package-ensure-system-package= | @todo         |
 | =package=                           | Built-in      |
 
+Load paths from shell
+
+#+begin_src emacs-lisp
+(use-package exec-path-from-shell
+  :custom
+  (when (memq window-system '(mac ns x))
+    (exec-path-from-shell-initialize))
+  (when (daemonp)
+    (exec-path-from-shell-initialize)))
+#+end_src
+
 Load settings for this particular system.
 
 #+begin_src emacs-lisp
@@ -105,18 +116,20 @@ Configure an interface for talking to the system's =pass= to manage secrets.
       display-time-format "%l:%M %p %b %y"     ; Set a nice display time format
       display-time-default-load-average nil    ; Don't display load average time in the modeline
       require-final-newline t                  ; Ensure files end with a single newline
-      indent-tabs-mode nil                     ; Stop using tabs to indent
+      tab-always-indent 'complete              ; Tab always completes
+      completion-cycle-threshold 3
       visible-bell 1                           ; Silence Emacs noises
       warning-minimum-level :emergency         ; Only warn about real problems
       ad-redefinition-action 'accept           ; Silence warnings for advice redefinition
       fill-column 80                           ; Set the fill-column, possibly move this to setq-default phrasing.
       vc-follow-symlinks t                     ; Don't warn about following symlinks
+      indent-tabs-mode nil                     ; Stop using tabs to indent
       large-file-warning-threshold nil)        ; Don't warn for large files
 (scroll-bar-mode -1)                           ; Disable scroll bar
 (tool-bar-mode -1)                             ; Disable the toolbar
 (tooltip-mode -1)                              ; Disable tooltips
 (menu-bar-mode -1)                             ; Disable the menu bar
-(set-default-coding-systems 'utf-8)            ; Default to utf-8 encoding
+(set-default-coding-systems 'utf-8)           ; Default to utf-8 encoding
 #+end_src
 
 Change a few indenting behaviors.
@@ -268,7 +281,11 @@ using the =evil-collection= package.
 #+begin_src emacs-lisp
 (use-package evil-collection
     :after evil
+    :init
+    (setq evil-collection-company-use-tng nil)
     :ensure t
+    :custom
+    (evil-collection-outline-bind-tab-p nil)
     :config
     (evil-collection-init)
     (evil-collection-init 'dashboard)) ; Make sure Evil bindings work on the Dashboard.
@@ -399,8 +416,9 @@ Enable one of the themes, either from the custom theme directory or from the
 themes provided by =doom-themes=.
 
 #+begin_src emacs-lisp
-;(load-theme 'doom-horizon t)
-(load-theme 'doom-wilmersdorf t)
+;; (load-theme 'doom-horizon t)
+;; (load-theme 'doom-wilmersdorf t)
+(load-theme 'doom-monokai-spectrum t)
 #+end_src
 
 Prettify fringe bitmaps.
@@ -413,7 +431,7 @@ Configure a leader based key binding for choosing and toggling theemes under the
 
 #+begin_src emacs-lisp
 (cy/leader-key-def
-  "tc" '(load-theme :which-key "choose theme"))
+  "tc" '(consult-theme :which-key "choose theme"))
 #+end_src
 
 Set the background of HTML color strings in buffers to the color they represent.
@@ -539,65 +557,65 @@ Enable proper Unicode glyph support.
 Configure =centaur-tabs= to make grouping buffers a little more simple.
 
 #+begin_src emacs-lisp
-(use-package centaur-tabs
-  :demand
-  :config
-  (centaur-tabs-mode t)
-  (centaur-tabs-group-by-projectile-project)
-  (centaur-tabs-headline-match)
-  (setq centaur-tabs-style "rounded"
-	centaur-tabs-height 32
-	centaur-tabs-set-icons t
-	centaur-tabs-set-modified-marker t
-	centaur-tabs-set-bar 'under
-	x-underline-at-descent-line t
-	centaur-tabs-adjust-buffer-order 'left)
-  (defun centaur-tabs-buffer-groups ()
-    (list
-     (cond
-      ((or
-	(and
-	 (and
-	  (string-equal "*" (substring (buffer-name) 0 1))
-	  (not (string-equal "*mu4e-headers*" buffer-name)))
-	 (memq major-mode '(magit-process-mode
-			    magit-status-mode
-			    magit-diff-mode
-			    magit-log-mode
-			    magit-file-mode
-			    magit-blob-mode
-			    magit-blame-mode)))
-	 "Emacs")
-	((derived-mode-p 'prog-mode)
-	 "Editing")
-	((derived-mode-p 'mu4e-main-mode)
-	 "Mail")
-	((derived-mode-p 'dired-mode)
-	 "Dired")
-	((memq major-mode '(helpful-mode
-			    help-mode))
-	 "Help")
-	((memq major-mode '(org-mode
-			    org-agenda-clockreport-mode
-			    org-src-mode
-			    org-agenda-mode
-			    org-beamer-mode
-			    org-indent-mode
-			    org-bullets-mode
-			    org-cdlatex-mode
-			    org-agenda-log-mode
-			    diary-mode))
-	 "OrgMode")
-	(t
-	 (centaur-tabs-get-group-name (current-buffer))))))
+  ;; (use-package centaur-tabs
+  ;;   :demand
+  ;;   :config
+  ;;   (centaur-tabs-mode t)
+  ;;   (centaur-tabs-group-by-projectile-project)
+  ;;   (centaur-tabs-headline-match)
+  ;;   (setq centaur-tabs-style "rounded"
+  ;; 	  centaur-tabs-height 32
+  ;; 	  centaur-tabs-set-icons t
+  ;; 	  centaur-tabs-set-modified-marker t
+  ;; 	  centaur-tabs-set-bar 'under
+  ;; 	  x-underline-at-descent-line t
+  ;; 	  centaur-tabs-adjust-buffer-order 'left)
+  ;;   ;; (defun centaur-tabs-buffer-groups ()
+  ;;     ;; (list
+  ;;      ;; (cond
+  ;; 	;; ((or
+  ;; 	  ;; (and
+  ;; 	   ;; (and
+  ;; 	    ;; (string-equal "*" (substring (buffer-name) 0 1))
+  ;; 	    ;; (not (string-equal "*mu4e-headers*" buffer-name)))
+  ;; 	   ;; (memq major-mode '(magit-process-mode
+  ;; 			      ;; magit-status-mode
+  ;; 			      ;; magit-diff-mode
+  ;; 			      ;; magit-log-mode
+  ;; 	  ;; 		      magit-file-mode
+  ;; 	  ;; 		      magit-blob-mode
+  ;; 	  ;; 		      magit-blame-mode)))
+  ;; 	  ;;  "Emacs")
+  ;; 	  ;; ((derived-mode-p 'prog-mode)
+  ;; 	   ;; "Editing")
+  ;; 	  ;; ((derived-mode-p 'mu4e-main-mode)
+  ;; 	  ;;  ;; "Mail")
+  ;; 	  ;; ((derived-mode-p 'dired-mode)
+  ;; 	  ;;  "Dired")
+  ;; 	  ;; ((memq major-mode '(helpful-mode
+  ;; 	  ;; 		      help-mode))
+  ;; 	  ;;  "Help")
+  ;; 	  ;; ((memq major-mode '(org-mode
+  ;; 	  ;; 		      org-agenda-clockreport-mode
+  ;; 	  ;; 		      org-src-mode
+  ;; 	  ;; 		      org-agenda-mode
+  ;; 	  ;; 		      org-beamer-mode
+  ;; 	  ;; 		      org-indent-mode
+  ;; 	  ;; 		      org-bullets-mode
+  ;; 	  ;; 		      org-cdlatex-mode
+  ;; 	  ;; 		      org-agenda-log-mode
+  ;; 	  ;; 		      diary-mode))
+  ;; 	  ;;  "OrgMode")
+  ;; 	  ;; (t
+  ;; 	   ;; (centaur-tabs-get-group-name (current-buffer))))))
 
-  :hook
-  (dashboard-mode . centaur-tabs-local-mode)
-  (vterm-mode . centaur-tabs-local-mode)
-  (term-mode . centaur-tabs-local-mode)
-  (calendar-mode . centaur-tabs-local-mode)
-  (mu4e-view-mode . centaur-tabs-local-mode)
-  (org-agenda-mode . centaur-tabs-local-mode))
+  ;;   :hook
+  ;;   (dashboard-mode . centaur-tabs-local-mode)
+  ;;   (vterm-mode . centaur-tabs-local-mode)
+  ;;   (term-mode . centaur-tabs-local-mode)
+  ;;   (calendar-mode . centaur-tabs-local-mode)
+  ;;   ;; (mu4e-view-mode . centaur-tabs-local-mode)
+  ;;   (org-agenda-mode . centaur-tabs-local-mode))
 #+end_src
 
 Provide leader based key bindings for Emacs 27+'s tab bar feature.
@@ -605,8 +623,8 @@ Use =,-.= to move to the next tab and =,-'= to move the the previous tab.
 
 #+begin_src emacs-lisp
 (cy/leader-key-def
-  "." '(centaur-tabs-forward :which-key "next tab")
-  "'" '(centaur-tabs-backward :which-key "prev tab"))
+  "." '(tab-bar-switch-to-next-tab :which-key "next tab")
+  "'" '(tab-bar-switch-to-prev-tab :which-key "prev tab"))
 #+end_src
 
 
@@ -763,8 +781,9 @@ Configure preferred settings for =dired=, the primary built-in file browsing mec
   "dj"  `(,(cy/dired-link "~/Notes/Journal.org") :which-key "Journal")
   "dn"  `(,(cy/dired-link "~/Notes") :which-key "Notes")
   "do"  `(,(cy/dired-link "~/Downloads") :which-key "Downloads")
-  "dp"  `(,(cy/dired-link "~/Pictures") :which-key "Pictures")
+  "dp"  `(,(cy/dired-link "~/Projects") :which-key "Projects")
   "dv"  `(,(cy/dired-link "~/Videos") :which-key "Videos")
+  "dm"  `(,(cy/dired-link "~/Projects/work/mobomo") :which-key "Mobomo Projects")
   "d."  `(,(cy/dired-link "~/Projects/home/dotfiles") :which-key "dotfiles"))
 #+end_src
 
@@ -795,16 +814,117 @@ Configure =neotree=, a file browser and project explorer like =NerdTree= for =vi
   (setq neo-theme (if (display-graphic-p) 'icons 'arrow)))
 #+end_src
 
+Configure =treemacs=. Like =neotree=, =treemacs= is a file browser, but with
+better integration with other plugins like =projectile=. It also
+provides a number of interesting functionalities like swapping
+workspaces.
+
+#+begin_src emacs-lisp
+  (use-package treemacs
+    :ensure t
+    :defer t
+    :init
+    (with-eval-after-load 'winum
+      (define-key winup-keymap (kbd "M-0") #'treemacs-select-window))
+    :config
+    (progn
+      (setq treemacs-collapse-dirs                   (if treemacs-python-executable 3 0)
+	    treemacs-deferred-git-apply-delay        0.5
+	    treemacs-directory-name-transformer      #'identity
+	    treemacs-display-in-side-window          t
+	    treemacs-eldoc-display                   t
+	    treemacs-file-event-delay                2000
+	    treemacs-file-extension-regex            treemacs-last-period-regex-value
+	    treemacs-file-follow-delay               0.2
+	    treemacs-file-name-transformer           #'identity
+	    treemacs-follow-after-init               t
+	    treemacs-expand-after-init               t
+	    treemacs-git-command-pipe                ""
+	    treemacs-goto-tag-strategy               'refetch-index
+	    treemacs-indentation                     2
+	    treemacs-indentation-string              " "
+	    treemacs-is-never-other-window           nil
+	    treemacs-max-git-entries                 5000
+	    treemacs-missing-project-action          'ask
+	    treemacs-move-forward-on-expand          nil
+	    treemacs-no-png-images                   nil
+	    treemacs-no-delete-other-windows         t
+	    treemacs-project-follow-cleanup          nil
+	    treemacs-persist-file                    (#'cy/cache-concat treemacs-persist)
+	    treemacs-position                        'left
+	    treemacs-read-string-input               'from-child-frame
+	    treemacs-recenter-distance               0.1
+	    treemacs-recenter-after-file-follow      nil
+	    treemacs-recenter-after-tag-follow       nil
+	    treemacs-recenter-after-project-jump     'always
+	    treemacs-recenter-after-project-expand   'on-distance
+	    treemacs-litter-directories              '("/node_modules" "/.venv" "/.cask")
+	    treemacs-show-cursor                     nil
+	    treemacs-show-hidden-files               t
+	    treemacs-silent-filewatch                nil
+	    treemacs-silent-refresh                  nil
+	    treemacs-sorting                         'alphabetic-asc
+	    treemacs-space-between-root-nodes        t
+	    treemacs-tag-follow-cleanup              t
+	    treemacs-tag-follow-delay                0.5
+	    treemacs-user-mode-line-format           nil
+	    treemacs-user-header-line-format         nil
+	    treemacs-width                           40
+	    treemacs-width-is-initially-locked       t
+	    treemacs-workspace-switch-cleanup        nil)
+
+      (treemacs-follow-mode t)
+      (treemacs-filewatch-mode t)
+      (treemacs-fringe-indicator-mode 'always)
+      (pcase (cons (not (null (executable-find "git")))
+		   (not (null treemacs-python-executable)))
+	(`(t . t)
+	 (treemacs-git-mode 'deferred))
+	(`(t . _)
+	 (treemacs-git-mode 'simple))))
+    :bind
+    (:map global-map
+	  ("M-0"        . treemacs-select-window)
+	  ("C-x t 1"    . treemacs-delete-other-windows)
+	  ("C-x t t"    . treemacs)
+	  ("C-x t B"    . treemacs-bookmark)
+	  ("C-x t C-t"  . treemacs-find-file)
+	  ("C-x t M-t"  . treemacs-find-tag)))
+
+
+  (use-package treemacs-evil
+    :after (treemacs evil)
+    :ensure t)
+
+  (use-package treemacs-projectile
+    :after (treemacs projectile)
+    :ensure t)
+
+  (use-package treemacs-icons-dired
+    :after (treemacs dired)
+    :ensure t
+    :config (treemacs-icons-dired-mode))
+
+  (use-package treemacs-magit
+    :after (treemacs magit)
+    :ensure t)
+#+end_src
+
 Set leader based keybindings for =neotree=. The key should be a sub-key of the general UI Toggles binding of =<leader>-t=, i.e.: /toggle/-> /tree/.
 
 #+begin_src emacs-lisp
 (cy/leader-key-def
-  "tt" '(neotree-toggle :which-key "tree"))
+  "tt" '(treemacs :which-key "tree"))
 #+end_src
 
 ** Completion
 
-Provide various commands to quickly select items from lists of candidates with completion.
+| =vertico=    | https://github.com/minad/vertico    |
+| =marginalia= | https://github.com/minad/marginalia |
+| =corfu=      | https://github.com/minad/corfu      |
+| =consult=    | consult                             |
+
+Provide various commands to quickly select items from lists of candidates with completion. Replace =counsel=.
 
 #+begin_quote
 Consult offers in particular an advanced buffer switching command consult-buffer
@@ -815,6 +935,7 @@ consult-line, which resembles Swiper.
 
 #+begin_src emacs-lisp
 (use-package consult
+  :after (vertico)
   :hook
   (org-mode . (lambda () (setq-local consult-fontify-preserve nil)))
   :init
@@ -822,6 +943,16 @@ consult-line, which resembles Swiper.
     (evil-global-set-key 'motion "gm" 'consult-mark)
     (evil-global-set-key 'motion "gM" 'consult-imenu)
     (evil-global-set-key 'motion "go" 'consult-outline)))
+
+(use-package consult-flycheck
+  :after (consult))
+
+(use-package consult-lsp
+  :after (consult))
+
+(cy/leader-key-def
+  "b"   '(:ignore t :which-key "buffer")
+  "bs"  '(consult-buffer :which-key "switch"))
 #+end_src
 
 Use a performant vertical completion UI. =vertico= and =corfu= together seem to be a
@@ -833,19 +964,26 @@ decent replacement for =Ivy=.
   (vertico-mode)
   (setq vertico-resize t) ;; Grow and shrink the vertico buffer
   (setq vertico-cycle t))  ;; Enable cycling for `vertico-next' and `vertico-previous'.
+
+(use-package vertico-buffer
+  :load-path (concat user-emacs-directory "elpa/vertico/extensions/vertico-buffer.el")
+  :ensure nil
+  :after (vertico))
 #+end_src
 
 Minimal completion-at-point. Everyone else seems to be doing it with =corfu=, why not Zoidburg?
 
 #+begin_src emacs-lisp
+;; (use-package company
+;;   :hook (after-init . global-company-mode))
 (use-package corfu
-  :hook
-  (after-init . corfu-global-mode)
   :custom
   (corfu-cycle t)
   (corfu-auto t)
   (corfu-quit-at-boundary t)
   (corfu-quit-no-match t)
+  (corfu-commit-predicate nil)
+  ;; (corfu-echo-documentation t)
   :bind (:map corfu-map
 	      ("TAB" . corfu-next)
 	      ([tab] . corfu-next)
@@ -863,7 +1001,8 @@ Provide rich minibuffer annotations via =marginalia=.
   (:map minibuffer-local-map
         ("s-T" . marginalia-cycle))
   :hook
-  (selectrum-mode . marginalia-mode))
+  (vertico-mode . marginalia-mode)
+  :init ( marginalia-mode ))
 #+end_src
 
 Use an advanced completion style that allows completion based on space-separated tokens, out of order.
@@ -874,39 +1013,6 @@ Use an advanced completion style that allows completion based on space-separated
   (completion-styles '(orderless))
   (orderless-component-separator 'orderless-escapable-split-on-space))
 #+end_src
-
-=company= provides a nice in-buffer completion interface, makes Emacs feel more IDE-like.
-
-=company-box= improves the look with icons and other visual enhancements.
-
-Trying out =corfu= as a replacement.
-
-#+begin_src emacs-lisp
-; (use-package company
-;   :ensure t
-;   :after prog-mode
-;   ;; :init (global-company-mode)     ;; This gets pretty annoying when you're writing regular files and notes.
-;   :hook (lsp-mode . company-mode)
-;   :bind (:map company-active-map
-;               ("TAB" . company-select-next)
-;               ([tab] . company-select-next)
-;               ("S-TAB" . company-select-previous)
-;               ([backtab] . company-select-previous))
-;   :config (setq company-idle-delay 0.0
-;                 company-tooltip-align-annotations t
-;                 company-minimum-prefix-length 1
-;                 create-lockfiles nil   ;; Lock file creation can crash debuggers.
-;                 ;; Easy navigation to candidates with M-<n>
-;                 company-show-numbers t
-;                 company-dabbrev-downcase nil))
-;
-; (use-package company-posframe
-;   :hook (company-mode . company-posframe-mode))
-;
-; (use-package company-box
-;   :hook (company-mode . company-box-mode))
-#+end_src
-
 
 ** Text Editing Features
 
@@ -984,7 +1090,7 @@ Stateful Keymaps with Hydra
   :defer 1)
 #+end_src
 
-Scaling text
+Support scaling text with =hydra-text-scale=.
 
 #+begin_src emacs-lisp
 (defhydra hydra-text-scale (:timeout 4)
@@ -1011,143 +1117,31 @@ Highlight matching parenthesis pairs.
 (show-paren-mode 1)
 #+end_src
 
+| =flyspell=               | Built-in                                       |
+| =flyspell-correct=       | https://github.com/d12frosted/flyspell-correct |
+| =flyspell-correct-popup= | https://github.com/d12frosted/flyspell-correct |
 
-** Diagnostics
-
-Flycheck.
-
-#+begin_src emacs-lisp
-(use-package flycheck
- :defer t
- ;; :init (add-hook 'after-init-hook #'global-flycheck-mode))
- :hook (lsp-mode . flycheck-mode))
-#+end_src
-
-*** Language Server Protocol (=lsp-mode=)
-
-LSP is "Language Server Protocol"
-
-lsp-keymap-prefix setting enables the ability to define a prefix for where lsp-mode's default keybindings will be added.
-
-which-key integration is important.
+Set up spell checking using the system's =aspell= command.
 
 #+begin_src emacs-lisp
-(use-package lsp-mode
-  :commands lsp
-  :hook
-  ((typescript-mode js2-mode web-mode) . lsp)
-  :bind (:map lsp-mode-map
-         ("TAB" . completion-at-point))
-  :config (setq lsp-headerline-breadcrumb-enable t
-                lsp-enable-on-type-formatting nil
-                lsp-enable-indentation nil
-                lsp-enable-semantic-highlighting t ; experimental
-                lsp-keep-workspace-alive t
-                lsp-enable-completion-at-point
-                lsp-enable-xref))
-#+end_src
-
-Define =<leader>=-based bindings for Language Server functionality.
-
-#+begin_src emacs-lisp
-(cy/leader-key-def
-  "l"   '(:ignore t :which-key "lsp")
-  "ld"  'lsp-find-definitions
-  "lr"  'lsp-find-references
-  "ln"  'lsp-ui-find-next-reference
-  "lp"  'lsp-ui-find-prev-reference
-  "li"  'lsp-ui-imenu
-  "le"  'lsp-ui-flycheck-list
-  "lS"  'lsp-ui-sideline-mode
-  "lD"  'lsp-shutdown-workspace
-  "lX"  'lsp-execute-code-action)
-#+end_src
-
-Add a UI for =lsp-mode=.
-
-=lsp-ui= adds support for =flycheck= and =code lenses=.
-
-By default, =lsp-mode= automatically activates =lsp-ui= unless ~lsp-auto-configure~ is set to ~nil~.
-
-#+begin_src emacs-lisp
-(use-package lsp-ui
-  :after lsp-mode
+(use-package flyspell
   :init
-  (lsp-ui-sideline-show-diagnostics t)
-  (lsp-ui-sideline-show-hover nil)
-  (lsp-ui-sideline-delay 5)
-  (lsp-ui-doc-enable t)
-  (lsp-ui-doc-position top))
-  ;;:hook (lsp-mode . lsp-ui-mode)) ; @todo : remove this if lsp-mode really does activate automatically
-#+end_src
-
-Set diagnostic information from =lsp-mode= to show up on a delay. Don't show on hover.
-
-#+begin_src emacs-lisp
-;(use-package lsp-ui-sideline
-;  :ensure nil
-;  :after lsp-ui
-;  :custom
-;  (lsp-ui-sideline-show-diagnostics t)
-;  (lsp-ui-sideline-show-hover nil)
-;  (lsp-ui-sideline-delay 5))
-
-#+end_src
-
-#+begin_src emacs-lisp
-;(use-package lsp-ui-doc
-;  :ensure nil
-;  :after lsp-ui
-;  (lsp-ui-doc-enable t)
-;  (lsp-ui-doc-position 'frame)
-;  (lsp-ui-doc-position 'bottom))
-#+end_src
-
-*** Debugging with dap-mode
-DAP (Debug Adapter Protocol). This is some thing that I guess comes from VSCode but seems like the de facto way to debug code using Language Servers.
-This is essentially the debug client.
-
-#+begin_src emacs-lisp
-(use-package dap-mode
-  :ensure t
-  :hook (lsp-mode . dap-mode)
+  (flyspell-mode 1)
   :config
-  (dap-mode 1)
-  (dap-ui-mode 1)
-  (dap-tooltip-mode 1)
-  (tooltip-mode 1)
-  (dap-ui-controls-mode 1)
+  (setq ispell-program-name "aspell")
+  (setq ispell-list-command "aspell --list"))
 
-  (require 'dap-node)
-  (dap-node-setup)
-  ;; (require 'dap-php)
-  ;; (dap-php-setup)
-  (require 'dap-firefox)
-  (dap-firefox-setup)
-  (require 'dap-chrome)
-  (dap-chrome-setup))
-
-  ;; Example template.
-  ;(dap-register-debug-template: "Node: Attach"
-  ;  (list :type "node"
-  ;        :cwd nil
-  ;        :request "attach"
-  ;        :program "nil"
-  ;        :port 9002 ;9229?
-  ;        :name "Node::Run")))
+(use-package flyspell-correct
+  :after flyspell
+  :bind (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
 #+end_src
 
-*** lsp-treemacs
-
-Provides tree views for different aspects of code, like symbols in a file, references of a symbol, diagnostics, etc...
-
-It's built on Treemacs, but it doesn't require Treemacs.
+Use the =flyspell-correct-popup= package to provide a spell correction interface =flyspell-correct= similar to =corfu=.
 
 #+begin_src emacs-lisp
-(use-package lsp-treemacs
-  :after lsp)
+(use-package flyspell-correct-popup
+  :after flyspell)
 #+end_src
-
 
 ** Projects
 
@@ -1166,14 +1160,16 @@ for reusability.
 #+end_src
 
 #+begin_src emacs-lisp
-(dir-locals-set-class-variables 'react
- '((js-mode . ((eval . (prettier-mode))))
-   (json-mode . ((eval . (prettier-mode))))
-   (rjsx-mode . ((eval . (prettier-mode))))
-   (scss-mode . ((eval . (prettier-mode))))
-   (web-mode . ((eval . (eglot-ensure))
-                (eval . (prettier-mode))
-                (prettier-parsers . (typescript))))))
+;; (dir-locals-set-class-variables 'react
+;;  '((js-mode . ((eval . (prettier-mode))))
+;;    (js2-mode . ((eval . (prettier-mode))))
+;;    (js2-minor-mode . ((eval . (prettier-mode))))
+;;    (json-mode . ((eval . (prettier-mode))))
+;;    (rjsx-mode . ((eval . (prettier-mode))))
+;;    (scss-mode . ((eval . (prettier-mode))))
+;;    (web-mode . ((eval . (eglot-ensure))
+;;                 (eval . (prettier-mode))
+;;                 (prettier-parsers . (typescript))))))
 #+end_src
 
 
@@ -1350,7 +1346,45 @@ Add prerequisite for =magit= package.
   (transient-mode-line-format nil))
 #+end_src
 
+* Diagnostics
+
+Try out =eglot= for a while to compare it with trusty =lsp-mode=.
+
+#+begin_src emacs-lisp
+(use-package eglot
+  :hook ((typescript-mode . eglot-ensure))
+  :commands (eglot)
+  :custom
+  (eglot-autoshutdown t)
+  :config
+  (add-to-list 'eglot-server-programs '(js-mode . ("typescript-language-server" "--stdio")))
+  (add-to-list 'eglot-server-programs '(js2-mode . ("typescript-language-server" "--stdio"))))
+  ;; (add-to-list 'eglot-stay-out-of 'eldoc-documentation-strategy))
+#+end_src
+* Linters
+
+#+begin_src emacs-lisp
+(use-package prettier
+  :config
+  (add-to-list 'prettier-enabled-parsers 'json-stringify))
+#+end_src
+
 * Languages
+
+
+#+begin_src emacs-lisp
+(use-package aggressive-indent
+  :hook
+  (css-mode . aggressive-indent-mode)
+  (emacs-lisp-mode . aggressive-indent-mode)
+  (js-mode . aggressive-indent-mode)
+  (typescript-mode . aggressive-indent-mode)
+  (lisp-mode . aggressive-indent-mode)
+  :custom
+  (aggressive-indent-comments-too t)
+  :config
+  (add-to-list 'aggressive-indent-protected-commands 'comment-dwim))
+#+end_src
 
 ** CSS
 
@@ -1364,13 +1398,59 @@ Add prerequisite for =magit= package.
   (css-indent-offset 2))
 #+end_src
 
-** JavaScript & TypeScript
+** JavaScript
 
-Set up nvm so Node versions may be managed.
+Use =js-doc= package to support js-doc style commenting.
 
 #+begin_src emacs-lisp
-(use-package nvm
-   :defer t)
+(use-package js-doc)
+#+end_src
+
+Configure the typescript mode
+
+#+begin_src emacs-lisp
+(use-package typescript-mode
+  :mode "\\.ts\\'"
+  :config
+  (setq typescript-indent-level 2))
+#+end_src
+
+Create a handy function to apply js indention preferences to various modes through hooks.
+
+#+begin_src emacs-lisp
+(defun cy/set-js-indentation ()
+  (setq js-indent-level 2)
+  (setq evil-shift-width 2)
+  (setq-default tab-width 2))
+#+end_src
+
+Configure the js-mode
+
+#+begin_src emacs-lisp
+(use-package js2-mode
+  :mode (rx ".js" eos)
+  :config
+  (add-hook 'js-mode-hook 'eglot-ensure)
+  (add-hook 'js2-mode-hook #'cy/set-js-indentation)
+  (add-hook 'js2-minor-mode-hook #'cy/set-js-indentation)
+  (add-hook 'js-mode-hook #'cy/set-js-indentation)
+  (add-hook 'web-mode-hook #'cy/set-js-indentation)
+  (add-hook 'json-minor-mode-hook #'cy/set-js-indentation)
+  (setq js2-mode-show-strict-warnings nil)
+  :custom
+  (add-to-list 'exec-path (expand-file-name "~/.nvm/go/bin"))
+
+  (js-switch-indent-offset 2)
+  (js2-highlight-level 3)
+  (js2-idle-timer-delay 0)
+  (js2-mode-show-parse-errors nil)
+  (js2-mode-show-strict-warnings nil))
+#+end_src
+
+Tell js-mode to use j2-mode's js2-minor-mode.
+
+#+begin_src emacs-lisp
+(add-hook 'js-mode-hook 'js2-minor-mode)
 #+end_src
 
 Attempt to add the add-node-modules-path package to the js modes.
@@ -1380,47 +1460,10 @@ Attempt to add the add-node-modules-path package to the js modes.
 (use-package add-node-modules-path
   :disabled
   :after js2-mode
-  :hook (js2-mode-hook . add-node-modules-path)
-        (js-mode-hook . add-node-modules-path))
+  :hook (js2-mode . add-node-modules-path)
+        (js-mode . add-node-modules-path))
 #+end_src
 
-Configure JavaScript and TypeScript language modes.
-
-#+begin_src emacs-lisp
-(use-package typescript-mode
-  :mode "\\.ts\\'"
-  :config
-  (setq typescript-indent-level 2))
-
-(defun cy/set-js-indentation ()
-  (setq js-indent-level 2)
-  (setq evil-shift-width js-indent-level)
-  (setq default-tab-width 2))
-
-(use-package js2-mode
-  :mode "\\.jsx?\\'"
-  :config
-
-  ;; Use js2-mode for Node scripts
-  (add-to-list 'magic-mode-alist '("#!/usr/bin/env node" . js2-mode))
-
-  ;; Don't use built-in syntax checking.
-  ;; @todo Why not?
-  (setq js2-mode-show-strict-warnings nil)
-
-  ;; Set up proper indentation in JavaScript and JSON files
-  (add-hook 'js2-mode-hook #'cy/set-js-indentation)
-  (add-hook 'json-mode-hook #'cy/set-js-indentation))
-
-;; I can't get prettier to work, it won't find my global install or the node_modules bin.
-;;(use-package prettier-js
-;;  :after add-node-modules-path
-;;  :hook ((js2-mode . prettier-js-mode)
-;;         (typescript-mode . prettier-js-mode))
-;;  :config
-;;  (setq prettier-js-show-errors nil))
-
-#+end_src
 
 ** TypeScript
 
@@ -1441,21 +1484,21 @@ This will install the typescript-language-server and the TypeScript compiler pac
 ** Emacs Lisp
 
 #+begin_src emacs-lisp
-  (add-hook 'emacs-lisp-mode-hook 'flycheck-mode)
+  ;; (add-hook 'emacs-lisp-mode-hook 'flycheck-mode)
 
   ;; Improved help in Emacs.
   (use-package helpful
-    :ensure t
-    :custom
-    (counsel-describe-function-function #'helpful-callable)
-    (counsel-describe-variable-function #'helpful-variable)
+    :ensure t)
+    ;; :custom
+    ;; (counsel-describe-function-function #'helpful-callable)
+    ;; (counsel-describe-variable-function #'helpful-variable)
     ;; Remap whatever key is bound to these functions to go to these other functions instead.
     ;; This doesn't change the keybinding itself, only its target.
-    :bind
-    ([remap describe-function] . counsel-describe-function)
-    ([remap describe-command] . helpful-command)
-    ([remap describe-variable] . counsel-describe-variable)
-    ([remap describe-key] . helpful-key))
+    ;; :bind
+    ;; ([remap describe-function] . counsel-describe-function)
+    ;; ([remap describe-command] . helpful-command)
+    ;; ([remap describe-variable] . counsel-describe-variable)
+    ;; ([remap describe-key] . helpful-key))
 
   (cy/leader-key-def
     "e"   '(:ignore t :which-key "eval")
@@ -1577,22 +1620,6 @@ You can use pyvenv package to use virtualenv environments in Emacs. The pyvenv-a
   :mode "\\.ya?ml\\'")
 #+end_src
 
-** Meta Lisp
-
-Useful packages across different Lisp and Scheme implementations
-
-#+begin_src emacs-lisp
-(use-package lispy
-  :hook ((emacs-lisp-mode . lispy-mode)
-         (scheme-mode . lispy-mode)))
-
-(use-package lispyville
-  :disabled
-  :hook ((lispy-mode . lispyville-mode))
-  :config
-  (lispyville-set-key-theme '(operators c-w additional)))
-#+end_src
-
 ** Systemd
 
 Really useful for editing Systemd  timers and configurations.
@@ -1674,7 +1701,7 @@ This is a newish section. Expect changes.
         ;; enable company and eldoc minor modes in rust-mode
         ;; (add-hook 'racer-mode-hook 'company-mode)
         (add-hook 'racer-mode-hook 'eldoc-mode)))
-    (add-hook 'rust-mode-hook 'flycheck-mode)
+    ;; (add-hook 'rust-mode-hook 'flycheck-mode)
     (add-hook 'rust-mode-hook 'flycheck-rust-setup)
 
     ;; format Rust buffers on save using rustfmt
@@ -1683,38 +1710,6 @@ This is a newish section. Expect changes.
                 (when (eq major-mode 'rust-mode)
                   (rust-format-buffer)))))))
 #+end_src
-
-** JavaScript and TypeScript
-
-| =typescript-mode= | @todo                              |
-| =js2-mode=        | @todo                              |
-| =web-mode=        | https://github.com/fxbois/web-mode |
-
-Configure JavaScript and TypeScript language modes.
-
-#+begin_src emacs-lisp
-(use-package typescript-mode
-  :mode "\\.ts\\'"
-  :config
-  (setq typescript-indent-level 2))
-
-(use-package js-doc)
-
-(use-package js2-mode
-  :ensure nil
-  :mode (rx ".js" eos)
-  :custom
-  (js-indent-level 2)
-  (js-switch-indent-offset 2)
-  (js2-highlight-level 3)
-  (js2-idle-timer-delay 0)
-  (js2-mode-show-parse-errors nil)
-  (js2-mode-show-strict-warnings nil)
-  :config
-  ;; Also use js2-mode for Node scripts
-  (add-to-list 'magic-mode-alist '("#!/usr/bin/env node" . js2-mode)))
-#+end_src
-
 
 ** Dockerfile
 
@@ -1727,7 +1722,6 @@ Add syntax highlighting for Dockerfiles and allow the building of images from th
 #+end_src
 
 ** Org Mode
-
 
 | =org=       | Built-in                             |
 | =org-roam=  | https://github.org/org-roam/org-roam |
@@ -1820,72 +1814,33 @@ Add =<leader>=-based keybindings for =org= documents.
 #+begin_src emacs-lisp
 (defun cy/capture-roam (choice)
   "Capture template shortcuts from org-roam-capture"
-  (lexical-let ((choice))
-    (lambda () (interactive) (message "chose: %s" choice) (org-roam-capture- :templates org-roam-dailies-capture-templates :keys choice :node (org-roam-node-create)))))
+  (lexical-let ((key choice))
+    (lambda ()
+      (interactive)
+      (message "chose: %s" key)
+      (let ((org-roam-directory (expand-file-name org-roam-dailies-directory org-roam-directory)))
+	(org-roam-capture-
+	 :templates org-roam-dailies-capture-templates
+	 :keys key
+	 :node (org-roam-node-create))))))
 
 (defun cy/capture-org (choice)
   "Capture template shortcuts from org-capture"
-  (lexical-let ((choice))
-    (lambda () (interactive) (message "chose: %s" choice) (org-capture nil choice))))
-;; (defun cy/dired-link (path)
-  ;; (lexical-let ((target path))
-    ;; (lambda () (interactive) (message "Path: %s" target) (dired target))))
-
-(defun cy/capture-task ()
-  (lambda () (interactive) (org-capture nil "t")))
-(defun cy/capture-mail ()
-  (lambda () (interactive) (org-capture nil "m")))
-(defun cy/capture-contact ()
-  (lambda () (interactive) (org-capture nil "c")))
-(defun cy/capture-log ()
-  (lambda () (interactive) (org-capture nil "l")))
-(defun cy/capture-journal ()
-  (lambda ()
-    (interactive)
-    (let ((org-roam directory (expand-file-name org-roam-dailies-directory org-roam-directory)))
-      (org-roam-capture-
-       :templates org-roam-dailies-capture-templates
-       :keys "j"
-       :node (org-roam-node-create)
-       :props (list)))))
-(defun cy/capture-meeting ()
-  (lambda () (interactive) (org-roam-capture- :templates org-roam-dailies-capture-templates :keys "m" :node (org-roam-node-create))))
-(defun cy/capture-idea ()
-  (lambda () (interactive) (org-roam-capture- :templates org-roam-dailies-capture-templates :keys "i" :node (org-roam-node-create))))
-  ;; `(lambda ()
-    ;; (interactive)
-    ;; (org-roam-capture- :templates org-roam-dailies-capture-templates :keys "j" :node (org-roam-node-create))))
-
-;; (defun cy/capture-task () (cy/capture-collection          "org" "t"))
-;; (defun cy/capture-mail () (cy/capture-collection          "org" "m"))
-;; (defun cy/capture-contact () (cy/capture-collection       "org" "c"))
-;; (defun cy/capture-people-log () (cy/capture-collection    "org" "l"))
-
-;; (general-emacs-define-key 'global
-;; :prefix "c"
-;; "j" '(cy/capture-collection "roam" "j"))
-
-(cy/leader-key-def
-  "c"   '(:ignore t :which-key "capture")
-  "ct"  '(:ignore t :which-key "test")
-  "ct"  `(,(cy/capture-task) :which-key "task")
-  "cM"  `(,(cy/capture-mail) :which-key "mail")
-  "cc"  `(,(cy/capture-contact) :which-key "contact")
-  "cl"  `(,(cy/capture-log) :which-key "log")
-  "cj"  `(,(cy/capture-journal) :which-key "journal")
-  "cM"  `(,(cy/capture-meeting) :which-key "meeting")
-  "ci"  `(,(cy/capture-idea) :which-key "idea"))
+  (lexical-let ((key choice))
+    (lambda () (interactive)(org-capture nil key))))
 #+end_src
 
+#+begin_src emacs-lisp
 (cy/leader-key-def
   "c"   '(:ignore t :which-key "capture")
-  "ct"  `(,(cy/capture-task) :which-key "task")
-  "cM"  `(,(cy/capture-mail) :which-key "mail")
-  "cc"  `(,(cy/capture-contact) :which-key "contact")
-  "cl"  `(,(cy/capture-log) :which-key "log")
-  "cj"  `(,(cy/capture-journal) :which-key "journal")
-  "cM"  `(,(cy/capture-meeting) :which-key "meeting")
-  "ci"  `(,(cy/capture-idea) :which-key "idea"))
+  "ct"  `(,(cy/capture-org "t") :which-key "task")
+  "cM"  `(,(cy/capture-org "m") :which-key "mail")
+  "cc"  `(,(cy/capture-org "c") :which-key "contact")
+  "cp"  `(,(cy/capture-org "T") :which-key "people")
+  "ci"  `(,(cy/capture-roam "i") :which-key "idea")
+  "cm"  `(,(cy/capture-roam "m") :which-key "meeting")
+  "cj"  `(,(cy/capture-roam "j") :which-key "journal"))
+#+end_src
 
 #+begin_src emacs-lisp
 (use-package org-superstar
@@ -2115,24 +2070,23 @@ Allows opening notes from external applications in Emacs.
 (require 'org-protocol)
 #+end_src
 
-*** Spaced Repetition
+*** Org Roam UI
+
+Configure a replacemnt for the old =org-roam-server= that was used with roam v1.
 
 #+begin_src emacs-lisp
-;; (use-package org-fc)
+(use-package websocket
+  :after org-roam)
 
-(evil-define-minor-mode-key '(normal insert emacs) 'org-fc-review-flip-mode
-  (kbd "RET") 'org-fc-review-flip
-  (kbd "n") 'org-fc-review-flip
-  (kbd "s") 'org-fc-review-suspend-card
-  (kbd "q") 'org-fc-review-quit)
-
-(evil-define-minor-mode-key '(normal insert emacs) 'org-fc-review-rate-mode
-  (kbd "a") 'org-fc-review-rate-again
-  (kbd "h") 'org-fc-review-rate-hard
-  (kbd "g") 'org-fc-review-rate-good
-  (kbd "e") 'org-fc-review-rate-easy
-  (kbd "s") 'org-fc-review-suspend-card
-  (kbd "q") 'org-fc-review-quit)
+(use-package org-roam-ui
+  :after org-roam
+  :load-path "~/Projects/pkgs/org-roam-ui/"
+  :hook (after-init . org-roam-ui-mode)
+  :config
+  (setq org-roam-ui-sync-theme t
+        org-roam-ui-follow t
+        org-roam-ui-update-on-save t
+        org-roam-ui-open-on-start t))
 #+end_src
 
 ** Tools
