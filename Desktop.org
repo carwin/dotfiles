@@ -135,11 +135,14 @@ ALTERNATE_EDITOR="emacs -Q"
 [[ "$TERM" == "xterm" ]] && export TERM=xterm-256-color
 
 # Ensure /usr/local/bin is in path.
-PATH="/usr/local/bin:$PATH"
+export PATH="/usr/local/bin:$PATH"
+
+# Ensure /home/<user>/.local/bin is in path, Python likes to use this.
+export PATH="$HOME/.local/bin:$PATH"
 
 # Add Ruby gems into path.
 if which ruby >/dev/null && which gem >/dev/null; then
-  PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"
+  export PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"
 fi
 
 # Source Ruby Version Manager (rvm)
@@ -536,7 +539,7 @@ Writes out my global =git= configuration.
   editor = vim
 [user]
   name = Carwin Young
-  email = carwin@mobomo.com # This gets changed to my personal account on a per repository basis.
+  email = cy@carw.in
   signingkey = D6FA5A05B721CCDE
 [color]
   ui = auto
@@ -2033,13 +2036,50 @@ browser[type="content-primary"] {background: #011326 !important}
 
 * Systemd
 
-This section is for storing all of my =Systemd= configurations and timers. Org will tangle these out, but they won't be enabled or run without intervention or some kind of post-save Emacs hook.
+This section is for storing all of my =Systemd= configurations and
+timers. Org will tangle these out, but they won't be enabled or run
+without intervention or some kind of post-save Emacs hook.
 
 User level =Systemd= configurations live in =~/.config/systemd/user/=
 
+** Random Wallpaper Timer
+
+This systemd service sets a random desktop wallpaper fifteen minutes
+after boot (when enabled) or whenever run.
+
+#+begin_src shell :tangle ~/.config/systemd/user/wallpaper-changer.service
+[Unit]
+Description=Choose a random desktop wallpaper
+
+[Service]
+ExecStart=feh --bg-fill --randomize --recursive /home/narwic/Pictures/Wallpaper/big
+
+[Install]
+WantedBy=default.target
+#+end_src
+
+This systemd timer can be enabled to automatically change the random
+wallpaper at a given interval.
+
+#+begin_src shell :tangle ~/.config/systemd/user/wallpaper-changer.timer
+#/etc/systemd/system/foo.timer
+[Unit]
+Description=Change the desktop wallpaper periodically
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=15min
+
+[Install]
+WantedBy=timers.target
+
+#+end_src
+
 ** Emacs
 
-Emacs ships with a systemd unit (at least in Arch), so there's really not much to tangle out. On a fresh system, one need simply enable the service and start it.
+Emacs ships with a systemd unit (at least in Arch), so there's really
+not much to tangle out. On a fresh system, one need simply enable the
+service and start it.
 
 #+begin_src sh :noweb-ref emacs-post-tangle
 # systemctl --user enable --now emacs
@@ -2048,11 +2088,13 @@ Emacs ships with a systemd unit (at least in Arch), so there's really not much t
 
 ** Post-tangle
 
-#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/Home/dotfiles/tangled/systemd-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
+#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/systemd-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
 <<emacs-post-tangle>>
 #+end_src
 
 * Other
+
+I don't rightly remember what I added this for, but I think it has something to do with	Ethereum development.
 
 #+begin_src conf :tangle ~/.soliumrc.json
 {

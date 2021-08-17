@@ -492,7 +492,7 @@ Define a toggle function that can be called to turn transparency on and off.
                     ;; Also handle undocumented (<active> <inactive>) form.
                     ((numberp (cadr alpha)) (cadr alpha)))
               100)
-         '(90 . 90) '(100 . 100)))))
+         '(92 . 92) '(100 . 100)))))
 (global-set-key (kbd "C-c t") 'cy/toggle-transparency)
 #+end_src
 
@@ -850,7 +850,7 @@ workspaces.
 	    treemacs-no-png-images                   nil
 	    treemacs-no-delete-other-windows         t
 	    treemacs-project-follow-cleanup          nil
-	    treemacs-persist-file                    (#'cy/cache-concat treemacs-persist)
+	    treemacs-persist-file                    ('cy/cache-concat treemacs-persist)
 	    treemacs-position                        'left
 	    treemacs-read-string-input               'from-child-frame
 	    treemacs-recenter-distance               0.1
