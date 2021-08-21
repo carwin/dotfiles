@@ -964,11 +964,6 @@ decent replacement for =Ivy=.
   (vertico-mode)
   (setq vertico-resize t) ;; Grow and shrink the vertico buffer
   (setq vertico-cycle t))  ;; Enable cycling for `vertico-next' and `vertico-previous'.
-
-(use-package vertico-buffer
-  :load-path (concat user-emacs-directory "elpa/vertico/extensions/vertico-buffer.el")
-  :ensure nil
-  :after (vertico))
 #+end_src
 
 Minimal completion-at-point. Everyone else seems to be doing it with =corfu=, why not Zoidburg?
@@ -1808,7 +1803,8 @@ Add =<leader>=-based keybindings for =org= documents.
   "oo"   '(org-open-at-point :which-key "open")
   "on"   '(org-toggle-narrow-to-subtree :which-key "narrow to subtree")
   "oa"   '(org-agenda :which-key "agenda")
-  "ot"   '(org-todo-list :which-key "todos"))
+  "ot"   '(org-todo-list :which-key "todos")
+  "a"    '(org-archive-subtree :which-key "archive"))
 #+end_src
 
 #+begin_src emacs-lisp
