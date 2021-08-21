@@ -38,52 +38,53 @@ and set the composition window to open in a new frame.
   ;; This is set to 't' to avoid mail syncing issues when using mbsync
   (setq mu4e-change-filenames-when-moving t
         ;; Refresh mail using isync every 10 minutes
-        mu4e-update-interval (* 10 60)
-        mu4e-compose-in-new-frame t
+        mu4e-update-interval (* 15 60)
+        mu4e-compose-in-new-frame nil
         mu4e-view-show-images t
+	mu4e-split-view 'vertical
         mu4e-get-mail-command "mbsync -a"
         mu4e-maildir "~/Mail")
   (setq mu4e-contexts
-       (list
-       ;; Personal account
-       (make-mu4e-context
-        :name "Personal"
-        :match-func
+	(list
+	 ;; Personal account
+	 (make-mu4e-context
+          :name "Personal"
+          :match-func
           (lambda (msg)
             (when msg
               (string-prefix-p "/Home" (mu4e-message-field msg :maildir))))
-        :vars '((user-mail-address . "cy@carw.in")
-                (user-full-name    . "Carwin Young")
-                (mu4e-compose-signature . cy/home-sig)
-                (mu4e-drafts-folder  . "/Home/drafts")
-                (mu4e-sent-folder    . "/Home/sent")
-                (mu4e-refile-folder  . "/Home/archive")
-                (mu4e-trash-folder   . "/Home/trash")
-                (mu4e-maildir-shortcuts .  (("/Home/inbox"         . ?i)
-                                            ("/Home/sent"          . ?s)
-                                            ("/Home/quarantine"    . ?q)
-                                            ("/Home/trash"         . ?t)
-                                            ("/Home/drafts"        . ?d)
-                                            ("/Home/archive"       . ?a)))))
+          :vars '((user-mail-address . "cy@carw.in")
+                  (user-full-name    . "Carwin Young")
+                  (mu4e-compose-signature . cy/home-sig)
+                  (mu4e-drafts-folder  . "/Home/drafts")
+                  (mu4e-sent-folder    . "/Home/sent")
+                  (mu4e-refile-folder  . "/Home/archive")
+                  (mu4e-trash-folder   . "/Home/trash")
+                  (mu4e-maildir-shortcuts .  (("/Home/inbox"         . ?i)
+                                              ("/Home/sent"          . ?s)
+                                              ("/Home/quarantine"    . ?q)
+                                              ("/Home/trash"         . ?t)
+                                              ("/Home/drafts"        . ?d)
+                                              ("/Home/archive"       . ?a)))))
          ;; Work account
-       (make-mu4e-context
-        :name "Work"
-        :match-func
+	 (make-mu4e-context
+          :name "Work"
+          :match-func
           (lambda (msg)
             (when msg
               (string-prefix-p "/Work" (mu4e-message-field msg :maildir))))
-        :vars '((user-mail-address . "carwin@mobomo.com")
-                (user-full-name    . "Carwin Young")
-                (mu4e-compose-signature . cy/work-sig)
-                (mu4e-drafts-folder  . "/Work/drafts")
-                (mu4e-sent-folder    . "/Work/sent")
-                (mu4e-refile-folder  . "/Work/archive")
-                (mu4e-trash-folder   . "/Work/trash")
-                (mu4e-maildir-shortcuts . (("/Work/inbox"     . ?i)
-                                            ("/Work/sent"     . ?s)
-                                            ("/Work/trash"    . ?t)
-                                            ("/Work/drafts"   . ?d)
-                                            ("/Work/archive"  . ?a))))))))
+          :vars '((user-mail-address . "carwin@mobomo.com")
+                  (user-full-name    . "Carwin Young")
+                  (mu4e-compose-signature . cy/work-sig)
+                  (mu4e-drafts-folder  . "/Work/drafts")
+                  (mu4e-sent-folder    . "/Work/sent")
+                  (mu4e-refile-folder  . "/Work/archive")
+                  (mu4e-trash-folder   . "/Work/trash")
+                  (mu4e-maildir-shortcuts . (("/Work/inbox"     . ?i)
+                                             ("/Work/sent"     . ?s)
+                                             ("/Work/trash"    . ?t)
+                                             ("/Work/drafts"   . ?d)
+                                             ("/Work/archive"  . ?a))))))))
 
 
 #+end_src
@@ -131,6 +132,15 @@ Send mail using =msmtp=.
       message-sendmail-extra-arguments '("--read-envelope-from")
       send-mail-function 'smtpmail-send-it
       message-send-mail-function 'message-send-mail-with-sendmail)
+#+end_src
+
+Configure calendar invite response functionality.
+
+Extend the main page to show details about individual mail directories with =mu4e-maildirs-extension=.
+
+#+begin_src emacs-lisp
+(use-package mu4e-maildirs-extension
+  :init (mu4e-maildirs-extension))
 #+end_src
 
 Provide ='cy-mail= so it can be required in =./Emacs.org=
