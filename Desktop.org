@@ -185,10 +185,6 @@ ZDOTDIR="$HOME/.zsh"
 
 (when (equal system-name "PUNCHY"))
 
-#+begin_src sh :noweb-ref environment-post-tangle
-# source ~/.profile
-
-#+end_src
 
 ** XDG User Directories
 
@@ -2173,11 +2169,6 @@ content-foreground = ${color.RED}
 content-padding = 0
 
 click-left = ~/.config/rofi/bin/power-menu
-#+end_src
-
-#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/environment-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
-<<xorg-post-tangle>>
-<<i3-post-tangle>>
 #+end_src
 
 * Applications
@@ -5124,174 +5115,6 @@ use_console_editor = yes
 # execute_on_song_change = "~/.config/ncmpcpp/art.sh"
 #+end_src
 
-** RSS
-#+begin_src emacs-lisp
-(use-package elfeed
-  :config
-  (setq elfeed-feeds
-    '(
-      ;; programming
-      ;; ("https://news.ycombinator.com/rss" hacker)
-      ;; programming languages
-      ;; ("https://www.reddit.com/r/golang.rss" golang)
-      ;; cloud
-      ;; ("https://www.reddit.com/r/aws.rss" aws)
-  ))
-  (setq-default elfeed-search-filter "@2-days-ago +unread")
-  (setq-default elfeed-search-title-max-width 100)
-  (setq-default elfeed-search-title-min-width 100))
-#+end_src
-** Mail
-;; @TODO - move this to Mail.org
-
-Mail on most systems is handled primarily via =mu4e= which is configured in my =Emacs.org= file.
-
-*** Mbsync
-
-=Mbsync= handles synchronization of IMAP inboxes.
-
-#+begin_src conf :tangle ~/.mbsyncrc
-
-# Global Channel configuration.
-Create Both
-Expunge Slave
-Remove None
-Sync All
-SyncState *
-CopyArrivalDate yes
-
-#####################
-# Work Email        #
-#####################
-IMAPAccount work
-Host imap.gmail.com
-User carwin@mobomo.com
-PassCmd "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/mobomomail.gpg"
-SSLType IMAPS
-CertificateFile /etc/ssl/certs/ca-certificates.crt
-
-IMAPStore work-remote
-Account work
-
-MaildirStore work-local
-# Subfolders Verbatim
-Path ~/Mail/Work/
-Inbox ~/Mail/Work/inbox
-
-Channel work-inbox
-Master :work-remote:
-Slave :work-local:inbox
-
-Channel work-archive
-Master :work-remote:"[Gmail]/All Mail"
-Slave :work-local:archive
-
-Channel work-sent
-Master :work-remote:"[Gmail]/Sent Mail"
-Slave :work-local:sent
-
-Channel work-trash
-Master :work-remote:"[Gmail]/Trash"
-Slave :work-local:trash
-Create Slave
-
-# Get all the work channels together into a group.
-Group work
-Channel work-inbox
-Channel work-archive
-Channel work-sent
-Channel work-trash
-
-##########################
-# Home Email             #
-##########################
-IMAPAccount home
-Host mail.runbox.com
-Port 993
-User narwic@1000needles.net
-PassCmd "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/personalmail.gpg"
-SSLType IMAPS
-SSLVersions TLSv1.2
-CertificateFile /etc/ssl/certs/ca-certificates.crt
-
-IMAPStore home-remote
-Account home
-
-MaildirStore home-local
-Path ~/Mail/Home/
-Inbox ~/Mail/Home/inbox/
-
-Channel home-inbox
-Master :home-remote:
-Slave :home-local:inbox
-Create Slave
-
-Channel home-sent
-Master :home-remote:"Sent"
-Slave :home-local:sent
-Create Slave
-
-Channel home-archive
-Master :home-remote:"Archives"
-Slave :home-local:archive
-Create Slave
-
-Channel home-quarantine
-Master :home-remote:"Quarantine"
-Slave :home-local:quarantine
-Create Slave
-
-Channel home-trash
-Master :home-remote:"Trash"
-Slave :home-local:trash
-Create Slave
-
-Channel home-drafts
-Master :home-remote:"Drafts"
-Slave :home-local:drafts
-Create Slave
-
-Group home
-Channel home-inbox
-Channel home-archive
-Channel home-sent
-Channel home-trash
-Channel home-quarantine
-Channel home-drafts
-
-#+end_src
-
-*** msmtp config
-
-=msmtp= is used by mu4e for sending mail instead of the basic smtp process. This is preferred because we have different contexts and emails from which we want to send mail and =msmtp= makes that much easier. See the sister configuration in Emacs.org.
-
-#+begin_src sh :tangle ~/.msmtprc :tangle-mode (identity #o600)
-defaults
-tls on
-tls_trust_file /etc/ssl/certs/ca-certificates.crt
-logfile ~/.local/log/msmtp.log
-
-# Home
-account Home
-auth on
-host mail.runbox.com
-port 587
-from cy@carw.in
-user narwic@1000needles.net
-passwordeval "gpg2 -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/personalmail.gpg"
-
-# Work
-account Work
-auth on
-host smtp.gmail.com
-port 587
-from carwin@mobomo.com
-user carwin@mobomo.com
-passwordeval "gpg2 -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/mobomomail.gpg"
-
-# account default : home
-#+end_src
-
 ** vim
 
 =Vim= configuration. Ol' trusty.
@@ -5547,13 +5370,7 @@ browser[type="content-primary"] {background: #011326 !important}
 
 ** Application post-tangle actions.
 
-#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/application-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
-<<mpd-post-tangle>>
-<<qutebrowser-post-tangle>>
-<<vim-post-tangle>>
-#+end_src
-
-* Systemd
+* Systemd Scripts
 
 This section is for storing all of my =Systemd= configurations and
 timers. Org will tangle these out, but they won't be enabled or run
@@ -5605,27 +5422,31 @@ service and start it.
 # systemctl --user start emacs
 #+end_src
 
-** Post-tangle
 
+* Post-tangle Targets
+
+This section is used to output the collections of noweb-ref references to shell scripts and run them.
+
+** Environment
+#+begin_src sh :noweb-ref environment-post-tangle
+# source ~/.profile
+#+end_src
+
+** System
+#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/environment-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
+<<xorg-post-tangle>>
+<<i3-post-tangle>>
+#+end_src
+
+** Applications
+
+#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/application-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
+<<mpd-post-tangle>>
+<<qutebrowser-post-tangle>>
+<<vim-post-tangle>>
+#+end_src
+
+** Emacs-centric
 #+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/systemd-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
 <<emacs-post-tangle>>
 #+end_src
-
-* Other
-
-I don't rightly remember what I added this for, but I think it has something to do with	Ethereum development.
-
-#+begin_src conf :tangle ~/.soliumrc.json
-{
-  "extends": "solium:recommended"
-  "plugins": ["security"],
-  "rules": {
-    "quotes": ["error", "double"],
-    "indentation": ["error", 4],
-    "linebreak-style": ["error", "unix"]
-  }
-}
-#+end_src
-
-
-* System Post-tangle

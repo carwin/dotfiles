@@ -2,9 +2,12 @@
 #+author: Carwin Young
 #+property: header-args:emacs-lisp :tangle (concat user-emacs-directory "cy-mail.el") :mkdirp yes
 
-| =mu4e=         | System |
-| =mu4e-contrib= | System |
-| =msmtp=        | System |
+* mu4e
+
+| =mu4e=                    | System |
+| =mu4e-contrib=            | System |
+| =msmtp=                   | System |
+| =mu4e-maildirs-extension= | @todo  |
 
 Configure =mu4e=, my favorite email client.
 
@@ -147,4 +150,151 @@ Provide ='cy-mail= so it can be required in =./Emacs.org=
 
 #+begin_src emacs-lisp
 (provide 'cy-mail)
+#+end_src
+
+
+* System =mbsync= / =isync= configuration
+
+=Mbsync= handles synchronization of IMAP inboxes.
+
+#+begin_src conf :tangle ~/.mbsyncrc
+
+# Global Channel configuration.
+Create Both
+Expunge Slave
+Remove None
+Sync All
+SyncState *
+CopyArrivalDate yes
+
+#####################
+# Work Email        #
+#####################
+IMAPAccount work
+Host imap.gmail.com
+User carwin@mobomo.com
+PassCmd "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/mobomomail.gpg"
+SSLType IMAPS
+CertificateFile /etc/ssl/certs/ca-certificates.crt
+
+IMAPStore work-remote
+Account work
+
+MaildirStore work-local
+# Subfolders Verbatim
+Path ~/Mail/Work/
+Inbox ~/Mail/Work/inbox
+
+Channel work-inbox
+Master :work-remote:
+Slave :work-local:inbox
+
+Channel work-archive
+Master :work-remote:"[Gmail]/All Mail"
+Slave :work-local:archive
+
+Channel work-sent
+Master :work-remote:"[Gmail]/Sent Mail"
+Slave :work-local:sent
+
+Channel work-trash
+Master :work-remote:"[Gmail]/Trash"
+Slave :work-local:trash
+Create Slave
+
+# Get all the work channels together into a group.
+Group work
+Channel work-inbox
+Channel work-archive
+Channel work-sent
+Channel work-trash
+
+##########################
+# Home Email             #
+##########################
+IMAPAccount home
+Host mail.runbox.com
+Port 993
+User narwic@1000needles.net
+PassCmd "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/personalmail.gpg"
+SSLType IMAPS
+SSLVersions TLSv1.2
+CertificateFile /etc/ssl/certs/ca-certificates.crt
+
+IMAPStore home-remote
+Account home
+
+MaildirStore home-local
+Path ~/Mail/Home/
+Inbox ~/Mail/Home/inbox/
+
+Channel home-inbox
+Master :home-remote:
+Slave :home-local:inbox
+Create Slave
+
+Channel home-sent
+Master :home-remote:"Sent"
+Slave :home-local:sent
+Create Slave
+
+Channel home-archive
+Master :home-remote:"Archives"
+Slave :home-local:archive
+Create Slave
+
+Channel home-quarantine
+Master :home-remote:"Quarantine"
+Slave :home-local:quarantine
+Create Slave
+
+Channel home-trash
+Master :home-remote:"Trash"
+Slave :home-local:trash
+Create Slave
+
+Channel home-drafts
+Master :home-remote:"Drafts"
+Slave :home-local:drafts
+Create Slave
+
+Group home
+Channel home-inbox
+Channel home-archive
+Channel home-sent
+Channel home-trash
+Channel home-quarantine
+Channel home-drafts
+
+#+end_src
+
+* System =msmtp= Configuration
+
+=msmtp= is used by =mu4e= for sending mail instead of the basic smtp process. This is preferred because we have different contexts and emails from which we want to send mail and =msmtp= makes that much easier.
+
+#+begin_src sh :tangle ~/.msmtprc
+defaults
+tls on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+logfile ~/.local/log/msmtp.log
+
+# Home
+account Home
+auth on
+host mail.runbox.com
+port 587
+from cy@carw.in
+user narwic@1000needles.net
+passwordeval "gpg2 -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/personalmail.gpg"
+
+# Work
+account Work
+auth on
+host smtp.gmail.com
+port 587
+from carwin@mobomo.com
+user carwin@mobomo.com
+passwordeval "gpg2 -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/mobomomail.gpg"
+
+# account default : home
 #+end_src
