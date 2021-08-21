@@ -80,7 +80,7 @@ Tags are used to filter all tasks to find anything actionable in a particular co
 ;; (setq org-agenda-tag-filter-preset '("-HABIT"))
 (setq org-agenda-files (list (cy/org-path "Inbox.org")
                              (cy/org-path "Habits.org")
-                             (cy/org-path "Roam-v2/Journal/")
+                             ;; (cy/org-path "Roam-v2/Journal/")
                              (cy/org-path "Calendar/")))
 
 (setq org-agenda-custom-commands
@@ -97,7 +97,8 @@ Tags are used to filter all tasks to find anything actionable in a particular co
                  ((org-agenda-overriding-header "Unprocessed Inbox Tasks")
                   ;; (org-agenda-files (remove '(,(cy/org-path "Habits.org")) org-agenda-files))
                   ;; (setq org-agenda-files `(,org-directory))
-                  (org-agenda-files '(,(cy/org-path "Inbox.org") ,(cy/org-path "Roam-v2/Journal/")))
+                  ;; (org-agenda-files '(,(cy/org-path "Inbox.org") ,(cy/org-path "Roam-v2/Journal/")))
+                  (org-agenda-files '(,(cy/org-path "Inbox.org")))
                   ;; (remove '(,(cy/org-path "Habits.org")) org-agenda-files)
                   (org-agenda-text-search-extra-files nil)))))
        ("h" "Habits"
