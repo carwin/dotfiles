@@ -3,10 +3,16 @@
 This is the primary desktop application configuration.
 
 @todo
-This block pulls in all the =:noweb-ref= references to =symlinks= and outputs them all into a =symlinks.sh= file. This block will normally be empty, if only this file is tangled out. The =:noweb-ref= references are stored in different files.
+This block pulls in all the =:noweb-ref= references to =symlinks= and
+outputs them all into a =symlinks.sh= file. This block will normally be
+empty, if only this file is tangled out. The =:noweb-ref= references are
+stored in different files.
 
 * System Settings
-Load system-specific settings from =.emacs.d/per-system-settings.el= and unpack relevant values into blocks so that they can be used in configuration file blocks. These settings are configured in Systems.org.
+Load system-specific settings from =.emacs.d/per-system-settings.el=
+and unpack relevant values into blocks so that they can be used in
+configuration file blocks. These settings are configured in
+Systems.org.
 
 #+begin_src emacs-lisp
 (load-file "~/.emacs.d/per-system-settings.el")
@@ -24,11 +30,14 @@ I typically set up my Arch system based on https://github.com/smfsh/arch-install
 
 ** Packages
 
-Core packages should be installed via =pacman=. It is assumed that most of the actual _core_ packages like =btrfs-progs= and =linux-headers= have already been installed at this point.
+Core packages should be installed via =pacman=. It is assumed that
+most of the actual _core_ packages like =btrfs-progs= and =linux-headers=
+have already been installed at this point.
 
-#+begin_src sh
+#+begin_src sh :noweb-ref arch-packages-post-tangle
 sudo pacman -S \
   emacs \
+  docker \
   tmux \
   vim \
   awesome-terminal-fonts \
@@ -39,14 +48,17 @@ sudo pacman -S \
   go \
   git \
   nvidia \
+  rxvt-unicode \
+  termite \
   nfs-utils \
   docker \
 #+end_src
 
 To make =AUR= package management easier, first install =yay=.
 
-#+begin_src  sh
-cd ~;
+#+begin_src sh :noweb-ref arch-yay-post-tangle
+#!/bin/bash
+cd ~/;
 git clone https://aur.archlinux.org/yay.git
 cd yay;
 makepkg -si;
@@ -54,22 +66,33 @@ cd ../;
 rm -rf yay;
 #+end_src
 
-Now install AUR packages:
+Now install =AUR= packages:
 
-#+begin_src sh
+#+begin_src sh :noweb-ref arch-aur-packages-post-tangle
 yay -S \
   ack \
   aaxtomp3 \
   adobe-source-han-sans-jp-fonts \
+  anki \
+  bind-tools \
+  dbschema \
+  discord \
   dunst \
+  elm-bin \
+  elm-language-server \
   efibootmgr \
   feh \
   flac \
+  fortune-mod \
   gnupg \
+  i3lock-color \
+  ibus-anthy \
   iotop \
   polybar \
   lando \
   libreswan \
+  lxdm-gtk3 \
+  ly \
   mailcap \
   mdadm \
   mlocate \
@@ -91,34 +114,54 @@ yay -S \
   p7zip \
   pass \
   pavucontrol \
+  picom-git \
   pulseaudio \
+  python-dotty-dict \
+  python-hjson \
+  python-matplotlib \
+  python-numpy \
   qgis \
-  qutebrowser \
   ranger \
-  remmina \
   rofi \
   rustup \
   scrot \
+  sqlite \
   sshfs \
-  spotify \
+  syncthing \
   ttf-mplus \
   tree \
   unrar \
   unzip \
+  urxvt-perls \
+  w3m \
+  wee-slack \
+  xautolock \
+  xfce-polkit \
   xorg-server \
   xorg-xdpyinfo \
   xorg-xev \
+  xorg-xauth \
+  xorg-xhost \
   xorg-xmodmap \
   xorg-xrdb \
-  xrandr \
+  xorg-xrandr \
+  xpra \
   zip
+#+end_src
+
+#+begin_src sh :noweb-ref get-preferred-fonts
+mkdir -p ~/.local/share/fonts;
+git clone git@github.com:coz-m/MPLUS_FONTS.git ~/.local/share/fonts/MPLUS_FONTS;
+git clone https://github.com/larzconwell/mplus-powerline-font/blob/master/mplus%20for%20Powerline.ttf ~/.local/share/fonts/mplus-for-powerline;
 #+end_src
 
 * Environment
 
 ** Profile
 
-I use a =.profile= file because it's easy to source for my primary shell (=zsh=), works with =bash=, and login managers read it. This covers the absolute basics of my configuration in a lot of instances.
+I use a =.profile= file because it's easy to source for my primary shell
+(=zsh=), works with =bash=, and login managers read it. This covers the
+absolute basics of my configuration in a lot of instances.
 
 #+begin_src conf :tangle ~/.profile :mkdirp
 DIFFPROG='vim'
@@ -180,7 +223,6 @@ QT_IM_MODULE=ibus
 XDG_CONFIG_HOME="$HOME/.config"
 XDG_DATA_HOME="$HOME/.local/share"
 XDG_CACHE_HOME="$HOME/.cache"
-ZDOTDIR="$HOME/.zsh"
 #+end_src
 
 (when (equal system-name "PUNCHY"))
@@ -218,22 +260,96 @@ After this file is changed, user-dirs need to be updated via: ~xdg-user-dirs-upd
 xdg-user-dirs-update
 #+end_src
 
-** Shell
+** Shell Configurations
 
-This is where shells are configured. I primarily use =zsh= but I've also used specific configs for =bash= and =fish= before.
+*** ZSH
 
-**** ZSH
+Create a ~~/.zshenv~ file to point invocations of =zsh= to look for
+configuration files within ~$XDG_CONFIG_HOME~. This is non-standard, but
+likely will be some day.
 
-There's not much to say here. The primarily interesting thing here is the sourcing of =~/.profile= at the top.
+#+begin_quote
+~.zshenv~ is sourced on all invocations of the shell unless the ~-f~
+option is set. It should contain commands to set the command search
+path, plus other important environment variables. ~.zshenv~ should not
+contain commands that produce output or assume the shell is attached
+to a tty.
+-- Zsh Manual
+#+end_quote
 
-#+begin_src conf :tangle ~/.zshrc :mkdirp yes
-source ~/.profile
-source ${ZDOTDIR:-$HOME}/prompt
+To keep the environment and command search paths standard between
+shells, I prefer to keep as much as I can in ~~/.profile~ and simply
+~source~ it at the top of ~/.zshenv~.
 
+The call chain works like this:
+
+ 1. =zsh= is invoked.
+ 2. =zsh= finds ~.zshenv~ and begins parsing.
+ 3. Within ~.zshenv~, =zsh= is told to source ~~/.profile~ which contains the environment variable declaration for ~$XDG_CONFIG_HOME~.
+ 4. After sourcing ~~/.profile~, =zsh= now looks in ~${XDG_CONFIG_HOME}/zsh/~ for a ~.zprofile~, then a ~.zshrc~ -- loading them in that order.
+
+#+begin_src conf :tangle ~/.zshenv
+# emulate sh -c 'source ~/.profile'
+source ${HOME}/.profile
+ZDOTDIR=${XDG_CONFIG_HOME}/zsh/
+#+end_src
+
+~.zprofile~ is sourced before ~.zshrc~ and is meant to act as an
+alternative to ~.zlogin~ (which gets sourced for login shells). Neither
+~.zprofile~ nor ~.zlogin~ should be used to change the shell environment
+at all and instead be used to set the terminal type and run a series
+of external commands like =fortune=.
+
+#+begin_src conf :tangle ~/.config/zsh/.zprofile :mkdirp yes
+#export TERM="xterm-256color"
+#+end_src
+
+~.zshrc~ is where everything interesting happens. This file is sourced
+on every interactive invocation of =zsh=.
+
+Load up the =zsh= plugin-manager =Antigen=.
+
+#+begin_src conf :noweb-ref zshrc
+source ${ZDOTDIR:-$HOME/.zsh}/custom/plugins/antigen/antigen.zsh
+#+end_src
+
+This configuration uses =oh-my-zsh= as a plugin backend, which I very
+much dislike. Other options like =prezto= seem just as heavy as
+=oh-my-zsh= though.
+
+Set a theme, and pull in any required plugins.
+
+#+begin_src conf :noweb-ref zshrc
+antigen use oh-my-zsh
+
+antigen bundle git
+antigen bundle zsh-users/zsh-syntax-highlighting
+
+antigen theme spaceship-prompt/spaceship-prompt
+
+antigen apply
+#+end_src
+
+Setup =zsh= to make it easier to be lazy about changing directories and
+enable extended globbing.
+
+The extended globbing feature allows asterisks to be used in a number
+of handy ways. ~ls **/foo~ will recursively list ~foo~ within the current
+directory tree. ~ls ***/foo~ will do the same thing but also follow
+symlinks. There are many other interesting features provided by the
+=EXTENDED_GLOB=, and most of them look fairly similar to regular
+expressions. For instance, ~ls [^ab]*~ matches any file not starting
+with the letters ~a~ or ~b~.
+
+#+begin_src conf :noweb-ref zshrc
 setopt AUTO_CD # Don't make me use `cd`. You know what I wanted.
 setopt NO_CASE_GLOB # Case insensitive globbing.
+setopt EXTENDED_GLOB
+#+end_src
 
-# Save history
+Save =zsh= history to a ~.zhistory~ file, ignoring duplicate entries.
+
+#+begin_src conf :noweb-ref zshrc
 HISTFILE=${ZDOTDIR:-$HOME}/.zhistory
 setopt EXTENDED_HISTORY # timestamp history lines
 SAVEHIST=5000
@@ -242,33 +358,32 @@ setopt SHARE_HISTORY # share history across sessions
 setopt APPEND_HISTORY # just keep adding to history
 setopt INC_APPEND_HISTORY # write all the time, don't wait for shell to close
 setopt HIST_IGNORE_DUPS # do not store duplicates
-setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_IGNORE_ALL_DUPS # ignore duplicate entries
+setopt HISTIGNOREALLDUPS    # ignore duplicate entries alternative syntax.
 setopt HIST_EXPIRE_DUPS_FIRST # expire duplicates first
 setopt HIST_SAVE_NO_DUPS
 setopt HIST_IGNORE_SPACE
 setopt HIST_FIND_NO_DUPS # ignore duplicates when searching
 setopt HIST_REDUCE_BLANKS # remove blank lines from history
 setopt HIST_VERIFY # be really sure when using !!
+#+end_src
 
+Allow =zsh= to provide corrections to commands which have been mistyped, even when using the AUTO_CD opt set above.
+
+#+begin_src conf :noweb-ref zshrc
 # Correction
 setopt CORRECT
 setopt CORRECT_ALL # Correct when using AUTO_CD
+#+end_src
 
-# Autocompletion
+Configure =zsh='s auto-completion features.
+
+#+begin_src conf :noweb-ref zshrc
 autoload -Uz compinit && compinit
-
-# Fragment completion.
-# zstyle ':completion:*' list-suffixes zstyle ':completion:*' expand prefix suffix
-
-# Tab completion
-# setopt MENU_COMPLETE
-# zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}' # Autocomplete, case insensitive
-# zstyle ':completion:*' menu select  # Highlight on tab
 
 # Color dirs
 export LS_COLORS # I don't know why this is necessary here, but colors don't work without it.
 # zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
-
 
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
@@ -288,12 +403,36 @@ zstyle ':completion:*' verbose true
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 
+# Fragment completion.
+# zstyle ':completion:*' list-suffixes zstyle ':completion:*' expand prefix suffix
 
+# Tab completion
+# setopt MENU_COMPLETE
+# zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}' # Autocomplete, case insensitive
+# zstyle ':completion:*' menu select  # Highlight on tab
+#+end_src
+
+Define custom command aliases.
+
+ - ~ls~ :: Automatically color the output of ~ls~.
+ - 7zultra :: Zip and compress a file or directory. This gets things pretty small.
+ - curlheaders :: Curl, with ~-I~ baked in.
+ - curlheadersproxy :: Curl, with ~-I~ baked in, but do it through a local proxy at =localhost:11080=.
+ - scrote :: Capture a selected area of the screen to the clipboard using =scrot=.
+ - webcam :: Turn on the webcam, sort of works like a mirror to check yourself before a meeting.
+ - dots :: Jump to the dotfiles directory.
+ - work :: Jump to the work projects directory.
+ - notes :: Jump to the ~~/Notes~ directory.
+ - docs :: Jump to ~~/Documents~.
+ - em :: Run =emacsclient=.
+ - emc :: The same as ~em~, but adds the ~-c~ parameter and runs it in the background.
+
+#+begin_src conf :noweb-ref zshrc
 alias ls='ls --color=auto'
 alias 7zultra='7z a -t7z -m0=lzma2 -mx=0 -mfb=64 -md=32m -ms=on'
 alias curlheaders='curl -I'
 alias curlheadersproxy='curl --socks5 localhost:11080 -I'
-alias scrot='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/foo.png && rm ~/foo.png'
+alias scrote='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/foo.png && rm ~/foo.png'
 alias webcam='mplayer tv:// -tv driver=v412:width=1920:height=1080:device=/dev/video0 -fps 15 -vf screenshot'
 alias dots='cd ~/Projects/home/dotfiles'
 alias work='cd ~/Projects/work'
@@ -301,10 +440,9 @@ alias notes='cd ~/Notes'
 alias docs='cd ~/Documents'
 alias em='emacsclient'
 alias emc='emacsclient -c &'
-#alias startwin='sudo virsh -c qemu:///system start win10'
-#alias stopwin='sudo virsh -c qemu:///system shutdown win10'
+#+end_src
 
-
+#+begin_src conf :noweb-ref zshrc
 export GPG_TTY=$(tty)
 
 # System dependent variables:
@@ -336,9 +474,55 @@ if [[ "$(< /proc/sys/kernel/osrelease)" == *microsoft* ]]; then
 fi
 #+end_src
 
-My custom prompt for =zsh=.
+Load built-in =zsh= modules. ~url-quote-magic~ analyzes characters being
+typed in a command to decide if the character needs to be escaped.
 
-#+begin_src conf :tangle ~/.zsh/prompt :mkdirp yes
+#+begin_src conf :noweb-ref zshrc
+autoload -U url-quote-magic
+#+end_src
+
+Source custom =zsh= plugins.
+
+| zsh-syntax-highlighting | https://github.com/zsh-users/zsh-syntax-highlighting |
+| base16-shell            | https://github.com/chriskempson/base16-shell         |
+
+=zsh-syntax-highlighting= provides in-line, as-you-type syntax highlighting for zsh.
+
+#+begin_src conf :noweb-ref zshrc
+source ${ZDOTDIR}/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+#+end_src
+
+=Base-16= is a plugin that essentially lets you choose a terminal theme
+from a command completion. Start with ~base16_~ and hit ~<Tab>~ to see the
+theme options.
+
+The settings are stored in ~~/.base16_theme~. Remove that directory to
+go back to ~.Xresources~ styles or whatever other configuration the
+current terminal emulator uses (e.g.: ~~/.config/termite/config~)
+
+#+begin_src conf :noweb-ref zshrc
+source ${ZDOTDIR}/custom/plugins/base16-shell/base16-shell.plugin.zsh
+#+end_src
+
+The below line is commented out, generally, but are used to load the
+custom work-in-progress prompt defined below.
+
+#+begin_src conf :noweb-ref zshrc
+# source ${ZDOTDIR:-$HOME}/prompt
+#+end_src
+
+Tangle out all of the ~.zshrc~ source blocks defined above into the
+final file.
+
+#+begin_src conf :tangle ~/.config/zsh/.zshrc :mkdirp yes :noweb yes
+<<zshrc>>
+#+end_src
+
+*Work In Progress*
+
+Carwin's custom =zsh= prompt.
+
+#+begin_src conf :tangle ~/.config/zsh/prompt :mkdirp yes
 # Left prompt
 export PS1="%F{223}%n%F{224}@%F{211}%m %F{179}%~%b%F{255} › "
 
@@ -351,6 +535,29 @@ RPROMPT=\$vcs_info_msg_0_
 zstyle ':vcs_info:git:*' formats '%F{223}%b|%F{211}%r%f'
 zstyle ':vcs_info:*' enable git
 
+#+end_src
+
+#+begin_src sh :noweb-ref zsh-post-tangle
+git clone https://github.com/zsh-users/antigen.git ~/.config/zsh/custom/plugins/antigen
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.config/zsh/custom/plugins/zsh-syntax-highlighting
+git clone git@github.com:chriskempson/base16-shell.git ~/.config/zsh/custom/plugins/base16-shell
+#+end_src
+
+#+begin_src conf
+This bit here came from the Archcraft repository, I'd like to have a much nicer shell...
+
+if [[ "$USER" == "root" ]]; then
+  PROMPT="%(?:%{$fg_bold[red]%}%{$fg_bold[yellow]%}%{$fg_bold[red]%} :%{$fg_bold[red]%} )"
+  PROMPT+='%{$fg[cyan]%}  %c%{$reset_color%} $(git_prompt_info)'
+else
+  PROMPT="%(?:%{$fg_bold[red]%}%{$fg_bold[green]%}%{$fg_bold[yellow]%} :%{$fg_bold[red]%} )"
+  PROMPT+='%{$fg[cyan]%}  %c%{$reset_color%} $(git_prompt_info)'
+fi
+
+ZSH_THEME_GIT_PROMPT_PREFIX="%{$fg_bold[blue]%}  git:(%{$fg[red]%}"
+ZSH_THEME_GIT_PROMPT_SUFFIX="%{$reset_color%} "
+ZSH_THEME_GIT_PROMPT_DIRTY="%{$fg[blue]%}) %{$fg[yellow]%}✗"
+ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg[blue]%})"
 #+end_src
 
 ** Xorg
@@ -376,51 +583,48 @@ Xcursor.size: 18
 ! ------------------------------------------------------------------------------
 
 ! special
-,*.foreground:   #d8dee8
-!*.background:   #2f343f
-,*.background: #080808
-,*.cursorColor:  #b48ead
-
-! black
-,*.color0  : #4b5262
-,*.color8  : #434a5a
-
-! red
-,*.color  : #bf616a
-,*.color9  : #b3555e
-
-! green
-,*.color2  : #a3be8c
-,*.color10 : #93ae7c
-
-! yellow
-,*.color3  : #ebcb8b
-,*.color11 : #dbbb7b
-
-! blue
-,*.color4  : #81a1c1
-,*.color12 : #7191b1
-
-! magenta
-,*.color5  : #b48ead
-,*.color13 : #a6809f
-
-! cyan
-,*.color6  : #89d0bA
-,*.color14 : #7dbba8
-
-! white
-,*.color7  : #e5e9f0
-,*.color15 : #d1d5dc
+! ,*.foreground:   #d8dee8
+! !*.background:   #2f343f
+! ,*.background: #080808
+! ,*.cursorColor:  #b48ead
+!
+! ! black
+! ,*.color0  : #4b5262
+! ,*.color8  : #434a5a
+!
+! ! red
+! ,*.color  : #bf616a
+! ,*.color9  : #b3555e
+!
+! ! green
+! ,*.color2  : #a3be8c
+! ,*.color10 : #93ae7c
+!
+! ! yellow
+! ,*.color3  : #ebcb8b
+! ,*.color11 : #dbbb7b
+!
+! ! blue
+! ,*.color4  : #81a1c1
+! ,*.color12 : #7191b1
+!
+! ! magenta
+! ,*.color5  : #b48ead
+! ,*.color13 : #a6809f
+!
+! ! cyan
+! ,*.color6  : #89d0bA
+! ,*.color14 : #7dbba8
+!
+! ! white
+! ,*.color7  : #e5e9f0
+! ,*.color15 : #d1d5dc
 
 ! ------------------------------------------------------------------------------
 ! Font configuration
 ! ------------------------------------------------------------------------------
 
-URxvt*font:    xft:M+ 1mn:regular:size=10
-URxvt*boldFont:   xft:M+ 1mn:bold:size=10
-URxvt*italicFont:  xft:M+ 1mn:italic:size=10
-URxvt*boldItalicFont: xft:M+ 1mn:bold italic:size=10
+URxvt*font: xft:M+ 1m for Powerline:regular:size=10
 
 ! ------------------------------------------------------------------------------
 ! Xft Font Configuration
@@ -439,7 +643,7 @@ Xft.dpi: 109
 ! ------------------------------------------------------------------------------
 
 ! font spacing
-URxvt*letterSpace:  0
+URxvt*letterSpace: 0
 URxvt.lineSpace:  0
 
 ! general settings
@@ -506,7 +710,6 @@ rofi.modi: run,drun,window,ssh
 ! ------------------------------------------------------------------------------
 ! Dmenu configs
 ! ------------------------------------------------------------------------------
-
 dmenu.selforeground: #d8dee9
 dmenu.background:    #2e3440
 dmenu.selbackground: #bf616a
@@ -674,7 +877,8 @@ exec xautolock -time 10 -locker "~/.config/i3/bin/i3lock.sh"
 floating_modifier $mod
 
 # start a terminal
-bindsym $mod+Return exec i3-sensible-terminal
+# bindsym $mod+Return exec i3-sensible-terminal
+bindsym $mod+Return exec termite
 
 # kill focused window
 bindsym $mod+Shift+q kill
@@ -2266,7 +2470,7 @@ DIR="$HOME/.config/rofi/bin"
 rofi_command="rofi -theme $DIR/../themes/asroot.rasi"
 
 # Apps
-terminal=" urxvt"
+terminal=" Termite"
 files=" Thunar"
 editor=" Geany"
 clifm=" Ranger"
@@ -2281,7 +2485,7 @@ options="$terminal\n$files\n$editor\n$clifm\n$lpad\n$vim"
 chosen="$(echo -e "$options" | $rofi_command -p "Run as root(#)" -dmenu -selected-row 0)"
 case $chosen in
     $terminal)
-        ${DIR}/bin/apps_as_root.sh 'urxvt'
+        ${DIR}/bin/apps_as_root.sh 'termite'
         ;;
     $files)
         ${DIR}/bin/apps_as_root.sh 'dbus-run-session thunar'
@@ -2290,13 +2494,13 @@ case $chosen in
         ${DIR}/bin/apps_as_root.sh geany
         ;;
     $clifm)
-        ${DIR}/bin/apps_as_root.sh 'urxvt -e ranger'
+        ${DIR}/bin/apps_as_root.sh 'termite -e ranger'
         ;;
     $lpad)
         ${DIR}/bin/apps_as_root.sh leafpad
         ;;
     $vim)
-        ${DIR}/bin/apps_as_root.sh 'urxvt -e vim'
+        ${DIR}/bin/apps_as_root.sh 'termite -e vim'
         ;;
 esac
 #+end_src
@@ -2469,10 +2673,10 @@ case $chosen in
 		fi
         ;;
     $bmon)
-        urxvt -e bmon
+        termite -e bmon
         ;;
     $launch_cli)
-        urxvt -e nmtui
+        termite -e nmtui
         ;;
     $launch)
         nm-connection-editor
@@ -4312,7 +4516,7 @@ dmenu_command = rofi -dmenu -theme ~/.config/rofi/themes/networkmenu.rasi
 # rofi_obscure = True
 
 [editor]
-terminal = urxvt
+terminal = termite
 gui_if_available = True
 # terminal = <name of terminal program>
 # gui_if_available = <True or False>
@@ -5368,7 +5572,6 @@ browser[type="content-primary"] {background: #011326 !important}
 
 #+end_src
 
-** Application post-tangle actions.
 
 * Systemd Scripts
 
@@ -5427,9 +5630,18 @@ service and start it.
 
 This section is used to output the collections of noweb-ref references to shell scripts and run them.
 
+** Packages
+
+#+begin_src shell :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/packages-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
+<<arch-packages-post-tangle>>
+<<arch-yay-post-tangle>>
+<<arch-aur-packages-post-tangle>>
+<<get-preferred-fonts>>
+#+end_src
+
 ** Environment
-#+begin_src sh :noweb-ref environment-post-tangle
-# source ~/.profile
+#+begin_src shell :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/environment-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
+<<zsh-post-tangle>>
 #+end_src
 
 ** System
