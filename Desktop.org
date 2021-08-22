@@ -404,28 +404,6 @@ Set a theme, and pull in any required plugins.
 | =zdharma/fast-syntax-highlighting= | Faster, more configurable syntax highlighting than zsh-users/zsh-syntax-highlighting | [[https://github.com/zdharma/fast-syntax-highlighting][Link]] |
 | =spaceship-prompt=                 | A pretty nice prompt theme. To eventually be replaced with Carwin's custom prompt.   | [[https://github.com/spaceship-prompt/spaceship-prompt][Link]] |
 
-+----------------------------------+---------------------------------------+---------------------------------------------------------------------+
-|=git=                             |Comes with a lot of aliases, I mainly  | [[https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/git][Link]]|
-|                                  |use the stash features.                |                                                                     |
-|                                  |                                       |                                                                     |
-|                                  |                                       |                                                                     |
-|                                  |                                       |                                                                     |
-|                                  |                                       |                                                                     |
-|                                  |                                       |                                                                     |
-|                                  |                                       |                                                                     |
-+----------------------------------+---------------------------------------+---------------------------------------------------------------------+
-|=zdharma/fast-syntax-highlighting=|Faster, more configurable syntax       | [[https://github.com/zdharma/fast-syntax-highlighting][Link]]       |
-|                                  |highlighting than                      |                                                                     |
-|                                  |=zsh-users/zsh-syntax-highlighting=.   |                                                                     |
-|                                  |                                       |                                                                     |
-|                                  |                                       |                                                                     |
-|                                  |                                       |                                                                     |
-+----------------------------------+---------------------------------------+---------------------------------------------------------------------+
-|=spaceship-prompt=                | A pretty nice prompt theme. To        | [[https://github.com/spaceship-prompt/spaceship-prompt][Link]]      |
-|                                  |eventually be replaced with Carwin's   |                                                                     |
-|                                  |custom prompt.                         |                                                                     |
-+----------------------------------+---------------------------------------+---------------------------------------------------------------------+
-
 The =spaceship-prompt= comes with some built-in configurable options which can be found [[https://github.com/spaceship-prompt/spaceship-prompt/blob/master/docs/options.md][here]].
 
 #+begin_src conf :noweb-ref zshrc
