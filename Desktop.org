@@ -302,11 +302,18 @@ Now, collect all the bits of =.profile= into a single file.
 
 XDG user directories define the paths for "well-known" directories.
 
-These values can be queried while scripting using ~xdg-user-dir <var
-name>~ like so: ~xdg-user-dir DOWNLOAD~.
+These values can be queried while scripting using ~xdg-user-dir
+<varname>~ like so:
+
+#+begin_src shell
+> xdg-user-dir DOWNLOAD
+#+end_src
 
 Using the configurations from this document, that would output:
-~/home/<user>/Downloads~
+
+#+begin_src shell
+> /home/<user>/Downloads
+#+end_src
 
  - =XDG_DESKTOP_DIR= :: Desktop files. This is mostly ignored, but it seems like a basic necessity for certain things like =Wine= applications.
  - =XDG_DOWNLOAD_DIR= :: The basic download directory for browsers and other applications.
