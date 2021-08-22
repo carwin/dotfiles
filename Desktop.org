@@ -157,76 +157,150 @@ git clone https://github.com/larzconwell/mplus-powerline-font/blob/master/mplus%
 
 * Environment
 
-** Profile
+Configure the basic environment upon which everything operates and
+depends. This is where all the most basic configurations, environment
+variables, etc... live.
+
+** =.profile=
 
 I use a =.profile= file because it's easy to source for my primary shell
-(=zsh=), works with =bash=, and login managers read it. This covers the
+(=zsh=), works with =bash=, and login managers read it.  This covers the
 absolute basics of my configuration in a lot of instances.
 
-#+begin_src conf :tangle ~/.profile :mkdirp
-DIFFPROG='vim'
-LANG=en_US.UTF-8
-LC_ALL=en_US.UTF-8
-LC_COLLATE=C
-RANGER_LOAD_DEFAULT_RC=false
-EDITOR="emacsclient --alternate-editor=vim -nw"
-VISUAL="emacsclient --alternate-editor=vim"
-ALTERNATE_EDITOR="emacs -Q"
+This file follows the stylistic convention of using ~export~ rather than
+simply declaring variables.  Though this is mostly a preference, there
+are instances where using ~export~ may save some headaches.
 
+~export~ sets the =$PATH= variable explicitly and sets the environment
+variables for child processes, though this isn't strictly necessary in
+most cases, because =$PATH= would already be set for the current
+environment when a child process runs.  You should expect dragons in
+cases where a script using this =POSIX= ~export~ built-in to set a
+variable calls another script which, by some mechanism, ceases to
+export that variable, in such a case it likely is no longer available
+in the parent environment either.
 
-# 256 Colors if we're using xterm.
+While using the ~export~ built-in doesn't prevent the shooting of one's
+own foot in that very specific way, it will prevent some scoping
+problems for the life of the shell.
+
+Now that the preamble is out of the way, declare the basics like =LANG=
+and =EDITOR=:
+
+#+begin_src conf :noweb-ref dot-profile
+export DIFFPROG="vim"
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LC_COLLATE=C
+export RANGER_LOAD_DEFAULT_RC=false
+export EDITOR="emacsclient --alternate-editor=vim -nw"
+export VISUAL="emacsclient --alternate-editor=vim"
+export ALTERNATE_EDITOR="emacs -Q"
+#+end_src
+
+Set the terminal to report 256 Colors if we're using xterm.
+
+#+begin_src conf :noweb-ref dot-profile
 [[ "$TERM" == "xterm" ]] && export TERM=xterm-256-color
+#+end_src
 
-# Ensure /usr/local/bin is in path.
+
+Ensure ~/usr/local/bin~ is in =$PATH=.
+
+#+begin_src conf :noweb-ref dot-profile
 export PATH="/usr/local/bin:$PATH"
+#+end_src
 
-# Ensure /home/<user>/.local/bin is in path, Python likes to use this.
+Ensure ~/home/<user>/.local/bin~ is in =$PATH=, =Python= likes to use this
+directory.
+
+#+begin_src conf :noweb-ref dot-profile
 export PATH="$HOME/.local/bin:$PATH"
+#+end_src
 
-# Add Ruby gems into path.
+Add =Ruby= gems into =$PATH= and, if =rvm= is installed, somewhere we expect
+it to be, source it and load =rvm= into a shell session as a function.
+
+#+begin_src conf :noweb-ref dot-profile
 if which ruby >/dev/null && which gem >/dev/null; then
   export PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"
 fi
 
-# Source Ruby Version Manager (rvm)
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
-[[ -s "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" ]] && source "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+[[ -s "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" ]] && source "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm"
+#+end_src
 
-# Add Rust crates into path.
+Add =Rust= crates into =$PATH= if the =rustup= binary is found.
+
+#+begin_src conf :noweb-ref dot-profile
 if which rustup >/dev/null; then
-  PATH="$HOME/.cargo/bin:$PATH"
+  export PATH="$HOME/.cargo/bin:$PATH"
 fi
+#+end_src
 
-# Add composer globals into path.
+Add PHP's =composer= globals into =$PATH=.
+
+#+begin_src conf :noweb-ref dot-profile
 export PATH="$PATH:$HOME/.config/composer/vendor/bin"
+#+end_src
 
-# Add cuda stuff into path
+Add NVIDIA's [[https://wiki.archlinux.org/title/GPGPU#CUDA][CUDA]] stuff into =$PATH=.
+
+#+begin_src conf :noweb-ref dot-profile
 export PATH="$PATH:/opt/cuda/bin"
+#+end_src
 
-# Source node version manager
+Source the Node Version Manager (=nvm=) in much the same way as =rvm=, above.
+
+#+begin_src conf :noweb-ref dot-profile
 [[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
 [[ -s /usr/share/nvm/init-nvm.sh ]] && . /usr/share/nvm/init-nvm.sh
-# source /usr/share/nvm/init-nvm.sh
+#+end_src
 
+Define the color values used by the =ls= command when it is invoked with
+the ~--color~ argument.
+
+#+begin_src conf :noweb-ref dot-profile
 # LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
 LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
+#+end_src
 
-# Add personal binaries into PATH.
-# PATH="$HOME/.local/bin:$PATH"
+Set environment variables related to input methods. These environment
+variables are required to make =ibus= and =ibus-anthy= work for inputting
+text in Japanese and Korean in particular.
 
-# Input method stuff
+#+begin_src conf :noweb-ref dot-profile
 GTK_IM_MODULE=ibus
 XMODIFIERS=@im=ibus
 QT_IM_MODULE=ibus
-
-# XDG Basedir specification, these for some reason don't go into user-dirs.dirs
-XDG_CONFIG_HOME="$HOME/.config"
-XDG_DATA_HOME="$HOME/.local/share"
-XDG_CACHE_HOME="$HOME/.cache"
 #+end_src
 
-(when (equal system-name "PUNCHY"))
+Specify the directories that fall within the [[https://wiki.archlinux.org/title/XDG_Base_Directory][XDG Base Directory]]
+specification.
 
+These, for some reason, don't go into ~user-dirs.dirs~.  Many
+applications have yet to switch over to using these locations, but
+someday this will be the standard.
+
+ - ~XDG_CONFIG_HOME~ :: Analogous to ~/etc~.
+ - ~XDG_DATA_HOME~ :: Analogous to ~/usr/share~.
+ - ~XDG_CACHE_HOME~ :: Analogous to ~/var/cache~.
+ - ~XDG_STATE_HOME~ :: Analogous to ~/var/lib~.
+ - ~XDG_RUNTIME_DIR~ :: Used for non-essential, user specific data files like sockets, named pipes, etc...
+
+#+begin_src conf :noweb-ref dot-profile
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_STATE_HOME="$HOME/.local/lib"
+export XDG_RUNTIME_HOME="$HOME/.local/run"
+#+end_src
+
+Now, collect all the bits of =.profile= into a single file.
+
+#+begin_src conf :tangle ~/.profile :mkdirp
+<<dot-profile>>
+#+end_src
 
 ** XDG User Directories
 
@@ -264,6 +338,7 @@ xdg-user-dirs-update
 
 *** ZSH
 
+**** =.zshenv=
 Create a ~~/.zshenv~ file to point invocations of =zsh= to look for
 configuration files within ~$XDG_CONFIG_HOME~. This is non-standard, but
 likely will be some day.
@@ -294,6 +369,8 @@ source ${HOME}/.profile
 ZDOTDIR=${XDG_CONFIG_HOME}/zsh/
 #+end_src
 
+**** =.zprofile=
+
 ~.zprofile~ is sourced before ~.zshrc~ and is meant to act as an
 alternative to ~.zlogin~ (which gets sourced for login shells). Neither
 ~.zprofile~ nor ~.zlogin~ should be used to change the shell environment
@@ -304,10 +381,12 @@ of external commands like =fortune=.
 #export TERM="xterm-256color"
 #+end_src
 
+**** =.zshrc=
+
 ~.zshrc~ is where everything interesting happens. This file is sourced
 on every interactive invocation of =zsh=.
 
-Load up the =zsh= plugin-manager =Antigen=.
+First, load up the =zsh= plugin manager =Antigen=.
 
 #+begin_src conf :noweb-ref zshrc
 source ${ZDOTDIR:-$HOME/.zsh}/custom/plugins/antigen/antigen.zsh
@@ -402,14 +481,6 @@ zstyle ':completion:*' verbose true
 
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
-
-# Fragment completion.
-# zstyle ':completion:*' list-suffixes zstyle ':completion:*' expand prefix suffix
-
-# Tab completion
-# setopt MENU_COMPLETE
-# zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}' # Autocomplete, case insensitive
-# zstyle ':completion:*' menu select  # Highlight on tab
 #+end_src
 
 Define custom command aliases.
@@ -441,6 +512,9 @@ alias docs='cd ~/Documents'
 alias em='emacsclient'
 alias emc='emacsclient -c &'
 #+end_src
+
+Configure some system-dependent variables. Most of these are added to
+handle some quirky behavior within =WSL= instances.
 
 #+begin_src conf :noweb-ref zshrc
 export GPG_TTY=$(tty)
