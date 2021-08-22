@@ -7,8 +7,6 @@
 :CONTENTS:
 - [[#systems][Systems]]
   - [[#base-configuration][Base Configuration]]
-  - [[#machines][Machines]]
-    - [[#per-system-settings][Per-System Settings]]
   - [[#guts][guts]]
   - [[#buster][buster]]
   - [[#punchy][punchy]]
@@ -18,44 +16,51 @@
 
 * Systems
 
+
 ** Base Configuration
 
-This base configuration is shared between all of the machines I manage.
+| =map= | Built-in |
 
-@todo
-
-** Machines
-
-Machines are named with shortness and distinguishability in mind. Some of them have been around nearly a decade so I'm rather partial to them.
-
-=link=
-
-#+begin_src emacs-lisp
-(defun test ())
-#+end_src
-
-*** Per-System Settings
-
-Some settings need to be customized on a per-system basis without tweaking individual configuration files. Thanks to =noweb= this is pretty easy to tweak.
+This set of base configurations is inherited by all declared
+systems. Each system overrides only the settings most relevant to it
+by declaring them again in a separate map. The base configuration and
+the declared overrides are mashed together on a per-system basis using
+=map-merge=.
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/per-system-settings.el :noweb yes
 (require 'map) ;; needed for map-merge
 
 (setq cy/system-settings
-  (map-merge
-    'list
-    '((desktop/dpi . 180)
-      (desktop/background . "some-file.jpg")
-      (emacs/dashboard-agenda-face-size . 100)
-      (emacs/default-face-size . 100)
-      (emacs/variable-face-size . 2.45)
-      (emacs/fixed-face-size . 1.5))
-    <<system-settings>>))
+      (map-merge
+       'list
+       '((desktop/dpi . 180)
+	 (dotfiles/dir . (file-name-dire buffer-file-name))
+	 (emacs/dashboard-agenda-face-size . 100)
+	 (emacs/default-face-size . 100)
+	 (emacs/variable-face-size . 2.45)
+	 (emacs/fixed-face-size . 1.5))
+       <<system-settings>>))
 #+end_src
+
+Individual machines / systems are named with brevity and
+distinguishability in mind. Some of them have been around nearly a
+decade so I'm rather partial to them.
+
+For systems that boot into multiple operating systems, the following
+pattern is used to denote which environment is being referred to when
+referencing the system in configuration:
+
+ - greatname :: =Linux= and =Android=
+ - GREATNAME :: =Windows= and =WSL=
+ - GreatName :: =OSX=
 
 ** guts
 
-=guts= is my primary desktop machine. It runs 3 2560x1440 monitors. =guts= has two hard drives, one which boots =Arch Linux= and the other which boots =Windows 10=.
+=guts= is a custom desktop machine with multiple hard drives which
+boots into either =Windows 10= or =Arch Linux=. This system is used
+primarily with a 49" Samsung CRG49 monitor with a 32:9 aspect
+ratio. This monitor is typically the source of any need for per-system
+tweaking on =guts=.
 
 #+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep
 (when (equal system-name "guts")
@@ -73,13 +78,17 @@ Some settings need to be customized on a per-system basis without tweaking indiv
 
 #+end_src
 
-*NOTE*: The description of the monitor setup isn't accurate anymore. I've got a 49" Samsung 32:9 monitor now and a portrait one on the side, the setup isn't final so I'm not updating the text yet.
-
 ** buster
 
-=buster= is a ThinkPad x201s that runs =Arch Linux=. This is a side machine that more or less acts as a backup when other machines are down for service or when I have a need to test out equipment in the network closet via a cabled interface. Most of the time it gets used for Music and Movie watching in the background.
+=buster= is a ThinkPad x201s that runs =Arch Linux=.
 
-*System Settings*
+This is a side machine that more or less acts as a backup when other
+machines are down for service or when I have a need to test out
+equipment in the network closet via a cabled interface. It also acts
+as the primary machine while travelling.
+
+Most of the time it gets used for music and movie watching in the
+background.
 
 #+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep
 (when (equal system-name "buster")
@@ -89,33 +98,28 @@ Some settings need to be customized on a per-system basis without tweaking indiv
     (emacs/fixed-face-size . 110)))
 #+end_src
 
-
 ** punchy
 
-=punchy= is a ThinkPad p43s that I use primarily for my day job, but has also become a go-to favorite generally. It runs =Arch Linux= and =Windows 10=. The screen is wonderful, but there are some HiDPI quirks that make using =i3= and =gtk= applications somewhat annoying.
+=punchy= is a work-provided ThinkPad p43s that I use primarily for my
+day job. It runs =Windows 10= and =Ubuntu 20.04= via =WSL2=. Emacs, on this
+machine, is run via =WSL= and forwarded to an X session on Windows
+provided by the X410 application.
 
-I've been experimenting with using WSL2 to run Emacs and forward the X sessions out to =guts= or Windows 10 locally. It works pretty well.
-
-*System Settings*
+The screen is wonderful, but there are some HiDPI quirks that make
+using =i3= and =gtk= applications somewhat annoying.
 
 #+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep
-(when (equal system-name "punchy")
-  '((desktop/dpi . 89)
-    (emacs/default-face-size . 110)
-    (emacs/variable-face-size . 110)
-    (emacs/fixed-face-size . 110)))
-;; When booted into Windows
 (when (equal system-name "PUNCHY")
   '((desktop/dpi . 89)
     (emacs/variable-face-size . 1.1)
     (emacs/fixed-face-size . 1.1)
     (emacs/default-face-size . 100)))
-
 #+end_src
 
 ** cutman
 
-=cutman= is a Pixel 5. I've yet to get into figuring out how to use Emacs with it.
+=cutman= is a Pixel 5. I've yet to get into figuring out how to use
+Emacs with it, but I suspect Termux is a major part of it.
 
 * =system-settings-get=
 :PROPERTIES:
