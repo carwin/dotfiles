@@ -222,10 +222,6 @@ Add =Ruby= gems into =$PATH= and, if =rvm= is installed, somewhere we expect
 it to be, source it and load =rvm= into a shell session as a function.
 
 #+begin_src conf :noweb-ref dot-profile
-if which ruby >/dev/null && which gem >/dev/null; then
-  export PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"
-fi
-
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 [[ -s "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" ]] && source "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm"
 #+end_src
@@ -234,7 +230,7 @@ Add =Rust= crates into =$PATH= if the =rustup= binary is found.
 
 #+begin_src conf :noweb-ref dot-profile
 if which rustup >/dev/null; then
-  export PATH="$HOME/.cargo/bin:$PATH"
+  export PATH="$PATH:$HOME/.cargo/bin"
 fi
 #+end_src
 
@@ -298,7 +294,7 @@ export XDG_RUNTIME_HOME="$HOME/.local/run"
 
 Now, collect all the bits of =.profile= into a single file.
 
-#+begin_src conf :tangle ~/.profile :mkdirp
+#+begin_src conf :noweb yes :tangle ~/.profile :mkdirp yes
 <<dot-profile>>
 #+end_src
 
@@ -306,16 +302,22 @@ Now, collect all the bits of =.profile= into a single file.
 
 XDG user directories define the paths for "well-known" directories.
 
-These values can be queried while scripting using ~xdg-user-dir <var name>~ like so: ~xdg-user-dir DOWNLOAD~. That would output ~/home/<user>/Downloads~ using my configuration.
+These values can be queried while scripting using ~xdg-user-dir <var
+name>~ like so: ~xdg-user-dir DOWNLOAD~.
 
-- =XDG_DESKTOP_DIR=: Desktop files. I don't actually use this but it seems like it's a basic necessity for certain things like =wine= applications.
-- =XDG_DOWNLOAD_DIR=: The basic download directory for browsers and other applications.
-- =XDG_TEMPLATES_DIR=: Another mostly unused value. The purpose of this directory is to house file templates so you can right click and add a specific type of file somewhere using a GUI file browser like =Thunar=.
-- =XDG_PUBLICSHARE_DIR=: Pretty obvious. This is for files that should be public on the network. I don't think I've ever put something here.
-- =XDG_DOCUMENTS_DIR=: User document storage. I typically symlink my OneDrive documents folder here.
-- =XDG_MUSIC_DIR=: Where tunez come from.
-- =XDG_PICTURES_DIR=: Photo storage. This one is another typical symlink to OneDrive.
-- =XDG_VIDEOS_DIR=: Video storage.
+Using the configurations from this document, that would output:
+~/home/<user>/Downloads~
+
+ - =XDG_DESKTOP_DIR= :: Desktop files. This is mostly ignored, but it seems like a basic necessity for certain things like =Wine= applications.
+ - =XDG_DOWNLOAD_DIR= :: The basic download directory for browsers and other applications.
+ - =XDG_TEMPLATES_DIR= :: Another mostly unused value. The purpose of this directory is to house file templates which can be used by right clicking in Desktop Managers and choosing an available template from the contextual menu.
+ - =XDG_PUBLICSHARE_DIR= :: This directory is for files that should be public on the network.
+ - =XDG_DOCUMENTS_DIR= :: User document storage.
+ - =XDG_MUSIC_DIR= :: Where tunez come from.
+ - =XDG_PICTURES_DIR= :: Photo storage.
+ - =XDG_VIDEOS_DIR= :: Video storage.
+
+
 
 #+begin_src conf :tangle ~/.config/user-dirs.dirs :mkdirp
 XDG_DESKTOP_DIR="$HOME/"
@@ -339,9 +341,9 @@ xdg-user-dirs-update
 *** ZSH
 
 **** =.zshenv=
-Create a ~~/.zshenv~ file to point invocations of =zsh= to look for
-configuration files within ~$XDG_CONFIG_HOME~. This is non-standard, but
-likely will be some day.
+Create a ~/home/<user>/.zshenv~ file to point invocations of =zsh= to look
+for configuration files within ~$XDG_CONFIG_HOME~. This is non-standard,
+but likely will be some day.
 
 #+begin_quote
 ~.zshenv~ is sourced on all invocations of the shell unless the ~-f~
@@ -455,7 +457,7 @@ setopt HIST_REDUCE_BLANKS # remove blank lines from history
 setopt HIST_VERIFY # be really sure when using !!
 #+end_src
 
-Allow =zsh= to provide corrections to commands which have been mistyped, even when using the AUTO_CD opt set above.
+Allow =zsh= to provide corrections to commands which have been mistyped, even when using the ~AUTO_CD~ opt set above.
 
 #+begin_src conf :noweb-ref zshrc
 # Correction
