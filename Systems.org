@@ -11,7 +11,7 @@
   - [[#buster][buster]]
   - [[#punchy][punchy]]
   - [[#cutman][cutman]]
-- [[#system-settings-get][system-settings-get]]
+- [[#functions-and-export][Functions and Export]]
 :END:
 
 * Systems
@@ -27,19 +27,24 @@ by declaring them again in a separate map. The base configuration and
 the declared overrides are mashed together on a per-system basis using
 =map-merge=.
 
-#+begin_src emacs-lisp :tangle ~/.emacs.d/per-system-settings.el :noweb yes
+#+begin_src emacs-lisp :tangle ~/.emacs.d/cy-system-settings.el :noweb yes
 (require 'map) ;; needed for map-merge
+
+<<system-functions>>
 
 (setq cy/system-settings
       (map-merge
        'list
-       '((desktop/dpi . 180)
-	 (dotfiles/dir . (file-name-dire buffer-file-name))
+       `((desktop/dpi . 180)
+	 (dotfiles/dir . ,(shell-command-to-string "printf %s \"$DOTDIR\""))
+         (dotfiles/out . ,(concat (cy/system-settings-get 'dotfiles/dir) "/tangled"))
 	 (emacs/dashboard-agenda-face-size . 100)
 	 (emacs/default-face-size . 100)
 	 (emacs/variable-face-size . 2.45)
 	 (emacs/fixed-face-size . 1.5))
        <<system-settings>>))
+
+<<export>>
 #+end_src
 
 Individual machines / systems are named with brevity and
@@ -121,12 +126,20 @@ using =i3= and =gtk= applications somewhat annoying.
 =cutman= is a Pixel 5. I've yet to get into figuring out how to use
 Emacs with it, but I suspect Termux is a major part of it.
 
-* =system-settings-get=
-:PROPERTIES:
-:ID:       b4e88d2a-3545-4ed3-9efd-740d1dab500b
-:END:
+* =Functions and Export=
 
-#+begin_src emacs-lisp :tangle ~/.emacs.d/per-system-settings.el :noweb yes
+Define =cy/system-settings-get= to allow access to the system
+variables defined in this file.
+
+#+begin_src emacs-lisp :noweb-ref system-functions
 (defun cy/system-settings-get (setting)
  (alist-get setting cy/system-settings))
+#+end_src
+
+
+Provide ='cy-system= so it can be required by sibling files that require
+it.
+
+#+begin_src emacs-lisp :noweb-ref export
+(provide 'cy-system)
 #+end_src
