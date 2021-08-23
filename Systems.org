@@ -52,8 +52,8 @@ distinguishability in mind. Some of them have been around nearly a
 decade so I'm rather partial to them.
 
 For systems that boot into multiple operating systems, the following
-pattern is used to denote which environment is being referred to when
-referencing the system in configuration:
+hostname pattern is used to denote which environment is being referred
+to when referencing the system in configuration:
 
  - greatname :: =Linux= and =Android=
  - GREATNAME :: =Windows= and =WSL=
