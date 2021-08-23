@@ -208,22 +208,33 @@ Set the terminal to report 256 Colors if we're using xterm.
 Ensure ~/usr/local/bin~ is in =$PATH=.
 
 #+begin_src conf :noweb-ref dot-profile
-export PATH="/usr/local/bin:$PATH"
+export PATH="$PATH:/usr/local/bin"
 #+end_src
 
 Ensure ~/home/<user>/.local/bin~ is in =$PATH=, =Python= likes to use this
 directory.
 
 #+begin_src conf :noweb-ref dot-profile
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$PATH:$HOME/.local/bin"
 #+end_src
 
 Add =Ruby= gems into =$PATH= and, if =rvm= is installed, somewhere we expect
 it to be, source it and load =rvm= into a shell session as a function.
 
+For Emacs' "dumb" =$TERM= don't do anything but export a variable to
+silence complaints.  =rvm= doesn't play nicely with dumb terms.
+
 #+begin_src conf :noweb-ref dot-profile
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
-[[ -s "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm" ]] && source "$HOME/.cache/yay/rvm/src/rvm/scripts/rvm"
+case $TERM in
+  dumb*)
+    # Emacs inferior shell is dumb
+    # source $(rvm default do rvm env --path)
+    export RVM_SILENCE_PATH_MISMATCH_CHECK_FLAG=1
+    ;;
+  xterm*)
+    [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+    ;;
+esac
 #+end_src
 
 Add =Rust= crates into =$PATH= if the =rustup= binary is found.
@@ -266,9 +277,9 @@ variables are required to make =ibus= and =ibus-anthy= work for inputting
 text in Japanese and Korean in particular.
 
 #+begin_src conf :noweb-ref dot-profile
-GTK_IM_MODULE=ibus
-XMODIFIERS=@im=ibus
-QT_IM_MODULE=ibus
+export GTK_IM_MODULE=ibus
+export XMODIFIERS=@im=ibus
+export QT_IM_MODULE=ibus
 #+end_src
 
 Specify the directories that fall within the [[https://wiki.archlinux.org/title/XDG_Base_Directory][XDG Base Directory]]
@@ -372,22 +383,31 @@ The call chain works like this:
  3. Within ~.zshenv~, =zsh= is told to source ~~/.profile~ which contains the environment variable declaration for ~$XDG_CONFIG_HOME~.
  4. After sourcing ~~/.profile~, =zsh= now looks in ~${XDG_CONFIG_HOME}/zsh/~ for a ~.zprofile~, then a ~.zshrc~ -- loading them in that order.
 
+The =dotsloc= environment variable is also defined here, rather than
+in ~.zshrc~, to make it available to non-interactive instances of the
+shell.  This is useful for jumping to the dotfiles directory from a
+script.
+
 #+begin_src conf :tangle ~/.zshenv
 # emulate sh -c 'source ~/.profile'
 source ${HOME}/.profile
 ZDOTDIR=${XDG_CONFIG_HOME}/zsh/
+DOTDIR=${HOME}/Projects/home/dotfiles
 #+end_src
 
 **** =.zprofile=
 
 ~.zprofile~ is sourced before ~.zshrc~ and is meant to act as an
-alternative to ~.zlogin~ (which gets sourced for login shells). Neither
+alternative to ~.zlogin~ (both are sourced for login shells). Neither
 ~.zprofile~ nor ~.zlogin~ should be used to change the shell environment
 at all and instead be used to set the terminal type and run a series
 of external commands like =fortune=.
 
 #+begin_src conf :tangle ~/.config/zsh/.zprofile :mkdirp yes
 #export TERM="xterm-256color"
+shopt -s expand_aliases
+#+end_src
+
 #+end_src
 
 **** =.zshrc=
@@ -621,7 +641,8 @@ zstyle ':vcs_info:*' enable git
 
 #+end_src
 
-#+begin_src sh :noweb-ref zsh-post-tangle
+#+begin_src shell :noweb-ref zsh-downloads
+#!/bin/bash
 git clone https://github.com/zsh-users/antigen.git ~/.config/zsh/custom/plugins/antigen
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.config/zsh/custom/plugins/zsh-syntax-highlighting
 git clone git@github.com:chriskempson/base16-shell.git ~/.config/zsh/custom/plugins/base16-shell
