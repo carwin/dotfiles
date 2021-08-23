@@ -815,15 +815,30 @@ Xft/RGBA "rgb"
 
 ** Git
 
-Writes out my global =git= configuration.
+*** Primary =.gitconfig=
 
-#+begin_src shell :tangle ~/.gitconfig :mkdirp yes
+Set the editor for gitinteraction to vim. If I want to do things within Emacs I'll use =magit=.
+#+begin_src conf :noweb-ref gitconfig
 [core]
   editor = vim
+#+end_src
+
+Set up the default details about the global git user.
+
+Some projects will use a different email value. This can be set on a
+per-project basis with ~git config --local
+user.email="some-email@wherever.com"~.
+
+#+begin_src conf :noweb-ref gitconfig
 [user]
   name = Carwin Young
   email = cy@carw.in
   signingkey = D6FA5A05B721CCDE
+#+end_src
+
+Make git's output prettier by configuring colors.
+
+#+begin_src conf :noweb-ref gitconfig
 [color]
   ui = auto
 [color "branch"]
@@ -839,12 +854,23 @@ Writes out my global =git= configuration.
   added = yellow
   changed = green
   untracked = cyan
+#+end_src
+
+Configure some default parameters for basic =git= commands. Logging for
+~git merge~, etc...
+
+#+begin_src conf :noweb-ref gitconfig
 [merge]
   log = true
 [rebase]
   stat = true
 [log]
   decorate = full
+#+end_src
+
+Create some handy url aliases for commonly used remote repositories.
+
+#+begin_src conf :noweb-ref gitconfig
 [url "git@github.com:"]
   insteadOf = "gh:"
   pushInsteadOf = "github:"
@@ -859,6 +885,16 @@ Writes out my global =git= configuration.
   insteadOf = "gist:"
 [url "git@heroku.com:"]
   insteadOf = "heroku:"
+#+end_src
+
+Provide a list of shortcut aliases to commonly used =git= functionality.
+
+Some of these may duplicate options made available via the =oh-my-zsh=
+plugin for the shell but are worth keeping here in case shell
+preferences change. This list of aliases acts as the master list and
+any other provided alias is just a rarely used convenience.
+
+#+begin_src conf :noweb-ref gitconfig
 [alias]
   br = branch
   st = status
@@ -872,6 +908,13 @@ Writes out my global =git= configuration.
   cm = commit -S -m
   cma = commit --amend -S
   change-commits = "!f() { VAR=$1; OLD=$2; NEW=$3; shift 3; git filter-branch -f --env-filter \"if [[ \\\"$`echo $VAR`\\\" = '$OLD' ]]; then export $VAR='$NEW'; fi\" $@; }; f"
+#+end_src
+
+Collect all the =.gitconfig= bits in this section and tangle them out
+into ~/homr/<user>/.gitconfig~.
+
+#+begin_src conf :tangle ~/.gitconfig :noweb yes
+<<gitconfig>>
 #+end_src
 
 ** Window Manager
