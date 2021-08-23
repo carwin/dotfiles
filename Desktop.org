@@ -2,31 +2,32 @@
 
 This is the primary desktop application configuration.
 
-@todo
-This block pulls in all the =:noweb-ref= references to =symlinks= and
-outputs them all into a =symlinks.sh= file. This block will normally be
-empty, if only this file is tangled out. The =:noweb-ref= references are
-stored in different files.
+* Import System-specific Settings
 
-* System Settings
 Load system-specific settings from =.emacs.d/per-system-settings.el=
-and unpack relevant values into blocks so that they can be used in
-configuration file blocks. These settings are configured in
-Systems.org.
+and unpack relevant values.  These settings are configured in
+=./Systems.org= and tangled out to the directory specified above.
 
 #+begin_src emacs-lisp
-(load-file "~/.emacs.d/per-system-settings.el")
+(load-file "~/.emacs.d/cy-system-settings.el")
+(require 'cy-system (concat user-emacs-directory "cy-system-settings.el"))
 #+end_src
 
+@todo: testing block.
 #+begin_src emacs-lisp
-(cy/system-settings-get (intern name))
+(cy/system-settings-get 'dotfiles/dir)
+;; (add-to-list 'default-frame-alist '(cy/system-settings-get 'desktop/dpi))
 #+end_src
 
 * System
 
+/The majority of this document assumes that Arch Linux is installed
+and functioning./
+
 Once =Arch Linux= is installed, a few things need to happen.
 
-I typically set up my Arch system based on https://github.com/smfsh/arch-install.
+I typically set up my Arch system based on
+https://github.com/smfsh/arch-install.
 
 ** Packages
 
@@ -36,22 +37,21 @@ have already been installed at this point.
 
 #+begin_src sh :noweb-ref arch-packages-post-tangle
 sudo pacman -S \
-  emacs \
-  docker \
-  tmux \
-  vim \
   awesome-terminal-fonts \
-  i3-gaps \
+  docker \
   htop \
-  wget \
-  networkmanager \
-  go \
+  emacs \
   git \
+  go \
+  networkmanager \
+  nfs-utils \
   nvidia \
+  openssh \
   rxvt-unicode \
   termite \
-  nfs-utils \
-  docker \
+  tmux \
+  vim \
+  wget \
 #+end_src
 
 To make =AUR= package management easier, first install =yay=.
@@ -85,6 +85,7 @@ yay -S \
   flac \
   fortune-mod \
   gnupg \
+  i3-gaps \
   i3lock-color \
   ibus-anthy \
   iotop \
@@ -109,7 +110,6 @@ yay -S \
   npm \
   ntfs-3g \
   nvm \
-  openssh \
   org-protocol-emacsclient \
   p7zip \
   pass \
@@ -644,13 +644,16 @@ ZSH_THEME_GIT_PROMPT_DIRTY="%{$fg[blue]%}) %{$fg[yellow]%}✗"
 ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg[blue]%})"
 #+end_src
 
-** Xorg
 
-Until =Wayland= stops being terrible with the =nvidia= drivers, I'll continue using =X=.
+** X Window System
+
+Until =Wayland= stops being terrible with the =NVIDIA= drivers, I'll
+continue using =X=.
 
 *** Xresources
 
-This file handles a variety of things, from shell colors to terminal emulator settings.
+This file handles a variety of things, from shell colors to terminal
+emulator settings.
 
 #+begin_src conf :tangle ~/.Xresources :mkdirp yes
 !emacs*Background: DarkSlateGray
@@ -800,11 +803,15 @@ dmenu.selbackground: #bf616a
 dmenu.foreground:    #d8dee9
 #+end_src
 
-After changing this file, it is necessary to reload it via: ~xrdb ~/.Xresources~
+After changing this file, it is necessary to reload it via: ~xrdb
+~/.Xresources~
 
 *** xsettingsd
 
-=xsettingsd= acts as a minimal settings daemon for =Xorg= applications. It replaces similar daemons from desktop environments like =GNOME= and =XFCE= and enables the usage of a simple configuration file:
+=xsettingsd= acts as a minimal settings daemon for =Xorg=
+applications. It replaces similar daemons from desktop environments
+like =GNOME= and =XFCE= and enables the usage of a simple configuration
+file:
 
 #+begin_src conf :tangle ~/.config/xsettingsd/xsettingsd.conf :mkdirp yes :noweb yes
 Xft/Antialias 1
@@ -2505,14 +2512,25 @@ click-left = ~/.config/rofi/bin/power-menu
 
 * Applications
 
-
 | Arch package | Description                                               |
 |--------------+-----------------------------------------------------------|
-| xfce-polkit  | Polkit agent                                              |
-| i3lock-color | A fork of i3lock with more color options                  |
-| fortune-mod  | Provides fun sayings for lockscreens and such             |
-| picom-git    | The latest version of Compton, which was renamed to Picom |
-| lxdm         | Display manager, occasionally swapped with the ~ly~ package |
+| =xfce-polkit=  | Polkit agent                                              |
+| =i3lock-color= | A fork of i3lock with more color options                  |
+| =fortune-mod=  | Provides fun sayings for lockscreens and such             |
+| =picom-git=    | The latest version of Compton, which was renamed to Picom |
+| =lxdm-gtk3=    | Display manager, occasionally swapped with the ~ly~ package |
+| =dunst=        | Notifications                                             |
+| =rofi=         | Launcher and more                                         |
+| =tmux=         | Terminal multiplexer                                      |
+| =ranger=       | File browser                                              |
+| =mpv=          | Video player                                              |
+| =mpd=          | Music player daemon                                       |
+| =ncmpcpp=      | Library manager and =mpd= interface                         |
+| =vim=          | Likely the most perfect pure text editor                  |
+| =firefox=      | GUI Web Browser                                           |
+
+This section configures the majority of the programs in use in this
+system and is the area of this file most likely to change.
 
 ** Dunst
 
@@ -5760,7 +5778,8 @@ This section is used to output the collections of noweb-ref references to shell 
 
 ** Packages
 
-#+begin_src shell :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/packages-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
+#+begin_src shell :noweb yes :mkdirp yes :tangle (concat (cy/system-settings-get 'dotfiles/out) "/post-pkgs.sh") :tangle-mode (identity #o755)
+#!/bin/bash
 <<arch-packages-post-tangle>>
 <<arch-yay-post-tangle>>
 <<arch-aur-packages-post-tangle>>
@@ -5768,7 +5787,9 @@ This section is used to output the collections of noweb-ref references to shell 
 #+end_src
 
 ** Environment
-#+begin_src shell :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/environment-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
+#+begin_src shell :noweb yes :mkdirp yes :tangle (concat (cy/system-settings-get 'dotfiles/out) "/post-env.sh") :tangle-mode (identity #o755)
+#!/in/bash
+<<zsh-downloads>>
 <<zsh-post-tangle>>
 #+end_src
 
