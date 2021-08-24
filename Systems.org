@@ -27,7 +27,7 @@ by declaring them again in a separate map. The base configuration and
 the declared overrides are mashed together on a per-system basis using
 =map-merge=.
 
-#+begin_src emacs-lisp :tangle ~/.emacs.d/cy-system-settings.el :noweb yes
+#+begin_src emacs-lisp :tangle (concat user-emacs-directory "cy-system-settings.el") :noweb yes
 (require 'map) ;; needed for map-merge
 
 <<system-functions>>
@@ -37,7 +37,7 @@ the declared overrides are mashed together on a per-system basis using
        'list
        `((desktop/dpi . 180)
 	 (dotfiles/dir . ,(shell-command-to-string "printf %s \"$DOTDIR\""))
-         (dotfiles/out . ,(concat (cy/system-settings-get 'dotfiles/dir) "/tangled"))
+         (dotfiles/out . ,(concat (shell-command-to-string "printf %s \"$DOTDIR\"") "/tangled"))
 	 (emacs/dashboard-agenda-face-size . 100)
 	 (emacs/default-face-size . 100)
 	 (emacs/variable-face-size . 2.45)
