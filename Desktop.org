@@ -2,22 +2,13 @@
 
 This is the primary desktop application configuration.
 
-* Import System-specific Settings
+* System-specific Settings
 
-Load system-specific settings from =.emacs.d/per-system-settings.el=
-and unpack relevant values.  These settings are configured in
-=./Systems.org= and tangled out to the directory specified above.
+This file relies on settings and functions configured in
+=./Systems.org=, which provides ='cy-system=.
 
-#+begin_src emacs-lisp
-(load-file "~/.emacs.d/cy-system-settings.el")
-(require 'cy-system (concat user-emacs-directory "cy-system-settings.el"))
-#+end_src
-
-@todo: testing block.
-#+begin_src emacs-lisp
-(cy/system-settings-get 'dotfiles/dir)
-;; (add-to-list 'default-frame-alist '(cy/system-settings-get 'desktop/dpi))
-#+end_src
+='cy-system= gets evaluated on init. The require statement is in
+=~/.Emacs.org=.
 
 * System
 
