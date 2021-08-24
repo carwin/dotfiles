@@ -111,7 +111,8 @@ Configure an interface for talking to the system's =pass= to manage secrets.
 ** Better Default Settings
 
 #+begin_src emacs-lisp
-(setq inhibit-startup-message t                ; Disable the startup message
+(setq auto-save-default nil                    ; Disable auto saving, prefer the super-saver package
+      inhibit-startup-message t                ; Disable the startup message
       inhibit-startup-screen t                 ; Disable the startup screen
       display-time-format "%l:%M %p %b %y"     ; Set a nice display time format
       display-time-default-load-average nil    ; Don't display load average time in the modeline
@@ -154,7 +155,7 @@ Avoid creating backup files. Don't regret this later.
 
 #+begin_src emacs-lisp
 ;; Avoid #file.org#
-(auto-save-visited-mode)
+;; (auto-save-visited-mode)
 (setq create-lockfiles nil)
 ;; Avoid filename.ext~
 (setq make-backup-files nil)
@@ -448,13 +449,21 @@ Set the background of HTML color strings in buffers to the color they represent.
 
 ** Import Sibling Dotfiles
 
+| =cy-system=   | [[file:Systems.org][./Systems.org]]  |
 | =cy-workflow= | [[file:Workflow.org][./Workflow.org]] |
 | =cy-mail=     | [[file:Mail.org][./Mail.org]]     |
 | =cy-calendar= | [[file:Calendar.org][./Calendar.org]] |
 
-Provide agenda workflows, =mu4e= configuration, and calendar integration from sibling files.
+Provide agenda workflows, =mu4e= configuration, and calendar integration
+from sibling files.
+
+Additionally, load system-specific settings from
+=.emacs.d/per-system-settings.el= and unpack relevant values.  These
+settings are configured in =./Systems.org= and tangled out to the
+directory specified above.
 
 #+begin_src emacs-lisp
+(require 'cy-system (concat user-emacs-directory "cy-system-settings.el"))
 (require 'cy-workflow (concat user-emacs-directory "cy-workflow.el"))
 (require 'cy-mail (concat user-emacs-directory "cy-mail.el"))
 (require 'cy-calendar (concat user-emacs-directory "cy-calendar.el"))
@@ -974,7 +983,7 @@ Minimal completion-at-point. Everyone else seems to be doing it with =corfu=, wh
 (use-package corfu
   :custom
   (corfu-cycle t)
-  (corfu-auto t)
+  (corfu-auto nil)
   (corfu-quit-at-boundary t)
   (corfu-quit-no-match t)
   (corfu-commit-predicate nil)
@@ -1013,11 +1022,13 @@ Use an advanced completion style that allows completion based on space-separated
 
 Auto-save files when buffers are changed.
 
-The exclusion list excludes the entire dotfiles directory, since auto-save in these files may be quite cumbersome due to the large amount of tangling and script running that happens throughout.
+The exclusion list excludes the entire dotfiles directory, since
+auto-save in these files may be quite cumbersome due to the large
+amount of tangling and script running that happens throughout.
 
 #+begin_src emacs-lisp
 (defun cy/auto-save-exclude-dir-list ()
-  (directory-files "~/Projects/home/dotfiles" t "\\.org$"))
+  `(directory-files "~/Projects/home/dotfiles" t "\\.org$"))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -1028,8 +1039,14 @@ The exclusion list excludes the entire dotfiles directory, since auto-save in th
   :config
   (super-save-mode +1)
   ;; (setq super-save-exclude (concat (file-name-directory buffer-file-name) "*.org"))
-  (setq super-save-exclude (cy/auto-save-exclude-dir-list))
-  (setq super-save-auto-save-when-idle t))
+  ;; (setq super-save-exclude (cy/auto-save-exclude-dir-list))
+  (setq super-save-exclude '(("Desktop.org")
+			     ("Emacs.org")
+			     ("Systems.org")
+			     ("Workflow.org")
+			     ("Mail.org")
+			     ("Calendar.org")))
+  (setq super-save-auto-save-when-idle nil))
 #+end_src
 
 Automatically revert files in open buffers that have been changed elsewhere.
@@ -1038,6 +1055,12 @@ Automatically revert files in open buffers that have been changed elsewhere.
 (global-auto-revert-mode 1)
 ;; This can support messages if they get annoying
 ;; (setq auto-revert-verbose nil)
+#+end_src
+
+Revert Dired and other buffers
+
+#+begin_src emacs-lisp
+(setq global-auto-revert-non-file-buffers t)
 #+end_src
 
 Highlight matching braces in text.
@@ -1150,8 +1173,8 @@ a strategically positioned .dir-locals.el file or resort to directory classes
 for reusability.
 
 #+begin_src emacs-lisp
-(dir-locals-set-class-variables 'python
-  '((python-mode . ((eval . (eglot-ensure))))))
+;; (dir-locals-set-class-variables 'python
+;;   '((python-mode . ((eval . (eglot-ensure))))))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -1560,16 +1583,16 @@ pip install --user "python-language-server[all]"
 There are many others, but this one is as good as any for now.
 
 #+begin_src emacs-lisp
-(use-package python-mode
-  :ensure t
-  :hook (python-mode . lsp-deferred)
-  :custom
-  ;; Set these if python3 is called "python3" on the system.
-  ;; (python-shell-interpreter "python3")
-  ;; (dap-python-executable "python3")
-  (dap-python-debugger 'debugpy)
-  :config
-  (require 'dap-python))
+;; (use-package python-mode
+;;   :ensure t
+;;   :hook (python-mode . lsp-deferred)
+;;   :custom
+;;   ;; Set these if python3 is called "python3" on the system.
+;;   ;; (python-shell-interpreter "python3")
+;;   ;; (dap-python-executable "python3")
+;;   (dap-python-debugger 'debugpy)
+;;   :config
+;;   (require 'dap-python))
 #+end_src
 
 You can use pyvenv package to use virtualenv environments in Emacs. The pyvenv-activate command should configure Emacs to cause lsp-mode and dap-mode to use the virtual environment when they are loaded, just select the path to your virtual environment before loading the project.
