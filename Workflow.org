@@ -2,7 +2,8 @@
 #+author: Carwin Young
 #+property: header-args:emacs-lisp :tangle (concat user-emacs-directory "cy-workflow.el") :mkdirp yes
 
-This file contains the description and configuration of the productivity workflow I plan on using with Org.
+This file contains the description and configuration of the
+productivity workflow I plan on using with Org.
 
 * Principles
 

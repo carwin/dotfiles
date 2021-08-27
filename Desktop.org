@@ -1,97 +1,30 @@
 #+title: Desktop Configuration
-#+options: toc:5
 
 * Table of Contents
 :PROPERTIES:
-:TOC:       :include all :ignore this
+:TOC:      :include siblings :depth 2 :force (nothing) :ignore (this) :local (nothing)
 :END:
 :CONTENTS:
+- [[#principles-and-goals][Principles and Goals]]
 - [[#system-specific-settings][System-specific Settings]]
-- [[#system][System]]
-  - [[#packages][Packages]]
+- [[#system-packages][System Packages]]
 - [[#environment][Environment]]
   - [[#profile][.profile]]
   - [[#xdg-user-directories][XDG User Directories]]
   - [[#shell-configurations][Shell Configurations]]
-    - [[#zsh][ZSH]]
-      - [[#zshenv][.zshenv]]
-      - [[#zprofile][.zprofile]]
-      - [[#zshrc][.zshrc]]
   - [[#x-window-system][X Window System]]
-    - [[#xresources][Xresources]]
-    - [[#xsettingsd][xsettingsd]]
   - [[#git][Git]]
-    - [[#primary-gitconfig][Primary .gitconfig]]
   - [[#window-manager][Window Manager]]
-    - [[#i3][i3]]
-      - [[#primary-i3wm-configuration][Primary i3wm Configuration]]
-      - [[#i3-scripts][i3 Scripts]]
-        - [[#autostart-with-i3][Autostart with i3]]
-        - [[#i3lock][i3lock]]
-        - [[#i3s-dunst-launcher][i3's Dunst Launcher]]
-        - [[#i3s-polybar-launcher][i3's Polybar Launcher]]
-        - [[#i3s-compositor-launcher][i3's Compositor Launcher]]
-    - [[#polybar][Polybar]]
-      - [[#polybar-modules][Polybar Modules]]
-        - [[#back-light][Back-light]]
-        - [[#battery][Battery]]
-        - [[#i3][i3]]
-        - [[#cpu][CPU]]
-        - [[#date][Date]]
-        - [[#filesystem][Filesystem]]
-        - [[#memory--ram][Memory / RAM]]
-        - [[#mpd][MPD]]
-        - [[#song][Song]]
-        - [[#wired-network][Wired Network]]
-        - [[#wireless-network][Wireless Network]]
-        - [[#generic--combined-network][Generic / Combined Network]]
-        - [[#volume][Volume]]
-        - [[#temperature][Temperature]]
-        - [[#menu-application-launcher][Menu (Application launcher)]]
-        - [[#sysmenu-power][Sysmenu (Power)]]
 - [[#applications][Applications]]
   - [[#dunst][Dunst]]
-    - [[#global][Global]]
-    - [[#shortcuts][Shortcuts]]
-    - [[#notification-styles][Notification Styles]]
-      - [[#low-priority-notifications][Low-priority Notifications]]
-      - [[#normal-notifications][Normal Notifications]]
-      - [[#urgent-notifications][Urgent Notifications]]
   - [[#rofi][Rofi]]
-    - [[#bins][Bins]]
-      - [[#asroot][Asroot]]
-      - [[#confirm][Confirm]]
-      - [[#launcher][Launcher]]
-      - [[#mpd-control-via-rofi][MPD Control via Rofi]]
-      - [[#network][Network]]
-      - [[#network-menu][Network Menu]]
-      - [[#power-menu][Power Menu]]
-      - [[#screenshot][Screenshot]]
-      - [[#windows][Windows]]
-    - [[#themes][Theme(s)]]
-      - [[#colors][Colors]]
-      - [[#confirm][Confirm]]
-      - [[#launcher][Launcher]]
-      - [[#window][Window]]
-      - [[#asroot][Asroot]]
-      - [[#network][Network]]
-      - [[#network-menu][Network Menu]]
-      - [[#network-menu-config][Network Menu Config]]
-      - [[#mpd][MPD]]
-      - [[#power-menu][Power Menu]]
-      - [[#screenshot][Screenshot]]
   - [[#tmux][Tmux]]
   - [[#ranger][ranger]]
   - [[#mpv][mpv]]
-    - [[#video-settings][Video Settings]]
-    - [[#audio-settings][Audio Settings]]
-    - [[#other-settings][Other settings]]
   - [[#mpd][mpd]]
   - [[#ncmpcpp][ncmpcpp]]
   - [[#vim][vim]]
   - [[#firefox][Firefox]]
-    - [[#userchromecss][userChrome.css]]
-    - [[#usercontentcss][userContent.css]]
 - [[#systemd-scripts][Systemd Scripts]]
   - [[#random-wallpaper-timer][Random Wallpaper Timer]]
   - [[#emacs][Emacs]]
@@ -104,17 +37,30 @@
 - [[#general-todos][General @TODOs]]
 :END:
 
-This is the primary desktop application configuration.
+This file documents the configuration and general setup of my desktop
+systems. No matter which machine is being used, things like the
+environment, shell, X configuration and keybindings should all remain
+more or less the same.
+
+* Principles and Goals
+
+- Turn all common application configs into /literate configuration/ files, àla [[https://en.wikipedia.org/wiki/Literate_programming][Donald Knuth]].
+- Really understand the configuration being described.
+- Where possible, use variables to describe common paths, avoiding references to static paths: e.g.: ~$XDG_CONFIG_HOME~ and ~$HOME~.
+- Provide shell scripts to retrieve or set any dependencies laid out in configuration.
+- Present content to myself as if I had amnesia and forgot how my configuration worked.
 
 * System-specific Settings
 
 This file relies on settings and functions configured in
-=./Systems.org=, which provides ='cy-system=.
+=./Systems.org=, which provides ='cy-system=. ='cy-system= gets evaluated on
+init and is called by =./Emacs.org=.
 
-='cy-system= gets evaluated on init. The require statement is in
-=~/.Emacs.org=.
+='cy-system= provides the Elisp function ~cy/system-settings-get~, which
+is used in this file to retrieve variables for values that differ
+between systems like DPI, resolution, etc...
 
-* System
+* System Packages
 
 /The majority of this document assumes that Arch Linux is installed
 and functioning./
@@ -123,8 +69,6 @@ Once =Arch Linux= is installed, a few things need to happen.
 
 I typically set up my Arch system based on
 https://github.com/smfsh/arch-install.
-
-** Packages
 
 Core packages should be installed via =pacman=. It is assumed that
 most of the actual _core_ packages like =btrfs-progs= and =linux-headers=
@@ -245,11 +189,23 @@ yay -S \
     zip
 #+end_src
 
+Create the =$HOME/.local/share/fonts= directory and download the fonts
+that get used throughout these configurations.
+
+| M+               | https://github.com/coz-m/MPLUS_FONTS                |
+| M+ For Powerline | https://github.com/larzconwell/mplus-powerline-font |
+| Dank Mono        | https://philpl.gumroad.com/l/dank-mono              |
+
+/Dank Mono is a paid font, and there's no convenient way to script the/
+/installation. This is something that needs to be worked out, but local/
+/sharing of the font via =SyncThing= should do in a pinch./
+
 #+begin_src shell :noweb-ref get-preferred-fonts
-mkdir -p ~/.local/share/fonts;
-git clone git@github.com:coz-m/MPLUS_FONTS.git ~/.local/share/fonts/MPLUS_FONTS;
-git clone https://github.com/larzconwell/mplus-powerline-font/blob/master/mplus%20for%20Powerline.ttf ~/.local/share/fonts/mplus-for-powerline;
+mkdir -p $HOME/.local/share/fonts;
+git clone git@github.com:coz-m/MPLUS_FONTS.git $HOME/.local/share/fonts/MPLUS_FONTS;
+git clone https://github.com/larzconwell/mplus-powerline-font/blob/master/mplus%20for%20Powerline.ttf $HOME/.local/share/fonts/mplus-for-powerline;
 #+end_src
+
 
 * Environment
 
@@ -307,7 +263,7 @@ Ensure ~/usr/local/bin~ is in =$PATH=.
 export PATH="$PATH:/usr/local/bin"
 #+end_src
 
-Ensure ~/home/<user>/.local/bin~ is in =$PATH=, =Python= likes to use this
+Ensure ~$HOME/.local/bin~ is in =$PATH=, =Python= likes to use this
 directory.
 
 #+begin_src conf :noweb-ref dot-profile
@@ -401,7 +357,7 @@ export XDG_RUNTIME_HOME="$HOME/.local/run"
 
 Now, collect all the bits of =.profile= into a single file.
 
-#+begin_src conf :noweb yes :tangle ~/.profile :mkdirp yes
+#+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/home) "/.profile") :mkdirp yes
 <<dot-profile>>
 #+end_src
 
@@ -432,7 +388,7 @@ Using the configurations from this document, that would output:
  - =XDG_VIDEOS_DIR= :: Video storage.
 
 
-#+begin_src conf :tangle ~/.config/user-dirs.dirs :mkdirp
+#+begin_src conf :tangle (concat (cy/system-settings-get 'config/dir) "/user-dirs.dirs") :mkdirp
 XDG_DESKTOP_DIR="$HOME/"
 XDG_DOWNLOAD_DIR="$HOME/Downloads"
 XDG_TEMPLATES_DIR="$HOME/Templates"
@@ -483,7 +439,7 @@ in ~.zshrc~, to make it available to non-interactive instances of the
 shell.  This is useful for jumping to the dotfiles directory from a
 script.
 
-#+begin_src conf :tangle ~/.zshenv
+#+begin_src conf :tangle (concat (cy/system-settings-get 'user/home) "/.zshenv")
 # emulate sh -c 'source ~/.profile'
 source ${HOME}/.profile
 ZDOTDIR=${XDG_CONFIG_HOME}/zsh/
@@ -498,7 +454,7 @@ alternative to ~.zlogin~ (both are sourced for login shells). Neither
 at all and instead be used to set the terminal type and run a series
 of external commands like =fortune=.
 
-#+begin_src conf :tangle ~/.config/zsh/.zprofile :mkdirp yes
+#+begin_src conf :tangle (concat (cy/system-settings-get 'config/dir) "/zsh/.zprofile") :mkdirp yes
 #export TERM="xterm-256color"
 shopt -s expand_aliases
 #+end_src
@@ -713,8 +669,22 @@ custom work-in-progress prompt defined below.
 Tangle out all of the ~.zshrc~ source blocks defined above into the
 final file.
 
-#+begin_src conf :tangle ~/.config/zsh/.zshrc :mkdirp yes :noweb yes
+#+begin_src conf :tangle (concat (cy/system-settings-get 'config/dir) "/zsh/.zshrc") :mkdirp yes :noweb yes
 <<zshrc>>
+#+end_src
+
+The following files should be pulled into the local filesystem via =git=
+on any new system.
+
+For convenience, simply evaluate this block or the
+collection of ~:noweb-ref~ blocks that includes this one which is
+defined at the bottom of this file.
+
+#+begin_src shell :noweb-ref zsh-downloads
+#!/bin/bash
+git clone https://github.com/zsh-users/antigen.git ~/.config/zsh/custom/plugins/antigen
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.config/zsh/custom/plugins/zsh-syntax-highlighting
+git clone git@github.com:chriskempson/base16-shell.git ~/.config/zsh/custom/plugins/base16-shell
 #+end_src
 
 *Work In Progress*
@@ -734,13 +704,6 @@ RPROMPT=\$vcs_info_msg_0_
 zstyle ':vcs_info:git:*' formats '%F{223}%b|%F{211}%r%f'
 zstyle ':vcs_info:*' enable git
 
-#+end_src
-
-#+begin_src shell :noweb-ref zsh-downloads
-#!/bin/bash
-git clone https://github.com/zsh-users/antigen.git ~/.config/zsh/custom/plugins/antigen
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.config/zsh/custom/plugins/zsh-syntax-highlighting
-git clone git@github.com:chriskempson/base16-shell.git ~/.config/zsh/custom/plugins/base16-shell
 #+end_src
 
 #+begin_src conf
@@ -771,69 +734,27 @@ continue using =X=.
 This file handles a variety of things, from shell colors to terminal
 emulator settings.
 
+#+begin_src conf :noweb yes :tangle ~/.Xresources :mkdirp yes
+<<xresources-config>>
+#+end_src
 
-#+begin_src conf :tangle ~/.Xresources :mkdirp yes
-!emacs*Background: DarkSlateGray
-!emacs*Foreground: Wheat
-!emacs*pointerColor: Orchid
-!emacs*cursorColor: Orchid
-!emacs*bitmapIcon: on
-!emacs*font: fixed
-!emacs.geometry: 80x25
+Set the cursor size to something sane. This often gets skewed on HiDPI
+devices or when switching between a Desktop Manager like GNOME or Xfce
+and a window manager like =i3=.
+
+#+begin_src conf :noweb-ref xresources-config
 Xcursor.size: 18
+#+end_src
 
-! ------------------------------------------------------------------------------
-! Colour Configuration
-! ------------------------------------------------------------------------------
+Configure [[https://www.freedesktop.org/wiki/Software/Xft/][Xft]] font settings for X applications to use.
 
-! special
-! ,*.foreground:   #d8dee8
-! !*.background:   #2f343f
-! ,*.background: #080808
-! ,*.cursorColor:  #b48ead
-!
-! ! black
-! ,*.color0  : #4b5262
-! ,*.color8  : #434a5a
-!
-! ! red
-! ,*.color  : #bf616a
-! ,*.color9  : #b3555e
-!
-! ! green
-! ,*.color2  : #a3be8c
-! ,*.color10 : #93ae7c
-!
-! ! yellow
-! ,*.color3  : #ebcb8b
-! ,*.color11 : #dbbb7b
-!
-! ! blue
-! ,*.color4  : #81a1c1
-! ,*.color12 : #7191b1
-!
-! ! magenta
-! ,*.color5  : #b48ead
-! ,*.color13 : #a6809f
-!
-! ! cyan
-! ,*.color6  : #89d0bA
-! ,*.color14 : #7dbba8
-!
-! ! white
-! ,*.color7  : #e5e9f0
-! ,*.color15 : #d1d5dc
+The goal with these settings is to get fonts looking as nice as
+possible with hinting and filtering. It is highly likely that these
+values are system dependent.
 
-! ------------------------------------------------------------------------------
-! Font configuration
-! ------------------------------------------------------------------------------
+@todo: How do I output different blocks based on emacs variable values?
 
-URxvt*font: xft:M+ 1m for Powerline:regular:size=10
-
-! ------------------------------------------------------------------------------
-! Xft Font Configuration
-! ------------------------------------------------------------------------------
-
+#+begin_src conf :noweb-ref xresources-config
 Xft.autohint: 0
 Xft.lcdfilter: lcddefault
 Xft.hintstyle: hintslight
@@ -841,24 +762,62 @@ Xft.hinting: 1
 Xft.antialias: 1
 Xft.rgba: rgb
 Xft.dpi: 109
+#+end_src
 
-! ------------------------------------------------------------------------------
-! URxvt configs
-! ------------------------------------------------------------------------------
+The terminal emulator =URxvt= reads its configuration from this
+=$HOME/.Xresources= file. This is the primary terminal emulator used
+across the various setups.
 
-! font spacing
+/Note: =URxvt= is being slowly replaced by =Termite=, but URxvt should
+always be around as a fallback./
+
+Set the font for URxvt to use =M+ 1m for Powerline= and set ~letterSpace~
+and ~lineSpace~ both to ~0~ to avoid rendering quirks.
+
+#+begin_src conf :noweb-ref xresources-config
+URxvt*font: xft:M+ 1m for Powerline:regular:size=10
 URxvt*letterSpace: 0
 URxvt.lineSpace:  0
+#+end_src
 
+=URxvt= should report support for 256 colors and allow scrolling back ~15000~ lines.
+
+#+begin_src conf :noweb-ref xresources-config
 ! general settings
 URxvt*saveline:   15000
 URxvt*termName:   rxvt-256color
+#+end_src
+
+The ~iso14755: false~ setting is an attempt at disabling what =URxvt= dubs
+'picture insert mode' when ~Ctrl+Shift~ is pressed. This is disabled
+here to allow interaction with the system's clipboard via ~Ctrl+Shift+c~
+and ~Ctrl+Shift+v~.
+
+#+begin_src conf :noweb-ref xresources-config
 URxvt*iso14755:   false
+#+end_src
+
+Allow the terminal to flash or make a noise when something interesting
+happens that the user should pay attention to.
+
+#+begin_src conf :noweb-ref xresources-config
 URxvt*urgentOnBell:  true
+#+end_src
+
+Tell =URxvt= to use =ibus= as the input method. This is mostly set to
+allow inputting Japanese into the terminal, for instance, in
+=weechat=.
+
+#+begin_src conf :noweb-ref xresources-config
 URxvt.inmputMethod: ibus
 URxvt.preeditType: OverTheSpot
+#+end_src
 
-! appearance
+Configure the appearance of =URxvt=, turning off scroll bars and
+essentially making a plain, undecorated window that is slightly
+transparent.
+
+#+begin_src conf :noweb-ref xresources-config
 URxvt*depth:   32
 URxvt*scrollBar:  false
 URxvt*scrollBar_right: false
@@ -867,10 +826,25 @@ URxvt*externalBorder: 0
 URxvt.geometry:   84x22
 URxvt*transparent: true
 URxvt*shading: 25
+#+end_src
 
+Define a list of perl extensions that extend the functionality of
+=URxvt=. For Arch Linux, these come by way of the =urxvt-perls= package in
+the AUR.
+
+| default             |                                                                    |
+| keyboard-select     | Use keyboard shortcuts to select and copy text                     |
+| selection-clipboard |                                                                    |
+| matcher             | Replaces the old ~url-select~, use keyboard shortcuts to select URLs |
+
+#+begin_src conf :noweb-ref xresources-config
 ! perl extensions
-URxvt.perl-ext-common: default,clipboard,url-select,keyboard-select,selection-clipboard,matcher
+URxvt.perl-ext-common: default,keyboard-select,selection-clipboard,matcher
+#+end_src
 
+Define key bindings for those =Perl= extensions.
+
+#+begin_src conf :noweb-ref xresources-config
 ! macros for clipboard and selection
 URxvt.copyCommand:  xclip -i -selection clipboard
 URxvt.pasteCommand:  xclip -o -selection clipboard
@@ -880,12 +854,23 @@ URxvt.keysym.M-C-v:  perl:clipboard:paste_escaped
 URxvt.keysym.M-Escape: perl:keyboard-select:activate
 URxvt.keysym.M-s:  perl:keyboard-select:search
 URxvt.keysym.M-u:  perl:url-select:select_next
+#+end_src
+
+Handle URLs within =URxvt=. They should be underlined and colored,
+follow-able with the left mouse click, and open with Firefox by
+default.
+
+#+begin_src conf :noweb-ref xresources-config
 URxvt.url-launcher:  firefox
 URxvt.underlineURLs: true
 URxvt*matcher.button: 1
 URxvt.urlButton: 1
 URxvt.underlineColor: #bf616a
+#+end_src
 
+Configure additional keybindings for normal =URxvt= functionality.
+
+#+begin_src conf :noweb-ref xresources-config
 ! scroll one line
 URxvt.keysym.Shift-Up:  command:\033]720;1\007
 URxvt.keysym.Shift-Down: command:\033]721;1\007
@@ -899,21 +884,23 @@ URxvt.keysym.Control-Left: \033[1;5D
 ! Copy/Pasta
 URxvt.keysym.Shift-Control-V: eval:paste_clipboard
 URxvt.keysym.Shift-Control-C: eval:selection_to_clipboard
+#+end_src
 
-! ------------------------------------------------------------------------------
-! Rofi configs
-! ------------------------------------------------------------------------------
+Set up some colors for =Rofi= in case it is called without any color
+arguments.
 
+#+begin_src conf :noweb-ref xresources-config
 rofi.color-enabled: true
 rofi.color-window: #2e3440, #2e3440, #2e3440
 rofi.color-normal: #2e3440, #d8dee9, #2e3440, #2e3440, #bf616a
 rofi.color-active: #2e3440, #b48ead, #2e3440, #2e3440, #93e5cc
 rofi.color-urgent: #2e3440, #ebcb8b, #2e3440, #2e3440, #ebcb8b
 rofi.modi: run,drun,window,ssh
+#+end_src
 
-! ------------------------------------------------------------------------------
-! Dmenu configs
-! ------------------------------------------------------------------------------
+Also set up colors for =dmenu= in case it ever gets used again.
+
+#+begin_src conf :noweb-ref xresources-config
 dmenu.selforeground: #d8dee9
 dmenu.background:    #2e3440
 dmenu.selbackground: #bf616a
@@ -923,12 +910,20 @@ dmenu.foreground:    #d8dee9
 After changing this file, it is necessary to reload it via: ~xrdb
 ~/.Xresources~
 
+#+begin_src shell :shebang #!/bin/bash :noweb-ref source-xresources
+xrdb ~/.Xresources
+#+end_src
+
 *** xsettingsd
 
 =xsettingsd= acts as a minimal settings daemon for =Xorg=
 applications. It replaces similar daemons from desktop environments
 like =GNOME= and =XFCE= and enables the usage of a simple configuration
-file:
+file.
+
+Here it is used primarily to attempt better Xft font display. This
+somewhat duplicates similar entries in =$HOME/.Xresources= but various
+differences in system configuration may require one or the other.
 
 #+begin_src conf :tangle ~/.config/xsettingsd/xsettingsd.conf :mkdirp yes :noweb yes
 Xft/Antialias 1
@@ -941,7 +936,9 @@ Xft/RGBA "rgb"
 
 *** Primary =.gitconfig=
 
-Set the editor for gitinteraction to vim. If I want to do things within Emacs I'll use =magit=.
+Set the editor for gitinteraction to vim. If I want to do things
+within Emacs I'll use =magit=.
+
 #+begin_src conf :noweb-ref gitconfig
 [core]
   editor = vim
@@ -1037,7 +1034,7 @@ any other provided alias is just a rarely used convenience.
 Collect all the =.gitconfig= bits in this section and tangle them out
 into ~/homr/<user>/.gitconfig~.
 
-#+begin_src conf :tangle ~/.gitconfig :noweb yes
+#+begin_src conf :tangle (concat (cy/system-settings-get 'user/home) "/.gitconfig") :noweb yes :shebang #!/bin/bash
 <<gitconfig>>
 #+end_src
 
@@ -1045,9 +1042,12 @@ into ~/homr/<user>/.gitconfig~.
 
 *** i3
 
+=i3wm= is the preferred window manager it is lightweight, and
+accomplishes its purpose very well with minimal overhead.
+
 **** Primary i3wm Configuration
+
 #+begin_src conf :noweb-ref i3config
-## -- Modifier Keys ------------------------------------------------------------#
 set $mod Mod1
 set $sup Mod4
 #+end_src
@@ -1058,7 +1058,6 @@ bar{} section, which isn't particularly relevant as this configuration
 is meant to be used with =polybar=.
 
 #+begin_src conf :noweb-ref i3config
-## -- Fonts (Global) -----------------------------------------------------------#
 font pango:monospace 8
 # Title bar text alignment
 title_align center
@@ -1069,7 +1068,6 @@ This configuration assumes that the variant of =i3=, =i3gaps=, is in use.
 Set up gaps intelligently.
 
 #+begin_src conf :noweb-ref i3config
-##-- Gaps ----------------------------------------------------------------------#
 # Gaps (Outer gaps are added to the inner gaps)
 gaps inner 15
 gaps outer 0
@@ -1082,7 +1080,6 @@ smart_borders on
 Configure =i3='s colors. So pretty!
 
 #+begin_src conf :noweb-ref i3config
-##-- Colors --------------------------------------------------------------------#
 # class                 border  backgr. text    indicator child_border
 client.focused          #DA6E89 #DA6E89 #FFFFFF #98C379   #DA6E89
 client.focused_inactive #61AFEF #61AFEF #1E222A #98C379   #61AFEF
@@ -1097,31 +1094,25 @@ Run the ~autostart.sh~ script that is tangled out of this file a little
 later. It stores all the commands to be run when =i3= is initialized.
 
 #+begin_src conf :noweb-ref i3config
-##-- Autostart -----------------------------------------------------------------#
 exec_always --no-startup-id ~/.config/i3/bin/autostart.sh
 #+end_src
 
 Define keybindings for commonly used applications within =i3=.
 
-#+begin_src conf :noweb-ref i3config
-#-- Common app binds -----------------------------------------------------------#
-#+end_src
-
-| =Rofi=        |                      |
-|-------------+----------------------|
-| ~$mod+F1~     | Application launcher |
-| ~$mod+d~      | Application launcher |
-| ~$sup+n~      | Network menu         |
-| ~$sup+x~      | Power menu           |
-| ~$mod+Ctrl+m~ | mpd control          |
-| ~$mod+Ctrl+n~ | Network panel        |
-| ~$mod+Ctrl+s~ | Screenshot menu      |
-| ~Printscrn~   | Screenshot menu      |
-| ~$mod+Ctrl+r~ | Execute as root menu |
-| ~$mod+Ctrl+w~ | Window menu          |
+| =Rofi= key bindings |                      |
+|-------------------+----------------------|
+| ~$mod+F1~         | Application launcher |
+| ~$mod+d~          | Application launcher |
+| ~$sup+n~          | Network menu         |
+| ~$sup+x~          | Power menu           |
+| ~$mod+Ctrl+m~     | mpd control          |
+| ~$mod+Ctrl+n~     | Network panel        |
+| ~$mod+Ctrl+s~     | Screenshot menu      |
+| ~Printscrn~       | Screenshot menu      |
+| ~$mod+Ctrl+r~     | Execute as root menu |
+| ~$mod+Ctrl+w~     | Window menu          |
 
 #+begin_src conf :noweb-ref i3config
-# -- Rofi --
 bindsym $mod+F1 exec ~/.config/rofi/bin/launcher
 bindsym $mod+d exec ~/.config/rofi/bin/launcher
 bindsym $sup+n exec ~/.config/rofi/bin/network-menu
@@ -1142,7 +1133,6 @@ bindsym $mod+Control+w exec ~/.config/rofi/bin/windows
 | ~XF86AudioMicMute~               | Mute mic input |
 
 #+begin_src conf :noweb-ref i3config
-# -- Use pactl to adjust volume in PulseAudio. --
 set $refresh_i3status killall -SIGUSR1 i3status
 bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && $refresh_i3status
 bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10% && $refresh_i3status
@@ -1157,7 +1147,6 @@ bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOU
 | ~XF86AudioNext~         | Next         |
 
 #+begin_src conf :noweb-ref i3config
-# -- MPD --
 bindsym XF86AudioPlay exec "mpc toggle"
 bindsym XF86AudioStop exec "mpc stop"
 bindsym XF86AudioNext exec "mpc next"
@@ -1183,11 +1172,7 @@ exec xautolock -time 10 -locker "~/.config/i3/bin/i3lock.sh"
 #+end_src
 
 Now that most of the application specific bindings are out of the way,
-configure the actual =i3= bindings to suit needs:
-
-#+begin_src conf :noweb-ref i3config
-#-- i3wm ----------------------------------------------------------------------#
-#+end_src
+configure the actual =i3= bindings to suit needs.
 
 Use ~Mouse+$mod~ to drag floating windows to their wanted position as
 well as resize a panel using right-click and ~$mod~ to drag.
@@ -1437,53 +1422,86 @@ configuration file on the system.
 **** i3 Scripts
 
 ***** Autostart with i3
-#+begin_src shell :tangle ~/.config/i3/bin/autostart.sh :mkdirp yes :tangle-mode (identity #o755)
-#!/usr/bin/env bash
 
-## Autostart Programs
+This script is called whenever =i3= starts up. It's purpose is to
+automatically spawn programs and processes.
 
-# Kill already running process
+#+begin_src shell :noweb yes :tangle ~/.config/i3/bin/autostart.sh :mkdirp yes :shebang #!/bin/bash :tangle-mode (identity #o755)
+<<i3-autostart-script>>
+#+end_src
+
+First, kill already running processes from the list of enabled
+autostarts.
+
+#+begin_src shell :noweb-ref i3-autostart-script
 #_ps=(compton dunst ksuperkey mpd polybar xfce-polkit xfce4-power-manager)
 _ps=(compton dunst polybar xfce-polkit)
 for _prs in "${_ps[@]}"; do
-	if [[ `pidof ${_prs}` ]]; then
-		killall -9 ${_prs}
-	fi
+    if [[ `pidof ${_prs}` ]]; then
+        killall -9 ${_prs}
+    fi
 done
+#+end_src
 
-# polkit agent
+Start the =xfce-polkit= agent.
+
+#+begin_src shell :noweb-ref i3-autostart-script
 /usr/lib/xfce-polkit/xfce-polkit &
+#+end_src
 
-# iBus for multilingual input
+Start an =ibus-daemon= instance for multi-lingual text input.
+
+#+begin_src shell :noweb-ref i3-autostart-script
 ibus-daemon -drxR &
+#+end_src
 
-# Lauch notification daemon
+Launch =Dunst= to serve notifications.
+
+#+begin_src shell :noweb-ref i3-autostart-script
 ~/.config/i3/bin/launch-dunst.sh
+#+end_src
 
-# Lauch polybar
+Launch =Polybar= to give the window manager some interactive chrome.
+
+#+begin_src shell :noweb-ref i3-autostart-script
 ~/.config/i3/bin/launch-polybar.sh
+#+end_src
 
-# Lauch compositor
+Launch the =picom= compositor for X to allow things like transparency
+and fading of windows.
+
+#+begin_src shell :noweb-ref i3-autostart-script
 ~/.config/i3/bin/launch-compton.sh
+#+end_src
 
-# Set the initial desktop wallpaper
+Set the desktop wallpaper to the contents of ~$HOME/.fehbg~. This file
+gets updated whenever =feh= is used to set the wallpaper so it
+effectively sets your wallpaper to the last image chosen.
+
+#+begin_src shell :noweb-ref i3-autostart-script
 ~/.fehbg &
+#+end_src
 
-# Make sure the CAPS_LOCK key is set to L_Ctrl for those systems that aren't able to handle it at the keyboard level.
+Run =xmodmap= and point it to ~$HOME/.Xmodmap~ to ensure that the
+=CAPS_LOCK= key is always set to =L_Control= when in X on systems for
+which a keyboard level configuration is inappropriate or impossible.
+
+#+begin_src shell :noweb-ref i3-autostart-script
 xmodmap ~/.Xmodmap &
-
-# Adjust backlight (AMD)
-#blight -d amdgpu_bl0 set 15%
 #+end_src
 
 ***** i3lock
 
-=i3lock= is triggered manually by way of keystroke from =i3= or an automatic inactivity timer provided by the =xautolock= package.
+This =i3lock= script is triggered manually by way of keystroke from =i3=
+or an automatic inactivity timer provided by the =xautolock= package.
 
-#+begin_src shell :tangle ~/.config/i3/bin/i3lock.sh :mkdirp yes :tangle-mode (identity #o755)
-#!/usr/bin/env bash
+#+begin_src shell :noweb yes :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/i3lock.sh") :mkdirp yes :tangle-mode (identity #o755) :shebang  #!/bin/bash
+<<i3-lock-script>>
+#+end_src
 
-## Get colors -----------------
+Define the color variales the script will use:
+
+#+begin_src shell :noweb-ref i3-lock-script
 FG="#c8ccd4"
 BG="#1e222a"
 
@@ -1495,65 +1513,66 @@ BLUE="#61afef"
 MAGENTA="#c678dd"
 CYAN="#56b6c2"
 WHITE="#abb2bf"
+#+end_src
 
+@todo: This appears broken.
+
+Set an occasionally silly message from the =fortune= package to display
+on the lockscreen.
+
+#+begin_src shell :noweb-ref i3-lock-script
 TOTD=`fortune -n 90 -s | head -n 1`
+#+end_src
 
-## Exec	-----------------
+Invoke ~i3lock~, making it look extra fancy.
+
+#+begin_src shell :noweb-ref i3-lock-script
 i3lock \
---color="${BG}D9"			\
-\
---insidever-color=${GREEN}	\
---insidewrong-color=${RED}	\
---inside-color="${BG}00"	\
-\
---ringver-color=${GREEN}	\
---ringwrong-color=${RED}	\
---ring-color=${BLUE}		\
-\
---line-color=${BG}			\
---separator-color=${BG}		\
-\
---keyhl-color=${YELLOW}		\
---bshl-color=${RED}			\
-\
---verif-color=${BG}			\
---wrong-color=${FG}			\
---layout-color=${FG}		\
-\
---time-color=${FG}			\
---date-color=${FG}			\
-\
---pass-media-keys			\
---pass-screen-keys			\
---pass-power-keys			\
---pass-volume-keys			\
---{time,date,layout,verif,wrong,greeter}-font="JetBrains Mono Medium"			\
---{layout,verif,wrong,greeter}-size=18							\
---time-size=34													\
---date-size=18													\
---greeter-text="${TOTD}"			\
---greeter-color=${CYAN}				\
---verif-text="verifying..."			\
---wrong-text="wrong!"				\
---noinput-text="Empty"				\
---lock-text="Locking..."			\
---lockfailed-text="Failed to lock"	\
---radius 120				\
---ring-width 8.0			\
---screen 1					\
---clock						\
---indicator					\
---time-str="%I:%M %p"		\
---date-str="%b %d, %G"		\
-#--blur 5					\
+    --color="${BG}D9" \
+    --insidever-color=${GREEN} \
+    --insidewrong-color=${RED} \
+    --inside-color="${BG}00" \
+    --ringver-color=${GREEN} \
+    --ringwrong-color=${RED} \
+    --ring-color=${BLUE} \
+    --line-color=${BG} \
+    --separator-color=${BG} \
+    --keyhl-color=${YELLOW} \
+    --bshl-color=${RED} \
+    --verif-color=${BG} \
+    --wrong-color=${FG} \
+    --layout-color=${FG} \
+    --time-color=${FG} \
+    --date-color=${FG} \
+    --pass-media-keys \
+    --pass-screen-keys \
+    --pass-power-keys \
+    --pass-volume-keys \
+    --{time,date,layout,verif,wrong,greeter}-font="JetBrains Mono Medium" \
+    --{layout,verif,wrong,greeter}-size=18 \
+    --time-size=34 \
+    --date-size=18 \
+    --greeter-text="${TOTD}" \
+    --greeter-color=${CYAN} \
+    --verif-text="verifying..." \
+    --wrong-text="wrong!" \
+    --noinput-text="Empty" \
+    --lock-text="Locking..." \
+    --lockfailed-text="Failed to lock" \
+    --radius 120 \
+    --ring-width 8.0 \
+    --screen 1 \
+    --clock \
+    --indicator \
+    --time-str="%I:%M %p" \
+    --date-str="%b %d, %G" \
 #+end_src
 
 ***** i3's =Dunst= Launcher
 
-#+begin_src shell :tangle ~/.config/i3/bin/launch-dunst.sh :mkdirp yes :tangle-mode (identity #o755)
-#!/usr/bin/env bash
+#+begin_src shell :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/launch-dunst.sh") :mkdirp yes :tangle-mode (identity #o755) :shebang #!/bin/bash
 if [[ `pidof dunst` ]]; then
-	pkill dunst
+    pkill dunst
 fi
 
 dunst \
@@ -1565,33 +1584,55 @@ dunst \
 
 ***** i3's =Polybar= Launcher
 
-#+begin_src shell :tangle ~/.config/i3/bin/launch-polybar.sh :mkdirp yes :tangle-mode (identity #o755)
-#!/usr/bin/env bash
+=i3= launches this script at startup to display Polybar.
 
-# Terminate already running bar instances
+#+begin_src shell :noweb yes :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/launch-polybar.sh") :mkdirp yes :tangle-mode (identity #o755) :shebang #!/bin/bash
+<<i3-polybar-launcher>>
+#+end_src
+
+Terminate already running bar instances.
+
+#+begin_src shell :noweb-ref i3-polybar-launcher
 killall -q polybar
+#+end_src
 
-# Wait until the processes have been shut down
+Wait until the processes have been shut down
+
+#+begin_src shell :noweb-ref i3-polybar-launcher
 while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
+#+end_src
 
-# Launch polybar
+Launch polybar
+
+#+begin_src shell :noweb-ref i3-polybar-launcher
 polybar main -c ~/.config/polybar/config.ini &
 #+end_src
 
 ***** i3's Compositor Launcher
 
-Launches picom / compton.
+This script launches the picom / compton compositor when =i3= starts
+up. Lots of systems still call it "Compton" but the program has been
+renamed to "Picom" for some reason.
 
-#+begin_src shell :tangle ~/.config/i3/bin/launch-compton.sh :mkdirp yes :tangle-mode (identity #o755)
-#!/usr/bin/env bash
+#+begin_src shell :noweb yes :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/launch-compton.sh") :mkdirp yes :tangle-mode (identity #o755) :shebang #!/bin/bash
+<<i3-compositor-launcher>>
+#+end_src
 
-# Terminate if compton is already running
+Terminate the compositor process if compton/picom is already running.
+
+#+begin_src shell :noweb-ref i3-compositor-launcher
 killall -q compton
+#+end_src
 
-# Wait until the processes have been shut down
+Wait until the processes have been shut down.
+
+#+begin_src shell :noweb-ref i3-compositor-launcher
 while pgrep -u $UID -x compton >/dev/null; do sleep 1; done
+#+end_src
 
-# Launch compton
+Launch the compositor.
+
+#+begin_src shell :noweb-ref i3-compositor-launcher
 compton --config ~/.config/picom/picom.conf &
 #+end_src
 
@@ -1614,7 +1655,6 @@ YELLOW = #e5c07b
 BLUE = #61afef
 PURPLE = #c678dd
 CYAN = #56b6c2
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
 #+end_src
 
 Set up all the general configurations for Polybar.
@@ -6234,6 +6274,7 @@ Get all the prerequisites necessary for setting up the environment.
 <<zsh-downloads>>
 <<zsh-post-tangle>>
 <<update-xdg-user-dirs>>
+<<source-xresources>>
 #+end_src
 
 ** System
