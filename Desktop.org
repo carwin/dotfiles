@@ -96,6 +96,7 @@ yay -S \
   network-manager-applet \
   networkmanager-l2tp \
   networkmanager-libreswan \
+  ngrok \
   nodejs \
   noto-fonts \
   npm \
@@ -3006,7 +3007,7 @@ esac
 
 **** Network Menu
 
-#+begin_src shell :tangle ~/.config/rofi/bin/network-menu :mkdirp yes :tangle-mode (identity #o755)
+#+begin_src python :tangle ~/.config/rofi/bin/network-menu :mkdirp yes :tangle-mode (identity #o755)
 #!/usr/bin/env python3
 # encoding:utf8
 """NetworkManager command line dmenu script.
@@ -5968,20 +5969,23 @@ This section is used to output the collections of noweb-ref references to shell 
 #+end_src
 
 ** System
-#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/environment-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
+
+#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/environment-post-tangle.sh :tangle-mode (identity #o755)
 <<xorg-post-tangle>>
 <<i3-post-tangle>>
 #+end_src
 
 ** Applications
 
-#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/application-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
+removed shebang
+
+#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/application-post-tangle.sh :tangle-mode (identity #o755)
 <<mpd-post-tangle>>
-<<qutebrowser-post-tangle>>
 <<vim-post-tangle>>
 #+end_src
 
 ** Emacs-centric
-#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/systemd-post-tangle.sh :shebang "#!/bin/bash" :tangle-mode (identity #o755)
+
+#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/systemd-post-tangle.sh :tangle-mode (identity #o755)
 <<emacs-post-tangle>>
 #+end_src

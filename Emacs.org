@@ -124,13 +124,24 @@ Configure an interface for talking to the system's =pass= to manage secrets.
       ad-redefinition-action 'accept           ; Silence warnings for advice redefinition
       fill-column 80                           ; Set the fill-column, possibly move this to setq-default phrasing.
       vc-follow-symlinks t                     ; Don't warn about following symlinks
-      indent-tabs-mode nil                     ; Stop using tabs to indent
       large-file-warning-threshold nil)        ; Don't warn for large files
+(setq-default indent-tabs-mode nil)            ; Stop using tabs to indent
 (scroll-bar-mode -1)                           ; Disable scroll bar
 (tool-bar-mode -1)                             ; Disable the toolbar
 (tooltip-mode -1)                              ; Disable tooltips
 (menu-bar-mode -1)                             ; Disable the menu bar
 (set-default-coding-systems 'utf-8)           ; Default to utf-8 encoding
+#+end_src
+
+Seriously, indent with spaces, not tabs.
+
+#+begin_src emacs-lisp
+(progn
+  ;; make indent commands use space only (never tab character)
+  (setq-default indent-tabs-mode nil)
+  ;; emacs 23.1 to 26, default to t
+  ;; if indent-tabs-mode is t, it means it may use tab, resulting mixed space and tab
+  )
 #+end_src
 
 Change a few indenting behaviors.
@@ -1451,7 +1462,7 @@ Configure the js-mode
   (add-hook 'js-mode-hook 'eglot-ensure)
   (add-hook 'js2-mode-hook #'cy/set-js-indentation)
   (add-hook 'js2-minor-mode-hook #'cy/set-js-indentation)
-  (add-hook 'js-mode-hook #'cy/set-js-indentation)
+  (add-hook 'js2-mode-hook #'cy/set-js-indentation)
   (add-hook 'web-mode-hook #'cy/set-js-indentation)
   (add-hook 'json-minor-mode-hook #'cy/set-js-indentation)
   (setq js2-mode-show-strict-warnings nil)
