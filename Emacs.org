@@ -1892,6 +1892,13 @@ Now characters won't disappear for stuff like === and =*= text.
   :hook (org-mode . org-appear-mode))
 #+end_src
 
+** Vimrc Mode
+This is more or less entirely used for highlighting =vimrc= files.
+
+#+begin_src emacs-lisp
+(use-package vimrc-mode)
+#+end_src
+
 *** Structure Templates
 
 Org Mode's structure templates feature enables you to quickly insert code blocks

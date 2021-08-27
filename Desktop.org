@@ -1,4 +1,108 @@
 #+title: Desktop Configuration
+#+options: toc:5
+
+* Table of Contents
+:PROPERTIES:
+:TOC:       :include all :ignore this
+:END:
+:CONTENTS:
+- [[#system-specific-settings][System-specific Settings]]
+- [[#system][System]]
+  - [[#packages][Packages]]
+- [[#environment][Environment]]
+  - [[#profile][.profile]]
+  - [[#xdg-user-directories][XDG User Directories]]
+  - [[#shell-configurations][Shell Configurations]]
+    - [[#zsh][ZSH]]
+      - [[#zshenv][.zshenv]]
+      - [[#zprofile][.zprofile]]
+      - [[#zshrc][.zshrc]]
+  - [[#x-window-system][X Window System]]
+    - [[#xresources][Xresources]]
+    - [[#xsettingsd][xsettingsd]]
+  - [[#git][Git]]
+    - [[#primary-gitconfig][Primary .gitconfig]]
+  - [[#window-manager][Window Manager]]
+    - [[#i3][i3]]
+      - [[#primary-i3wm-configuration][Primary i3wm Configuration]]
+      - [[#i3-scripts][i3 Scripts]]
+        - [[#autostart-with-i3][Autostart with i3]]
+        - [[#i3lock][i3lock]]
+        - [[#i3s-dunst-launcher][i3's Dunst Launcher]]
+        - [[#i3s-polybar-launcher][i3's Polybar Launcher]]
+        - [[#i3s-compositor-launcher][i3's Compositor Launcher]]
+    - [[#polybar][Polybar]]
+      - [[#polybar-modules][Polybar Modules]]
+        - [[#back-light][Back-light]]
+        - [[#battery][Battery]]
+        - [[#i3][i3]]
+        - [[#cpu][CPU]]
+        - [[#date][Date]]
+        - [[#filesystem][Filesystem]]
+        - [[#memory--ram][Memory / RAM]]
+        - [[#mpd][MPD]]
+        - [[#song][Song]]
+        - [[#wired-network][Wired Network]]
+        - [[#wireless-network][Wireless Network]]
+        - [[#generic--combined-network][Generic / Combined Network]]
+        - [[#volume][Volume]]
+        - [[#temperature][Temperature]]
+        - [[#menu-application-launcher][Menu (Application launcher)]]
+        - [[#sysmenu-power][Sysmenu (Power)]]
+- [[#applications][Applications]]
+  - [[#dunst][Dunst]]
+    - [[#global][Global]]
+    - [[#shortcuts][Shortcuts]]
+    - [[#notification-styles][Notification Styles]]
+      - [[#low-priority-notifications][Low-priority Notifications]]
+      - [[#normal-notifications][Normal Notifications]]
+      - [[#urgent-notifications][Urgent Notifications]]
+  - [[#rofi][Rofi]]
+    - [[#bins][Bins]]
+      - [[#asroot][Asroot]]
+      - [[#confirm][Confirm]]
+      - [[#launcher][Launcher]]
+      - [[#mpd-control-via-rofi][MPD Control via Rofi]]
+      - [[#network][Network]]
+      - [[#network-menu][Network Menu]]
+      - [[#power-menu][Power Menu]]
+      - [[#screenshot][Screenshot]]
+      - [[#windows][Windows]]
+    - [[#themes][Theme(s)]]
+      - [[#colors][Colors]]
+      - [[#confirm][Confirm]]
+      - [[#launcher][Launcher]]
+      - [[#window][Window]]
+      - [[#asroot][Asroot]]
+      - [[#network][Network]]
+      - [[#network-menu][Network Menu]]
+      - [[#network-menu-config][Network Menu Config]]
+      - [[#mpd][MPD]]
+      - [[#power-menu][Power Menu]]
+      - [[#screenshot][Screenshot]]
+  - [[#tmux][Tmux]]
+  - [[#ranger][ranger]]
+  - [[#mpv][mpv]]
+    - [[#video-settings][Video Settings]]
+    - [[#audio-settings][Audio Settings]]
+    - [[#other-settings][Other settings]]
+  - [[#mpd][mpd]]
+  - [[#ncmpcpp][ncmpcpp]]
+  - [[#vim][vim]]
+  - [[#firefox][Firefox]]
+    - [[#userchromecss][userChrome.css]]
+    - [[#usercontentcss][userContent.css]]
+- [[#systemd-scripts][Systemd Scripts]]
+  - [[#random-wallpaper-timer][Random Wallpaper Timer]]
+  - [[#emacs][Emacs]]
+- [[#post-tangle-targets][Post-tangle Targets]]
+  - [[#packages][Packages]]
+  - [[#environment][Environment]]
+  - [[#system][System]]
+  - [[#applications][Applications]]
+  - [[#emacs-centric][Emacs-centric]]
+- [[#general-todos][General @TODOs]]
+:END:
 
 This is the primary desktop application configuration.
 
@@ -940,7 +1044,6 @@ into ~/homr/<user>/.gitconfig~.
 ** Window Manager
 
 *** i3
-,+begin_src conf :tangle ~/.config/i3/config :mkdirp yes
 
 **** Primary i3wm Configuration
 #+begin_src conf :noweb-ref i3config
@@ -1324,7 +1427,8 @@ for_window [class=Slack] move container to workspace $comm
 for_window [class=Emacs] move container to workspace $prim
 #+end_src
 
-Output the =i3= configuration defined in this section into a single configuration file on the system.
+Output the =i3= configuration defined in this section into a single
+configuration file on the system.
 
 #+begin_src emacs-lisp :noweb yes :tangle ~/.config/i3/config
 <<i3config>>
