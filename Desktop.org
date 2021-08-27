@@ -43,6 +43,7 @@ sudo pacman -S \
   tmux \
   vim \
   wget \
+  xclip \
 #+end_src
 
 To make =AUR= package management easier, first install =yay=.
@@ -1445,11 +1446,9 @@ i3lock \
 #+end_src
 
 ***** i3's =Dunst= Launcher
-#+begin_src conf :tangle ~/.config/i3/bin/launch-dunst.sh :mkdirp yes :tangle-mode (identity #o755)
+
+#+begin_src shell :tangle ~/.config/i3/bin/launch-dunst.sh :mkdirp yes :tangle-mode (identity #o755)
 #!/usr/bin/env bash
-
-# Launch dunst daemon
-
 if [[ `pidof dunst` ]]; then
 	pkill dunst
 fi
@@ -1815,7 +1814,7 @@ compositing-border = over
 pseudo-transparency = false
 #+end_src
 
-Decorate Polybar a little bit
+Decorate =Polybar= by defining some new, purely visual, modules.
 
 #+begin_src conf :tangle ~/.config/polybar/decor.ini
 [module/sep]
@@ -1833,8 +1832,6 @@ content-background = ${color.BG}
 content-foreground = ${color.BGL}
 content-padding = 2
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
-
 [module/LD]
 type = custom/text
 content = "%{T3}%{T-}"
@@ -1848,7 +1845,8 @@ content-background = ${color.BG}
 content-foreground = ${color.BGL}
 #+end_src
 
-Set up the available modules for Polybar
+Set up the available modules for =Polybar=. Most of these are some
+variation of the default.
 
 #+begin_src conf :tangle ~/.config/polybar/modules.ini
 [module/backlight]
@@ -2712,7 +2710,17 @@ system and is the area of this file most likely to change.
 =Dunst= serves as the notification system. It's configuration is minimal
 and is mostly concerned with color, placement, and format.
 
-#+begin_src conf :tangle ~/.config/dunst/dunstrc :mkdirp yes
+
+#+begin_src conf :noweb yes :tangle ~/.config/dunst/dunstrc :mkdirp yes
+<<dunst-config>>
+#+end_src
+
+*** Global
+
+First, set global =Dunst= parameters for things like the font, padding,
+width, etc...
+
+#+begin_src conf :noweb-ref dunst-config
 [global]
 monitor = 0
 follow = mouse
@@ -2743,23 +2751,53 @@ browser = /usr/bin/firefox -new-tab
 always_run_script = true
 title = Dunst
 class = Dunst
+#+end_src
 
+*** Shortcuts
+
+Define global key bindings for interacting with Dunst.
+
+- ~Ctrl+Space~ :: Close an open notification.
+- ~Ctrl+Shift+Space~ :: Close all open notifications.
+- ~Ctrl+`~ :: Step back through notification history, re-opens closed notifications.
+- ~Ctrl+Shift+.~ :: Context (@todo: This doesn't actually work)
+
+
+#+begin_src conf :noweb-ref dunst-config
 [shortcuts]
 close = ctrl+space
 close_all = ctrl+shift+space
 history = ctrl+grave
 context = ctrl+shift+period
+#+end_src
 
+*** Notification Styles
+
+=Dunst= supports styling notifications by their urgency. Low-priority
+styles should be unassuming, critical / urgent notifications should
+grab your attention.
+
+**** Low-priority Notifications
+
+#+begin_src conf :noweb-ref dunst-config
 [urgency_low]
 background = "#2f343f"
 foreground = "#d8dee8"
 timeout = 2
+#+end_src
 
+**** Normal Notifications
+
+#+begin_src conf :noweb-ref dunst-config
 [urgency_normal]
 background = "#2f343f"
 foreground = "#d8dee8"
 timeout = 4
+#+end_src
 
+**** Urgent Notifications
+
+#+begin_src conf :noweb-ref dunst-config
 [urgency_critical]
 background = "#2f343f"
 foreground = "#d8dee8"
@@ -2823,7 +2861,6 @@ case $chosen in
     $vim)
         ${DIR}/bin/apps_as_root.sh 'termite -e vim'
         ;;
-esac
 #+end_src
 
 
@@ -5295,20 +5332,47 @@ element.selected.active {
   border-color: @selected;
 }
 #+end_src
+
 ** Tmux
 
-#+description: @todo I think tmux now supports using XDG_CONFIG_HOME so it can be stored in ~/.config/tmux/.
+=Tmux= handles terminal multiplexing, much like =screen=. Because the
+system uses =i3=, this isn't actually an extremely integral part of the
+usual workflow, though it is useful to have configured for when its
+needed.
 
-#+begin_src conf :tangle ~/.tmux.conf
+@todo I think tmux now supports using XDG_CONFIG_HOME so it can be stored in ~/.config/tmux/.
 
-# Key bindings
-# ------------------------------------------------------------------------------
-# Unbind the default Prefix
+The configuration starts by defining some simpler keybindings than
+what =tmux= ships with. To do that, the default prefix of ~Ctrl-b~ is
+unbound, and then set to ~Ctrl-a~. All =tmux= commands will begin with
+that default prefix.
+
+#+begin_src conf :noweb-ref tmux-config
 unbind C-b
-# Bind <C-a> as the new Prefix
 set -g prefix C-a
-# Send the prefix when used with prefix+a for nested sessions
+#+end_src
+
+When using =tmux= sessions within other =tmux= sessions, things can get a
+bit tricky with the key binds. This tells =tmux= to send the prefix into
+the nested session if focused.
+
+#+begin_src conf :noweb-ref tmux-config
 bind C-a send-prefix
+#+end_src
+
+Define the keys to be used for navigating and splitting panes in
+=tmux=. Keep in mind that all of the following keys are preceded by
+the earlier defined default prefix.
+
+ - ~|~ :: Split window horizontally
+ - ~-~ :: Split window vertically
+ - ~r~ :: Reload =tmux= configuration in place
+ - ~hjkl~ :: Move around panes with ~hjkl~
+ - ~HJKL~ :: Resize panes in corresponding ~hjkl~ directions
+ - ~v~ :: Begin selection for copying to clipboard
+ - ~y~ :: Copy selection to clipboard via ~xclip~.
+
+#+begin_src conf :noweb-ref tmux-config
 # Split windows horizontally with |
 bind | split-window -h
 # Split windows vertically with -
@@ -5329,9 +5393,16 @@ bind-key L resize-pane -R 5
 # Vim keystrokes for select and copy (yank) to clipboard.
 bind-key -T copy-mode-vi 'v' send -X begin-selection
 bind-key -T copy-mode-vi 'y' send-keys -X copy-pipe-and-cancel "xclip -i -f -selection primary | xclip -i -selection clipboard"
+#+end_src
 
-# General Settings
-# ------------------------------------------------------------------------------
+Configure general =tmux= settings:
+ - Enable mouse usage to select and resize panes, etc...
+ - Use ~vi~ mode
+ - Start the window index at 1 instead of 0
+ - Remove delay for an ~Esc~ key press
+ - Add a 600ms delay for a repeated key press
+
+#+begin_src conf :noweb-ref tmux-config
 # Be colorful
 set -g default-terminal "screen-256color"
 
@@ -5351,9 +5422,11 @@ set-window-option -g mode-keys vi
 set -sg escape-time 0
 # Set delay for repeat key press.
 set -sg repeat-time 600
+#+end_src
 
+Set the =Tmux= colors and general theme.
 
-# THEME
+#+begin_src conf :noweb-ref tmux-config
 set -g status-bg colour236
 set -g status-fg white
 set -g status-justify centre
@@ -5362,7 +5435,6 @@ set -g status-interval 60
 set -g status-left-length 30
 set -g status-left '#[fg=green](#S) #(whoami)'
 set -g status-right '#[fg=yellow]#(curl "wttr.in/?format=3")#[default] #[fg=white]%H:%M#[default]'
-
 #+end_src
 
 ** ranger
