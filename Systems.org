@@ -36,12 +36,14 @@ the declared overrides are mashed together on a per-system basis using
       (map-merge
        'list
        `((desktop/dpi . 180)
-	 (dotfiles/dir . ,(shell-command-to-string "printf %s \"$DOTDIR\""))
+         (dotfiles/dir . ,(shell-command-to-string "printf %s \"$DOTDIR\""))
          (dotfiles/out . ,(concat (shell-command-to-string "printf %s \"$DOTDIR\"") "/tangled"))
-	 (emacs/dashboard-agenda-face-size . 100)
-	 (emacs/default-face-size . 100)
-	 (emacs/variable-face-size . 2.45)
-	 (emacs/fixed-face-size . 1.5))
+         (user/home . ,(concat "/home/" user-login-name))
+         (config/dir . ,(shell-command-to-string "printf %s \"$XDG_CONFIG_HOME\""))
+         (emacs/dashboard-agenda-face-size . 100)
+         (emacs/default-face-size . 100)
+         (emacs/variable-face-size . 2.45)
+         (emacs/fixed-face-size . 1.5))
        <<system-settings>>))
 
 <<export>>
