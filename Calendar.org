@@ -1,0 +1,37 @@
+#+title: Calendar Configuration
+#+author: Carwin Young
+#+property: header-args:emacs-lisp :tangle (concat user-emacs-directory "cy-calendar.el") :mkdirp yes
+
+| =org-gcal= | @todo |
+
+
+#+begin_src emacs-lisp
+(use-package org-gcal
+  :after org
+  :config
+  (setq org-gcal-client-id (password-store-get "org-gcal/gcal-client-id")
+        org-gcal-client-secret (password-store-get "org-gcal/gcal-client-secret")
+        org-gcal-fetch-file-alist '(("carwinyoung@gmail.com" .  "~/Notes/Calendar/Personal.org")
+                                      ("carwin@mobomo.com" .  "~/Notes/Calendar/Mobomo.org"))))
+#+end_src
+
+Configure calendar bindings off the =<leader>= key.
+
+#+begin_src emacs-lisp
+(cy/leader-key-def
+  "C" '(:ignore t :which-key "calendar")
+  "Cf" '(org-gcal-fetch :which-key "fetch"))
+#+end_src
+
+Set =org-gcal= to update when entering agenda mode and when finalizing captured documents.
+
+#+begin_src emacs-lisp
+(add-hook 'org-agenda-mode-hook (lambda () (org-gcal-fetch) ))
+(add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-fetch) ))
+#+end_src
+
+Provide =cy-calendar= so it can be required by =./Emacs.org=.
+
+#+begin_src emacs-lisp
+(provide 'cy-calendar)
+#+end_src
