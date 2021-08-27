@@ -26,30 +26,29 @@ Core packages should be installed via =pacman=. It is assumed that
 most of the actual _core_ packages like =btrfs-progs= and =linux-headers=
 have already been installed at this point.
 
-#+begin_src sh :noweb-ref arch-packages-post-tangle
-sudo pacman -S \
-  awesome-terminal-fonts \
-  docker \
-  htop \
-  emacs \
-  git \
-  go \
-  networkmanager \
-  nfs-utils \
-  nvidia \
-  openssh \
-  rxvt-unicode \
-  termite \
-  tmux \
-  vim \
-  wget \
-  xclip \
+#+begin_src shell :noweb-ref pacman-install
+sudo pacman -Syyu && sudo pacman -S \
+                          awesome-terminal-fonts \
+                          docker \
+                          htop \
+                          emacs \
+                          git \
+                          go \
+                          networkmanager \
+                          nfs-utils \
+                          nvidia \
+                          openssh \
+                          rxvt-unicode \
+                          termite \
+                          tmux \
+                          vim \
+                          wget \
+                          xclip \
 #+end_src
 
 To make =AUR= package management easier, first install =yay=.
 
-#+begin_src sh :noweb-ref arch-yay-post-tangle
-#!/bin/bash
+#+begin_src shell :noweb-ref arch-install-yay
 cd ~/;
 git clone https://aur.archlinux.org/yay.git
 cd yay;
@@ -60,89 +59,89 @@ rm -rf yay;
 
 Now install =AUR= packages:
 
-#+begin_src sh :noweb-ref arch-aur-packages-post-tangle
+#+begin_src shell :noweb-ref yay-install
 yay -S \
-  ack \
-  aaxtomp3 \
-  adobe-source-han-sans-jp-fonts \
-  anki \
-  bind-tools \
-  dbschema \
-  discord \
-  dunst \
-  elm-bin \
-  elm-language-server \
-  efibootmgr \
-  feh \
-  flac \
-  fortune-mod \
-  gnupg \
-  i3-gaps \
-  i3lock-color \
-  ibus-anthy \
-  iotop \
-  polybar \
-  lando \
-  libreswan \
-  lxdm-gtk3 \
-  ly \
-  mailcap \
-  mdadm \
-  mlocate \
-  mpd \
-  mpv \
-  multimarkdown \
-  mu \
-  ncmpcpp \
-  network-manager-applet \
-  networkmanager-l2tp \
-  networkmanager-libreswan \
-  ngrok \
-  nodejs \
-  noto-fonts \
-  npm \
-  ntfs-3g \
-  nvm \
-  org-protocol-emacsclient \
-  p7zip \
-  pass \
-  pavucontrol \
-  picom-git \
-  pulseaudio \
-  python-dotty-dict \
-  python-hjson \
-  python-matplotlib \
-  python-numpy \
-  qgis \
-  ranger \
-  rofi \
-  rustup \
-  scrot \
-  sqlite \
-  sshfs \
-  syncthing \
-  ttf-mplus \
-  tree \
-  unrar \
-  unzip \
-  urxvt-perls \
-  w3m \
-  wee-slack \
-  xautolock \
-  xfce-polkit \
-  xorg-server \
-  xorg-xdpyinfo \
-  xorg-xev \
-  xorg-xauth \
-  xorg-xhost \
-  xorg-xmodmap \
-  xorg-xrdb \
-  xorg-xrandr \
-  xpra \
-  zip
+    ack \
+    aaxtomp3 \
+    adobe-source-han-sans-jp-fonts \
+    anki \
+    bind-tools \
+    dbschema \
+    discord \
+    dunst \
+    elm-bin \
+    elm-language-server \
+    efibootmgr \
+    feh \
+    flac \
+    fortune-mod \
+    gnupg \
+    i3-gaps \
+    i3lock-color \
+    ibus-anthy \
+    iotop \
+    polybar \
+    lando \
+    libreswan \
+    lxdm-gtk3 \
+    ly \
+    mailcap \
+    mdadm \
+    mlocate \
+    mpd \
+    mpv \
+    multimarkdown \
+    mu \
+    ncmpcpp \
+    network-manager-applet \
+    networkmanager-l2tp \
+    networkmanager-libreswan \
+    ngrok \
+    nodejs \
+    noto-fonts \
+    npm \
+    ntfs-3g \
+    nvm \
+    org-protocol-emacsclient \
+    p7zip \
+    pass \
+    pavucontrol \
+    picom-git \
+    pulseaudio \
+    python-dotty-dict \
+    python-hjson \
+    python-matplotlib \
+    python-numpy \
+    qgis \
+    ranger \
+    rofi \
+    rustup \
+    scrot \
+    sqlite \
+    sshfs \
+    syncthing \
+    ttf-mplus \
+    tree \
+    unrar \
+    unzip \
+    urxvt-perls \
+    w3m \
+    wee-slack \
+    xautolock \
+    xfce-polkit \
+    xorg-server \
+    xorg-xdpyinfo \
+    xorg-xev \
+    xorg-xauth \
+    xorg-xhost \
+    xorg-xmodmap \
+    xorg-xrdb \
+    xorg-xrandr \
+    xpra \
+    zip
 #+end_src
 
-#+begin_src sh :noweb-ref get-preferred-fonts
+#+begin_src shell :noweb-ref get-preferred-fonts
 mkdir -p ~/.local/share/fonts;
 git clone git@github.com:coz-m/MPLUS_FONTS.git ~/.local/share/fonts/MPLUS_FONTS;
 git clone https://github.com/larzconwell/mplus-powerline-font/blob/master/mplus%20for%20Powerline.ttf ~/.local/share/fonts/mplus-for-powerline;
@@ -329,7 +328,6 @@ Using the configurations from this document, that would output:
  - =XDG_VIDEOS_DIR= :: Video storage.
 
 
-
 #+begin_src conf :tangle ~/.config/user-dirs.dirs :mkdirp
 XDG_DESKTOP_DIR="$HOME/"
 XDG_DOWNLOAD_DIR="$HOME/Downloads"
@@ -343,7 +341,7 @@ XDG_VIDEOS_DIR="$HOME/Videos"
 
 After this file is changed, user-dirs need to be updated via: ~xdg-user-dirs-update~.
 
-#+begin_src sh :noweb-ref environment-post-tangle
+#+begin_src sh :noweb-ref update-xdg-user-dirs
 xdg-user-dirs-update
 #+end_src
 
@@ -668,6 +666,7 @@ continue using =X=.
 
 This file handles a variety of things, from shell colors to terminal
 emulator settings.
+
 
 #+begin_src conf :tangle ~/.Xresources :mkdirp yes
 !emacs*Background: DarkSlateGray
@@ -1845,10 +1844,18 @@ content-background = ${color.BG}
 content-foreground = ${color.BGL}
 #+end_src
 
+**** Polybar Modules
+
 Set up the available modules for =Polybar=. Most of these are some
 variation of the default.
 
-#+begin_src conf :tangle ~/.config/polybar/modules.ini
+#+begin_src conf :noweb yes :tangle ~/.config/polybar/modules.ini
+<<polybar-modules>>
+#+end_src
+
+***** Back-light
+
+#+begin_src conf :noweb-ref polybar-modules
 [module/backlight]
 type = internal/backlight
 #type = internal/xbacklight
@@ -1882,9 +1889,11 @@ ramp-8 = 
 ramp-9 = 
 ramp-font = 2
 ramp-foreground = ${color.CYAN}
+#+end_src
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+***** Battery
 
+#+begin_src conf :noweb-ref polybar-modules
 [module/battery]
 type = internal/battery
 
@@ -1974,9 +1983,11 @@ animation-charging-4 = 
 animation-charging-foreground = ${color.GREEN}
 animation-charging-font = 2
 animation-charging-framerate = 700
+#+end_src
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+***** i3
 
+#+begin_src conf :noweb-ref polybar-modules
 [module/i3]
 type = internal/i3
 
@@ -2101,9 +2112,11 @@ label-separator = |
 label-separator-padding = 0
 label-separator-foreground = ${color.BGL}
 label-separator-background = ${color.BGL}
+#+end_src
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+***** CPU
 
+#+begin_src conf :noweb-ref polybar-modules
 [module/cpu]
 type = internal/cpu
 
@@ -2136,9 +2149,11 @@ label = " %percentage%%"
 ;;ramp-coreload-2 = 
 ;;ramp-coreload-3 = 
 ;;ramp-coreload-4 = 
+#+end_src
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+***** Date
 
+#+begin_src conf :noweb-ref polybar-modules
 [module/date]
 type = internal/date
 
@@ -2174,9 +2189,11 @@ format-background = ${color.BGL}
 label = %time%
 label-font = 4
 label-foreground = ${color.CYAN}
+#+end_src
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+***** Filesystem
 
+#+begin_src conf :noweb-ref polybar-modules
 [module/filesystem]
 type = internal/fs
 
@@ -2232,9 +2249,11 @@ label-mounted = " %free%"
 ;   %mountpoint%
 ; Default: %mountpoint% is not mounted
 label-unmounted = " %mountpoint%: NM"
+#+end_src
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+***** Memory / RAM
 
+#+begin_src conf :noweb-ref polybar-modules
 [module/memory]
 type = internal/memory
 
@@ -2291,9 +2310,11 @@ label = " %mb_used%"
 ;;ramp-free-2 = 
 ;;ramp-free-3 = 
 ;;ramp-free-4 = 
+#+end_src
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+***** MPD
 
+#+begin_src conf :noweb-ref polybar-modules
 [module/mpd]
 type = internal/mpd
 
@@ -2384,8 +2405,11 @@ icon-next-foreground = ${color.CYAN}
 ;;toggle-on-foreground = #ff
 ;;toggle-off-foreground = #55
 
-;;-----------
+#+end_src
 
+***** Song
+
+#+begin_src conf :noweb-ref polybar-modules
 [module/song]
 type = internal/mpd
 
@@ -2400,18 +2424,28 @@ format-stopped = ${self.format-online}
 label-song =  "%artist% - %title%"
 label-song-maxlen = 25
 label-song-ellipsis = true
+#+end_src
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+***** Wired Network
 
+#+begin_src conf :noweb-ref polybar-modules
 ; If you use both a wired and a wireless network, just add 2 module definitions. For example
 [module/wired-network]
 type = internal/network
 interface = eno1
+#+end_src
 
+***** Wireless Network
+
+#+begin_src conf :noweb-ref polybar-modules
 [module/wireless-network]
 type = internal/network
 interface = wlp6s0
+#+end_src
 
+***** Generic / Combined Network
+
+#+begin_src conf :noweb-ref polybar-modules
 ; Normal Module
 [module/network]
 type = internal/network
@@ -2508,9 +2542,11 @@ ramp-signal-font = 2
 ;;animation-packetloss-1-foreground = #000000
 ; Framerate in milliseconds
 ;;animation-packetloss-framerate = 500
+#+end_src
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+***** Volume
 
+#+begin_src conf :noweb-ref polybar-modules
 [module/volume]
 type = internal/pulseaudio
 
@@ -2582,9 +2618,11 @@ ramp-volume-8 = 
 ramp-volume-9 = 
 ramp-volume-font = 2
 ramp-volume-foreground = ${color.BLUE}
+#+end_src
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+***** Temperature
 
+#+begin_src conf :noweb-ref polybar-modules
 [module/temperature]
 type = internal/temperature
 
@@ -2652,9 +2690,11 @@ ramp-9 = 
 ramp-font = 2
 ramp-foreground = ${color.YELLOW}
 ;;ramp-foreground = #55
+#+end_src
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+***** Menu (Application launcher)
 
+#+begin_src conf :noweb-ref polybar-modules
 [module/menu]
 type = custom/text
 
@@ -2669,9 +2709,11 @@ click-left = ~/.config/rofi/bin/launcher
 
 ;;scroll-up = path_to_script
 ;;scroll-down = path_to_script
+#+end_src
 
-;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+***** Sysmenu (Power)
 
+#+begin_src conf :noweb-ref polybar-modules
 [module/sysmenu]
 type = custom/text
 
@@ -5439,71 +5481,22 @@ set -g status-right '#[fg=yellow]#(curl "wttr.in/?format=3")#[default] #[fg=whit
 
 ** ranger
 
+=Ranger= is a terminal based file browser, think of it like Thunar or
+Nautilus, but available without a UI.
+
+The default configuration and settings for =Ranger= are actually quite
+good, so there's little need to customize it too much.
+
+One of the nice features that =Ranger= provides is the ability to add your own commands, written in Python.
+
+The following configuration defines:
+
+| Command | Description                                                                        |
+|---------+------------------------------------------------------------------------------------|
+| ~:empty~  | Empties the ~/home/<user>/.Trash~ directory                                          |
+| ~:moveit~ | An in-application wrapper for the ~mv~ command, without support for flags or options |
+
 #+begin_src python :tangle ~/.config/ranger/commands.py :mkdirp yes
-# This is a sample commands.py.  You can add your own commands here.
-#
-# Please refer to commands_full.py for all the default commands and a complete
-# documentation.  Do NOT add them all here, or you may end up with defunct
-# commands when upgrading ranger.
-
-# A simple command for demonstration purposes follows.
-# -----------------------------------------------------------------------------
-
-from __future__ import (absolute_import, division, print_function)
-
-# You can import any python module as needed.
-import os
-
-# You always need to import ranger.api.commands here to get the Command class:
-from ranger.api.commands import Command
-
-
-# Any class that is a subclass of "Command" will be integrated into ranger as a
-# command.  Try typing ":my_edit<ENTER>" in ranger!
-class my_edit(Command):
-    # The so-called doc-string of the class will be visible in the built-in
-    # help that is accessible by typing "?c" inside ranger.
-    """:my_edit <filename>
-
-    A sample command for demonstration purposes that opens a file in an editor.
-    """
-
-    # The execute method is called when you run this command in ranger.
-    def execute(self):
-        # self.arg(1) is the first (space-separated) argument to the function.
-        # This way you can write ":my_edit somefilename<ENTER>".
-        if self.arg(1):
-            # self.rest(1) contains self.arg(1) and everything that follows
-            target_filename = self.rest(1)
-        else:
-            # self.fm is a ranger.core.filemanager.FileManager object and gives
-            # you access to internals of ranger.
-            # self.fm.thisfile is a ranger.container.file.File object and is a
-            # reference to the currently selected file.
-            target_filename = self.fm.thisfile.path
-
-            # This is a generic function to print text in ranger.
-        self.fm.notify("Let's edit the file " + target_filename + "!")
-
-        # Using bad=True in fm.notify allows you to print error messages:
-        if not os.path.exists(target_filename):
-            self.fm.notify("The given file does not exist!", bad=True)
-            return
-
-        # This executes a function from ranger.core.acitons, a module with a
-        # variety of subroutines that can help you construct commands.
-        # Check out the source, or run "pydoc ranger.core.actions" for a list.
-        self.fm.edit_file(target_filename)
-
-    # The tab method is called when you press tab, and should return a list of
-    # suggestions that the user will tab through.
-    # tabnum is 1 for <TAB> and -1 for <S-TAB> by default
-    def tab(self, tabnum):
-        # This is a generic tab-completion function that iterates through the
-        # content of the current directory.
-        return self._tab_directory_content()
-
-
 class empty(Command):
     """:empty
     Empties the trash directory ~/.Trash
@@ -5521,65 +5514,146 @@ class moveit(Command):
         target_filename = self.fm.thisfile.path
         self.fm.run("mv " + target_filename + ' ' + self.arg(1))
 #+end_src
+
 ** mpv
 
-Media player configuration. =mpv= replaces =mplayer=.
+=mpv= is a media player based on Mplayer and mplayer2. It replaces
+=mplayer= in this system configuration.
 
-#+begin_src conf :tangle ~/.config/mpv/mpv.conf :mkdirp yes
-##################
-# video settings #
-##################
-# Start in fullscreen mode by default.
+/Note: Any references to ~mplayer~ in any of this repository's files are
+legacy and should be updated to use ~mpv~ instead./
+
+This configuration for =mpv= is somewhat simplistic but provides some
+sane defaults that can be further customized as needed.
+
+#+begin_src conf :noweb yes :tangle ~/.config/mpv/mpv.conf :mkdirp yes
+<<mpv-config>>
+#+end_src
+
+*** Video Settings
+
+Tell =mpv= not to start in fullscreen mode by default.
+
+#+begin_src conf :noweb-ref mpv-config
 fs=no
-# force starting with centered window
+#+end_src
+
+When starting, =mpv= should always attempt to center its window on the screen.
+
+#+begin_src conf :noweb-ref mpv-config
 geometry=50%:50%
-# Do not close the window on exit.
+#+end_src
+
+Keep the =mpv= window open when a file has finished playing.
+
+#+begin_src conf :noweb-ref mpv-config
 keep-open=yes
-# Do not wait with showing the video window until it has loaded. (This will
-# resize the window once video is loaded. Also always shows a window with
-# audio.)
+#+end_src
+
+It can be annoying to wait for a window to display when loading
+=mpv=. By default the program waits until a video file has finished
+loading before rendering the window which can sometimes lead users to
+opening a video twice, assuming the first =mpv= invocation didn't work.
+
+Set the =mpv= window to open immediately, whether or not the file has
+finished loading.
+
+One caveat of this configuration is that once a file has finished
+loading, the =mpv= window will resize accordingly.
+
+#+begin_src conf :noweb-ref mpv-config
 force-window=immediate
-# Disable the On Screen Controller (OSC).
+#+end_src
+
+Disable the On Screen Controller (OSC).
+
+#+begin_src conf :noweb-ref mpv-config
 osc=no
-# Keep the player window on top of all other windows.
+#+end_src
+
+Keep the =mpv= player window on top of all other windows.
+
+#+begin_src conf :noweb-ref mpv-config
 ontop=yes
-# Specify high quality video rendering preset (for --vo=gpu only)
-# Can cause performance problems with some drivers and GPUs.
+#+end_src
+
+Specify high quality video rendering presets (for ~--vo=gpu~ only).
+
+Note that this can cause performance issues with some drivers and
+GPUs. If there are problems with =mpv=, commenting out this setting is a
+good first step.
+
+#+begin_src conf :noweb-ref mpv-config
 profile=gpu-hq
-# Enable hardware decoding if available. Often, this does not work with all
-# video outputs, but should work well with default settings on most systems.
-# If performance or energy usage is an issue, forcing the vdpau or vaapi VOs
-# may or may not help.
+#+end_src
+
+Enable hardware decoding if available.
+
+Often, this does not work with all video outputs, but should work well
+with default settings on most systems. If performance or energy usage
+become an issue, forcing the ~vdpau~ or ~vaapi~ VOs may or may not help.
+
+#+begin_src conf :noweb-ref mpv-config
 hwdec=auto
-##################
-# audio settings #
-##################
-# Specify default audio device. You can list devices with: --audio-device=help
-# The option takes the device string (the stuff between the '...').
+#+end_src
+
+*** Audio Settings
+
+Specify default audio device. You can list devices with:
+~--audio-device=help~. The option takes the device string (the stuff
+between the '...').
+
+#+begin_src conf :noweb-ref mpv-config
 audio-device=alsa/default
-# Do not filter audio to keep pitch when changing playback speed.
+#+end_src
+
+Do not filter audio to keep pitch when changing playback speed.
+
+#+begin_src conf :noweb-ref mpv-config
 audio-pitch-correction=no
-# Output 5.1 audio natively, and upmix/downmix audio with a different format.
+#+end_src
+
+Output 5.1 audio natively, and upmix/downmix audio with a different
+format.
+
+#+begin_src conf :noweb-ref mpv-config
 audio-channels=5.1
-# Disable any automatic remix, _if_ the audio output accepts the audio format.
-# of the currently played file. See caveats mentioned in the manpage.
-# (The default is "auto-safe", see manpage.)
+#+end_src
+
+Disable any automatic remix, _if_ the audio output accepts the audio format.
+of the currently played file. See caveats mentioned in the manpage.
+
+#+begin_src conf :noweb-ref mpv-config
 audio-channels=auto
-##################
-# other settings #
-##################
-# Pretend to be a web browser. Might fix playback with some streaming sites,
-# but also will break with shoutcast streams.
+#+end_src
+
+*** Other settings
+
+Pretend to be a web browser. This might fix playback with some
+streaming sites, but also will break with certain streams.
+
+#+begin_src conf :noweb-ref mpv-config
 user-agent="Mozilla/5.0"
 #+end_src
 
 ** mpd
 
-Music player daemon configuration.
+=mpd=, or Music player daemon, is the main back-end for music and
+audio. For the most basic interaction, a front-end like =ncmpcpp= is
+needed.
 
-#+begin_src conf :tangle ~/.config/mpd/mpd.conf :mkdirp yes
-# Read the user manual for documentation: http://www.musicpd.org/doc/user/
-# Files and directories #######################################################
+A typical usage of =mpd= with these dotfiles is to run the daemon via
+=Systemd= as the logged in user.
+
+#+begin_src conf :noweb yes :tangle ~/.config/mpd/mpd.conf :mkdirp yes :comments org
+<<mpd-config>>
+#+end_src
+
+In this setup, =mpd='s main library is a directory mounted at
+~/home/<user>/Audio/Music~ and all =mpd= related files are stored in the
+~$XDG_CONFIG_HOME/mpd~ directory.
+
+#+begin_src conf :noweb-ref mpd-config
 music_directory  "~/Audio/Music"
 playlist_directory  "~/.config/mpd/playlists"
 db_file   "~/.config/mpd/database"
@@ -5587,84 +5661,57 @@ log_file   "syslog"
 pid_file   "~/.config/mpd/pid"
 state_file   "~/.config/mpd/state"
 sticker_file   "~/.config/mpd/sticker.sql"
-###############################################################################
-# General music daemon options ################################################
-#user    "nobody"
-#group    "nogroup"
-bind_to_address  "0.0.0.0"
-#bind_to_address  "~/.mpd/socket"
-#port    "6600"
-#log_level   "notice"
-#restore_paused "no"
-#save_absolute_paths_in_playlists "no"
-#metadata_to_use "artist,album,title,track,name,genre,date,composer,performer,disc"
-#metadata_to_use "+comment"
-auto_update "yes"
-auto_update_depth "3"
-###############################################################################
-# Symbolic link behavior ######################################################
-follow_outside_symlinks "yes"
-follow_inside_symlinks  "yes"
-###############################################################################
-# Zeroconf / Avahi Service Discovery ##########################################
-#zeroconf_enabled  "yes"
-#zeroconf_name   "Music Player @ %h"
-###############################################################################
-# Permissions #################################################################
-#password                        "password@read,add,control,admin"
-#default_permissions             "read,add,control,admin"
-###############################################################################
-# Database #######################################################################
-#database {
-#       plugin "proxy"
-#       host "other.mpd.host"
-#       port "6600"
-#}
-# Input #######################################################################
-input {
-        plugin "curl"
-#       proxy "proxy.isp.com:8080"
-#       proxy_user "user"
-#       proxy_password "password"
-}
-###############################################################################
-# Audio Output ################################################################
-#audio_output {
-## type  "alsa"
-## name  "My ALSA Device"
-## device  "hw:0,0" # optional
-## mixer_type      "hardware" # optional
-## mixer_device "default" # optional
-## mixer_control "PCM"  # optional
-## mixer_index "0"  # optional
-#}
-###############################################################################
-# Normalization automatic volume adjustments ##################################
-#replaygain   "album"
-#replaygain_preamp  "0"
-#replaygain_missing_preamp "0"
-#replaygain_limit  "yes"
-#volume_normalization  "no"
-###############################################################################
-# Character Encoding ##########################################################
-#filesystem_charset  "UTF-8"
-###############################################################################
-# Visualization
-# audio_output {
-#   type  "fifo"
-#   name  "Visualizer feed"
-#   path "/tmp/mpd.fifo"
-#   format "44100:16:2"
-# }
 #+end_src
 
-#+begin_src sh :noweb-ref mpd-post-tangle
+Bind =mpd= to the local system.
+
+#+begin_src conf :noweb-ref mpd-config
+bind_to_address  "0.0.0.0"
+#+end_src
+
+Automatically update the library, searching three levels deep in the
+directory hierarchy for changes.
+
+#+begin_src conf :noweb-ref mpd-config
+auto_update "yes"
+auto_update_depth "3"
+#+end_src
+
+Follow symbolic links in the library. This allows the library to be
+located off-system and mounted somewhere that isn't the user's home
+directory.
+
+#+begin_src conf :noweb-ref mpd-config
+follow_outside_symlinks "yes"
+follow_inside_symlinks  "yes"
+#+end_src
+
+Use ~curl~ for Input, see manpage.
+
+#+begin_src conf :noweb-ref mpd-config
+input {
+        plugin "curl"
+}
+#+end_src
+
+The rest of =mpd='s configuration can be left to its default values.
+
+On a new system, the playlists directory will need to be created
+before =mpd= can use it.
+
+#+begin_src sh :noweb-ref create-mpd-dirs
 mkdir -p ~/.config/mpd/playlists
 #+end_src
 
 ** ncmpcpp
 
-#+begin_src conf :tangle ~/.config/ncmpcpp/config :mkdirp yes
+Configure the =ncmpcpp= music library front-end for =mpd=.
+
+#+begin_src emacs-lisp :noweb yes :tangle ~/.config/ncmpcpp/config :mkdirp yes
+<<ncmpcpp-config>>
+#+end_src
+
+#+begin_src conf :noweb-ref ncmpcpp-config
 mpd_host = 127.0.0.1
 mpd_port = 6600
 
@@ -5716,16 +5763,27 @@ use_console_editor = yes
 
 =Vim= configuration. Ol' trusty.
 
-#+begin_src conf :tangle ~/.vimrc
-" Plugin Management
-" ------------------------------------------------------------------------------
-" Check for a plugin manager, and if it doesn't exist, go get it.
+#+begin_src emacs-lisp :noweb yes :tangle ~/.vimrc
+<<vim-config>>
+#+end_src
+
+First, setup plugin management for =Vim= using =plug.vim=. A lot of =vim=
+functionality is pulled in via plugins.
+
+Check for a plugin manager, and, if it doesn't exist, go get it.
+
+#+begin_src conf :noweb-ref vim-config
 if empty(glob('~/.vim/autoload/plug.vim'))
   silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
     \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
   autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
+#+end_src
 
+Call the plugin manager when =Vim= starts and define the remote plugins
+to be installed.
+
+#+begin_src conf :noweb-ref vim-config
 call plug#begin('~/.vim/plugged')
 Plug 'itchyny/lightline.vim'
 Plug 'plasticboy/vim-markdown'
@@ -5738,57 +5796,68 @@ Plug 'morhetz/gruvbox', { 'as': 'gruvbox' }
 Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
 
 call plug#end()
+#+end_src
 
-" NerdTree plugin configuration
-" ------------------------------------------------------------------------------
-" Close vim if the only window left open is NERDTree.
+Set =Vim= to close if the ~nerdtree~ plugin window is the only window left
+open.
+
+#+begin_src conf :noweb-ref vim-config
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+#+end_src
 
-" Markdown plugin configurations
-" ------------------------------------------------------------------------------
-" Disable folding
+Disable folding in the ~vim-markdown~ plugin.
+
+#+begin_src conf :noweb-ref vim-config
 let g:vim_markdown_folding_disabled = 1
+#+end_src
 
-" Lightline plugin configuration
-" ------------------------------------------------------------------------------
-" Set lightline colorscheme
+Setup the color scheme for the ~lightline~ plugin.
+
+#+begin_src conf :noweb-ref vim-config
 let g:lightline = {
   \ 'colorscheme': 'seoul256',
   \ }
+#+end_src
 
-" Key Mappings
-" ------------------------------------------------------------------------------
+Set up customization of =vim='s key mapping.
+
+| Key(s)     | Description                                                          |
+|------------+----------------------------------------------------------------------|
+| ~,~          | Leader key                                                           |
+| ~kj~         | An extra ~Esc~                                                         |
+| <leader>ww | Fast save a buffer                                                   |
+| <C-n>      | Toggle the ~NerdTree~ plugin window                                    |
+| <leader>wq | Fast save and quit a buffer                                          |
+| <leader>tn | New tab                                                              |
+| <leader>tm | Move tab                                                             |
+| <leader>.  | Next tab                                                             |
+| <leader>'  | Previous tab                                                         |
+| <leader>p  | Toggle Paste mode                                                    |
+| <leader>ss | Strip spaces (custom function)                                       |
+| <C-T>      | Toggle transparency (custom function)                                |
+| <C-L>      | Redraw the screen and turn off search highlighting until next search |
+
+#+begin_src conf :noweb-ref vim-config
 :let mapleader = ","
-" Do escape with kj
 inoremap kj <c-c>`^
-" Toggle NERDTree
 map <C-n> :NERDTreeToggle<CR>
-" Fast save a buffer
 nmap <leader>ww :w!<cr>
-" Fast save and quit buffer
 nmap <leader>wq :wq!<cr>
-" Fast quit
 nmap <leader>q :q!<cr>
-" New tab
 map <leader>tn :tabnew<cr> " Tab only map <leader>to :tabonly<cr>
-" Tab move
 map <leader>tm :tabmove<cr>
-" Tab next
 nnoremap <leader>. :tabnext<CR>
-" Tab previous
 nnoremap <leader>' :tabprevious<CR>
-" Toggle Paste mode (,p)
 set pastetoggle=<leader>p
 map <leader>p :set invpaste paste?<CR>
-" Strip trailing whitespace (,ss)
 nnoremap <leader>ss :call StripWhitespace()<CR>
-" Toggle background transparency (C-T)
 nnoremap <C-T> :call ToggleTransparent()<CR>
-" Map <C-L> (redraw screen) to also turn off search highlighting until the next search.
 nnoremap <C-L> :nohl<CR><C-L>
+#+end_src
 
-" General
-" ------------------------------------------------------------------------------
+Define general =Vim= settings.
+
+#+begin_src conf :noweb-ref vim-config
 set background=dark
 "colorscheme gruvbox
 "let g:colors_name='gruvbox'
@@ -5843,14 +5912,21 @@ match RedundantSpaces /\s\+$\| \+\ze\t\|\t/
 
 " Change the colorcolumn color.
 highlight ColorColumn ctermbg=236
+#+end_src
 
+Configure the local directories that =Vim= should use.
+
+#+begin_src conf :noweb-ref vim-config
 " Local directories
 set backupdir=~/.vim/backups
 set directory=~/.vim/swaps
 set undodir=~/.vim/undo
+#+end_src
 
-" Syntax
-" ------------------------------------------------------------------------------
+Define the syntax highlighting settings for various languages and file
+types.
+
+#+begin_src conf :noweb-ref vim-config
 " HTML
 let g:html_indent_tags = 'li\|p' " <li> and <p> tags are block elements
 
@@ -5880,9 +5956,13 @@ au BufRead,BufNewFile *.theme set filetype=php
 
 " PHP
 autocmd FileType php set omnifunc=phpcomplete#CompletePHP
+#+end_src
 
-" Functions
-" ------------------------------------------------------------------------------
+As mentioned earlier when defining the key binding customization,
+there are a couple of custom functions that make life a little bit
+easier when using =Vim=.
+
+#+begin_src vimrc :noweb-ref vim-config
 " Strip trailing whitespace
 function! StripWhitespace ()
   let save_cursor = getpos('.')
@@ -5905,18 +5985,19 @@ function! ToggleTransparent()
 endfunction
 #+end_src
 
-Create =vim= directories.
+On a new system, before =vim= is run, the directories to which the
+configuration points to should be created.
 
-#+begin_src  sh :noweb-ref vim-post-tangle
+#+begin_src sh :noweb-ref create-vim-dirs
 mkdir -p ~/.vim/undo
 mkdir -p ~/.vim/backups
 mkdir -p ~/.vim/swaps
 #+end_src
 
+Before this configuration file can be useful some directories and the
+=vim-plugin= manager needs to be put in the autoload directory.
 
-Before this configuration file can be useful some directories and the =vim-plugin= manager needs to be put in the autoload directory.
-
-#+begin_src sh :noweb-ref vim-post-tangle
+#+begin_src sh :noweb-ref get-vim-extras
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
   https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 #+end_src
@@ -6004,7 +6085,6 @@ OnUnitActiveSec=15min
 
 [Install]
 WantedBy=timers.target
-
 #+end_src
 
 ** Emacs
@@ -6013,51 +6093,83 @@ Emacs ships with a systemd unit (at least in Arch), so there's really
 not much to tangle out. On a fresh system, one need simply enable the
 service and start it.
 
-#+begin_src sh :noweb-ref emacs-post-tangle
-# systemctl --user enable --now emacs
+#+begin_src sh :noweb-ref systemd-enable-emacs
+systemctl --user enable --now emacs
 # systemctl --user start emacs
 #+end_src
 
 
 * Post-tangle Targets
 
-This section is used to output the collections of noweb-ref references to shell scripts and run them.
+This section is used to output the collections of noweb-ref references
+to shell scripts and run them.
+
+Each of these blocks should be executed as a first step on any new
+system. This can be done in Emacs via ~C-c C-c~.
 
 ** Packages
 
-#+begin_src shell :noweb yes :mkdirp yes :tangle (concat (cy/system-settings-get 'dotfiles/out) "/post-pkgs.sh") :tangle-mode (identity #o755)
-#!/bin/bash
-<<arch-packages-post-tangle>>
-<<arch-yay-post-tangle>>
-<<arch-aur-packages-post-tangle>>
+Install system packages and such.
+
+@todo: This section requires a password to be read as it is likely the
+commands are being executed by a non-root user. I don't have a great
+way around this at the moment.
+
+#+begin_src shell :noweb yes :shebang #!/bin/bash :output both :results verbatim
+<<pacman-install>>
+<<arch-install-yay>>
+<<yay-install>>
 <<get-preferred-fonts>>
 #+end_src
 
 ** Environment
-#+begin_src shell :noweb yes :mkdirp yes :tangle (concat (cy/system-settings-get 'dotfiles/out) "/post-env.sh") :tangle-mode (identity #o755)
-#!/in/bash
+
+Get all the prerequisites necessary for setting up the environment.
+
+#+begin_src shell :noweb yes :shebang #!/bin/bash :output both :results verbatim
 <<zsh-downloads>>
 <<zsh-post-tangle>>
+<<update-xdg-user-dirs>>
 #+end_src
 
 ** System
 
-#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/environment-post-tangle.sh :tangle-mode (identity #o755)
-<<xorg-post-tangle>>
+Handle all the bits and bobs needed for setting up the system itself.
+
+#+begin_src shell :noweb yes :shebang #!/bin/bash :output both :results verbatim
 <<i3-post-tangle>>
 #+end_src
 
 ** Applications
 
-removed shebang
+Create directories referenced by various application configurations
+and download any dependencies.
 
-#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/application-post-tangle.sh :tangle-mode (identity #o755)
-<<mpd-post-tangle>>
-<<vim-post-tangle>>
+#+begin_src shell :noweb yes :shebang #!/bin/bash :output both :results verbatim
+<<create-vim-dirs>>
+<<get-vim-extras>>
+<<create-mpd-dirs>>
 #+end_src
 
 ** Emacs-centric
 
-#+begin_src sh :noweb yes :mkdirp yes :tangle ~/Projects/home/dotfiles/tangled/systemd-post-tangle.sh :tangle-mode (identity #o755)
-<<emacs-post-tangle>>
+#+begin_src shell :noweb yes :shebang #!/bin/bash :output both :results verbatim
+<<systemd-enable-emacs>>
 #+end_src
+
+* General @TODOs
+
+ - The post tangle stuff around package installation doesn't really work
+ - Syncthing isn't documented, though it's extremely required.
+ - I should add a section for all the user-level systemd stuff currently in use
+ - Need to add something for sshfs mounted remote volumes like ~/Audio
+ - Nothing about the quirks and installation of Yubikey is present
+ - Needs a bitwarden section maybe, though there's really not much to it
+ - Missing ibus / anthy setup documentation
+ - Nothing in here about GPG usage
+ - circleci / aws config?
+ - Ngrok config?
+ - ~pass~ documentation
+ - ~nvm / rvm~ installation. Am I just using aur packages?
+ - anything for docker / kubernetes?
+ - Rust / rustup?
