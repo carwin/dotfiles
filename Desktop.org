@@ -1,4 +1,7 @@
 #+title: Desktop Configuration
+#+PROPERTY: header-args :mkdirp yes
+#+PROPERTY: header-args:sh   :tangle-mode (identity #o555) :shebang #!/bin/bash
+#+PROPERTY: header-args:conf :tangle-mode (identity #o555)
 
 * Table of Contents
 :PROPERTIES:
@@ -60,6 +63,16 @@ init and is called by =./Emacs.org=.
 is used in this file to retrieve variables for values that differ
 between systems like DPI, resolution, etc...
 
+#+name: system-settings
+#+begin_src emacs-lisp :session system-settings
+(load-file (concat user-emacs-directory "cy-system-settings.el"))
+#+end_src
+
+#+name: get-setting
+#+begin_src emacs-lisp :var name="nil" :session system-settings
+(cy/system-settings-get (intern name))
+#+end_src
+
 * System Packages
 
 /The majority of this document assumes that Arch Linux is installed
@@ -74,7 +87,7 @@ Core packages should be installed via =pacman=. It is assumed that
 most of the actual _core_ packages like =btrfs-progs= and =linux-headers=
 have already been installed at this point.
 
-#+begin_src shell :noweb-ref pacman-install
+#+begin_src sh :noweb-ref pacman-install
 sudo pacman -Syyu && sudo pacman -S \
                           awesome-terminal-fonts \
                           docker \
@@ -96,7 +109,7 @@ sudo pacman -Syyu && sudo pacman -S \
 
 To make =AUR= package management easier, first install =yay=.
 
-#+begin_src shell :noweb-ref arch-install-yay
+#+begin_src sh :noweb-ref arch-install-yay
 cd ~/;
 git clone https://aur.archlinux.org/yay.git
 cd yay;
@@ -107,7 +120,7 @@ rm -rf yay;
 
 Now install =AUR= packages:
 
-#+begin_src shell :noweb-ref yay-install
+#+begin_src sh :noweb-ref yay-install
 yay -S \
     ack \
     aaxtomp3 \
@@ -200,7 +213,7 @@ that get used throughout these configurations.
 /installation. This is something that needs to be worked out, but local/
 /sharing of the font via =SyncThing= should do in a pinch./
 
-#+begin_src shell :noweb-ref get-preferred-fonts
+#+begin_src sh :noweb-ref get-preferred-fonts
 mkdir -p $HOME/.local/share/fonts;
 git clone git@github.com:coz-m/MPLUS_FONTS.git $HOME/.local/share/fonts/MPLUS_FONTS;
 git clone https://github.com/larzconwell/mplus-powerline-font/blob/master/mplus%20for%20Powerline.ttf $HOME/.local/share/fonts/mplus-for-powerline;
@@ -357,7 +370,7 @@ export XDG_RUNTIME_HOME="$HOME/.local/run"
 
 Now, collect all the bits of =.profile= into a single file.
 
-#+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/home) "/.profile") :mkdirp yes
+#+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/home) "/.profile")
 <<dot-profile>>
 #+end_src
 
@@ -368,13 +381,13 @@ XDG user directories define the paths for "well-known" directories.
 These values can be queried while scripting using ~xdg-user-dir
 <varname>~ like so:
 
-#+begin_src shell
+#+begin_src sh
 > xdg-user-dir DOWNLOAD
 #+end_src
 
 Using the configurations from this document, that would output:
 
-#+begin_src shell
+#+begin_src sh
 > /home/<user>/Downloads
 #+end_src
 
@@ -388,7 +401,7 @@ Using the configurations from this document, that would output:
  - =XDG_VIDEOS_DIR= :: Video storage.
 
 
-#+begin_src conf :tangle (concat (cy/system-settings-get 'config/dir) "/user-dirs.dirs") :mkdirp
+#+begin_src conf :tangle (concat (cy/system-settings-get 'config/dir) "/user-dirs.dirs")
 XDG_DESKTOP_DIR="$HOME/"
 XDG_DOWNLOAD_DIR="$HOME/Downloads"
 XDG_TEMPLATES_DIR="$HOME/Templates"
@@ -420,7 +433,9 @@ option is set. It should contain commands to set the command search
 path, plus other important environment variables. ~.zshenv~ should not
 contain commands that produce output or assume the shell is attached
 to a tty.
+
 -- Zsh Manual
+
 #+end_quote
 
 To keep the environment and command search paths standard between
@@ -454,7 +469,7 @@ alternative to ~.zlogin~ (both are sourced for login shells). Neither
 at all and instead be used to set the terminal type and run a series
 of external commands like =fortune=.
 
-#+begin_src conf :tangle (concat (cy/system-settings-get 'config/dir) "/zsh/.zprofile") :mkdirp yes
+#+begin_src conf :tangle (concat (cy/system-settings-get 'config/dir) "/zsh/.zprofile")
 #export TERM="xterm-256color"
 shopt -s expand_aliases
 #+end_src
@@ -580,6 +595,7 @@ Define custom command aliases.
  - scrote :: Capture a selected area of the screen to the clipboard using =scrot=.
  - webcam :: Turn on the webcam, sort of works like a mirror to check yourself before a meeting.
  - dots :: Jump to the dotfiles directory.
+ - updots :: Update my dotfiles by running a script that tells Emacs to evaluate these Org files as a script.
  - work :: Jump to the work projects directory.
  - notes :: Jump to the ~~/Notes~ directory.
  - docs :: Jump to ~~/Documents~.
@@ -594,6 +610,7 @@ alias curlheadersproxy='curl --socks5 localhost:11080 -I'
 alias scrote='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/foo.png && rm ~/foo.png'
 alias webcam='mplayer tv:// -tv driver=v412:width=1920:height=1080:device=/dev/video0 -fps 15 -vf screenshot'
 alias dots='cd ~/Projects/home/dotfiles'
+alias updots='~/Projects/home/dotfiles/.bin/update-dotfiles'
 alias work='cd ~/Projects/work'
 alias notes='cd ~/Notes'
 alias docs='cd ~/Documents'
@@ -669,7 +686,7 @@ custom work-in-progress prompt defined below.
 Tangle out all of the ~.zshrc~ source blocks defined above into the
 final file.
 
-#+begin_src conf :tangle (concat (cy/system-settings-get 'config/dir) "/zsh/.zshrc") :mkdirp yes :noweb yes
+#+begin_src conf :tangle (concat (cy/system-settings-get 'config/dir) "/zsh/.zshrc") :noweb yes
 <<zshrc>>
 #+end_src
 
@@ -680,7 +697,7 @@ For convenience, simply evaluate this block or the
 collection of ~:noweb-ref~ blocks that includes this one which is
 defined at the bottom of this file.
 
-#+begin_src shell :noweb-ref zsh-downloads
+#+begin_src sh :noweb-ref zsh-downloads
 #!/bin/bash
 git clone https://github.com/zsh-users/antigen.git ~/.config/zsh/custom/plugins/antigen
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.config/zsh/custom/plugins/zsh-syntax-highlighting
@@ -691,7 +708,7 @@ git clone git@github.com:chriskempson/base16-shell.git ~/.config/zsh/custom/plug
 
 Carwin's custom =zsh= prompt.
 
-#+begin_src conf :tangle ~/.config/zsh/prompt :mkdirp yes
+#+begin_src conf :tangle ~/.config/zsh/prompt
 # Left prompt
 export PS1="%F{223}%n%F{224}@%F{211}%m %F{179}%~%b%F{255} › "
 
@@ -734,8 +751,23 @@ continue using =X=.
 This file handles a variety of things, from shell colors to terminal
 emulator settings.
 
-#+begin_src conf :noweb yes :tangle ~/.Xresources :mkdirp yes
+#+begin_src conf :noweb yes :tangle ~/.Xresources
 <<xresources-config>>
+#+end_src
+
+Old bits and bobs that likely aren't necessary:
+
+#+begin_src conf :noweb-ref xresources-config
+!emacs*Background: DarkSlateGray
+!emacs*Foreground: Wheat
+!emacs*pointerColor: Orchid
+!emacs*cursorColor: Orchid
+!emacs*bitmapIcon: on
+!emacs*font: fixed
+!emacs.geometry: 80x25
+
+*.foreground: #d8dee8
+
 #+end_src
 
 Set the cursor size to something sane. This often gets skewed on HiDPI
@@ -910,7 +942,7 @@ dmenu.foreground:    #d8dee9
 After changing this file, it is necessary to reload it via: ~xrdb
 ~/.Xresources~
 
-#+begin_src shell :shebang #!/bin/bash :noweb-ref source-xresources
+#+begin_src sh :shebang #!/bin/bash :noweb-ref source-xresources
 xrdb ~/.Xresources
 #+end_src
 
@@ -925,7 +957,7 @@ Here it is used primarily to attempt better Xft font display. This
 somewhat duplicates similar entries in =$HOME/.Xresources= but various
 differences in system configuration may require one or the other.
 
-#+begin_src conf :tangle ~/.config/xsettingsd/xsettingsd.conf :mkdirp yes :noweb yes
+#+begin_src conf :tangle ~/.config/xsettingsd/xsettingsd.conf :noweb yes
 Xft/Antialias 1
 Xft/Hinting 1
 Xft/HintStyle "hintslight"
@@ -1426,14 +1458,14 @@ configuration file on the system.
 This script is called whenever =i3= starts up. It's purpose is to
 automatically spawn programs and processes.
 
-#+begin_src shell :noweb yes :tangle ~/.config/i3/bin/autostart.sh :mkdirp yes :shebang #!/bin/bash :tangle-mode (identity #o755)
+#+begin_src sh :noweb yes :tangle ~/.config/i3/bin/autostart.sh :shebang #!/bin/bash
 <<i3-autostart-script>>
 #+end_src
 
 First, kill already running processes from the list of enabled
 autostarts.
 
-#+begin_src shell :noweb-ref i3-autostart-script
+#+begin_src sh :noweb-ref i3-autostart-script
 #_ps=(compton dunst ksuperkey mpd polybar xfce-polkit xfce4-power-manager)
 _ps=(compton dunst polybar xfce-polkit)
 for _prs in "${_ps[@]}"; do
@@ -1445,32 +1477,32 @@ done
 
 Start the =xfce-polkit= agent.
 
-#+begin_src shell :noweb-ref i3-autostart-script
+#+begin_src sh :noweb-ref i3-autostart-script
 /usr/lib/xfce-polkit/xfce-polkit &
 #+end_src
 
 Start an =ibus-daemon= instance for multi-lingual text input.
 
-#+begin_src shell :noweb-ref i3-autostart-script
+#+begin_src sh :noweb-ref i3-autostart-script
 ibus-daemon -drxR &
 #+end_src
 
 Launch =Dunst= to serve notifications.
 
-#+begin_src shell :noweb-ref i3-autostart-script
+#+begin_src sh :noweb-ref i3-autostart-script
 ~/.config/i3/bin/launch-dunst.sh
 #+end_src
 
 Launch =Polybar= to give the window manager some interactive chrome.
 
-#+begin_src shell :noweb-ref i3-autostart-script
+#+begin_src sh :noweb-ref i3-autostart-script
 ~/.config/i3/bin/launch-polybar.sh
 #+end_src
 
 Launch the =picom= compositor for X to allow things like transparency
 and fading of windows.
 
-#+begin_src shell :noweb-ref i3-autostart-script
+#+begin_src sh :noweb-ref i3-autostart-script
 ~/.config/i3/bin/launch-compton.sh
 #+end_src
 
@@ -1478,7 +1510,7 @@ Set the desktop wallpaper to the contents of ~$HOME/.fehbg~. This file
 gets updated whenever =feh= is used to set the wallpaper so it
 effectively sets your wallpaper to the last image chosen.
 
-#+begin_src shell :noweb-ref i3-autostart-script
+#+begin_src sh :noweb-ref i3-autostart-script
 ~/.fehbg &
 #+end_src
 
@@ -1486,7 +1518,7 @@ Run =xmodmap= and point it to ~$HOME/.Xmodmap~ to ensure that the
 =CAPS_LOCK= key is always set to =L_Control= when in X on systems for
 which a keyboard level configuration is inappropriate or impossible.
 
-#+begin_src shell :noweb-ref i3-autostart-script
+#+begin_src sh :noweb-ref i3-autostart-script
 xmodmap ~/.Xmodmap &
 #+end_src
 
@@ -1495,13 +1527,13 @@ xmodmap ~/.Xmodmap &
 This =i3lock= script is triggered manually by way of keystroke from =i3=
 or an automatic inactivity timer provided by the =xautolock= package.
 
-#+begin_src shell :noweb yes :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/i3lock.sh") :mkdirp yes :tangle-mode (identity #o755) :shebang  #!/bin/bash
+#+begin_src sh :noweb yes :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/i3lock.sh") :shebang  #!/bin/bash
 <<i3-lock-script>>
 #+end_src
 
 Define the color variales the script will use:
 
-#+begin_src shell :noweb-ref i3-lock-script
+#+begin_src sh :noweb-ref i3-lock-script
 FG="#c8ccd4"
 BG="#1e222a"
 
@@ -1520,13 +1552,13 @@ WHITE="#abb2bf"
 Set an occasionally silly message from the =fortune= package to display
 on the lockscreen.
 
-#+begin_src shell :noweb-ref i3-lock-script
+#+begin_src sh :noweb-ref i3-lock-script
 TOTD=`fortune -n 90 -s | head -n 1`
 #+end_src
 
 Invoke ~i3lock~, making it look extra fancy.
 
-#+begin_src shell :noweb-ref i3-lock-script
+#+begin_src sh :noweb-ref i3-lock-script
 i3lock \
     --color="${BG}D9" \
     --insidever-color=${GREEN} \
@@ -1570,7 +1602,7 @@ i3lock \
 
 ***** i3's =Dunst= Launcher
 
-#+begin_src shell :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/launch-dunst.sh") :mkdirp yes :tangle-mode (identity #o755) :shebang #!/bin/bash
+#+begin_src sh :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/launch-dunst.sh") :shebang #!/bin/bash
 if [[ `pidof dunst` ]]; then
     pkill dunst
 fi
@@ -1586,25 +1618,25 @@ dunst \
 
 =i3= launches this script at startup to display Polybar.
 
-#+begin_src shell :noweb yes :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/launch-polybar.sh") :mkdirp yes :tangle-mode (identity #o755) :shebang #!/bin/bash
+#+begin_src sh :noweb yes :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/launch-polybar.sh") :shebang #!/bin/bash
 <<i3-polybar-launcher>>
 #+end_src
 
 Terminate already running bar instances.
 
-#+begin_src shell :noweb-ref i3-polybar-launcher
+#+begin_src sh :noweb-ref i3-polybar-launcher
 killall -q polybar
 #+end_src
 
 Wait until the processes have been shut down
 
-#+begin_src shell :noweb-ref i3-polybar-launcher
+#+begin_src sh :noweb-ref i3-polybar-launcher
 while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
 #+end_src
 
 Launch polybar
 
-#+begin_src shell :noweb-ref i3-polybar-launcher
+#+begin_src sh :noweb-ref i3-polybar-launcher
 polybar main -c ~/.config/polybar/config.ini &
 #+end_src
 
@@ -1614,25 +1646,25 @@ This script launches the picom / compton compositor when =i3= starts
 up. Lots of systems still call it "Compton" but the program has been
 renamed to "Picom" for some reason.
 
-#+begin_src shell :noweb yes :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/launch-compton.sh") :mkdirp yes :tangle-mode (identity #o755) :shebang #!/bin/bash
+#+begin_src sh :noweb yes :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/launch-compton.sh") :shebang #!/bin/bash
 <<i3-compositor-launcher>>
 #+end_src
 
 Terminate the compositor process if compton/picom is already running.
 
-#+begin_src shell :noweb-ref i3-compositor-launcher
+#+begin_src sh :noweb-ref i3-compositor-launcher
 killall -q compton
 #+end_src
 
 Wait until the processes have been shut down.
 
-#+begin_src shell :noweb-ref i3-compositor-launcher
+#+begin_src sh :noweb-ref i3-compositor-launcher
 while pgrep -u $UID -x compton >/dev/null; do sleep 1; done
 #+end_src
 
 Launch the compositor.
 
-#+begin_src shell :noweb-ref i3-compositor-launcher
+#+begin_src sh :noweb-ref i3-compositor-launcher
 compton --config ~/.config/picom/picom.conf &
 #+end_src
 
@@ -1659,7 +1691,7 @@ CYAN = #56b6c2
 
 Set up all the general configurations for Polybar.
 
-#+begin_src conf :tangle ~/.config/polybar/config.ini :mkdirp yes
+#+begin_src conf :tangle ~/.config/polybar/config.ini
 ;; Global WM Settings
 
 [global/wm]
@@ -2896,8 +2928,7 @@ system and is the area of this file most likely to change.
 =Dunst= serves as the notification system. It's configuration is minimal
 and is mostly concerned with color, placement, and format.
 
-
-#+begin_src conf :noweb yes :tangle ~/.config/dunst/dunstrc :mkdirp yes
+#+begin_src conf :noweb yes :tangle ~/.config/dunst/dunstrc
 <<dunst-config>>
 #+end_src
 
@@ -3007,8 +3038,7 @@ following bin scripts have a corresponding ~.rasi~ theme file.
 This Asroot script is used to launch applications as the root user.
 @TODO: Confirm the binding, I don't often use this.
 
-#+begin_src shell :tangle ~/.config/rofi/bin/asroot :mkdirp yes :tangle-mode (identity #o755)
-#!/bin/bash
+#+begin_src sh :tangle ~/.config/rofi/bin/asroot :shebang #!/bin/bash
 
 DIR="$HOME/.config/rofi/bin"
 
@@ -3054,8 +3084,7 @@ case $chosen in
 
 A simple confirmation dialog for =Rofi= scripts.
 
-#+begin_src shell :tangle ~/.config/rofi/bin/confirm :mkdirp yes :tangle-mode (identity #o755)
-#!/usr/bin/env bash
+#+begin_src sh :tangle ~/.config/rofi/bin/confirm :shebang #!/bin/bash
 rofi -dmenu\
      -i\
      -no-fixed-num-lines\
@@ -3068,12 +3097,10 @@ rofi -dmenu\
 This =Rofi= script is the primary launcher for applications. It uses
 =i3wm='s default launcher binding of ~<Mod>~-~d~.
 
-#+begin_src shell :tangle ~/.config/rofi/bin/launcher :mkdirp yes :tangle-mode (identity #o755)
-#!/bin/sh
-
+#+begin_src sh :tangle ~/.config/rofi/bin/launcher :shebang #!/bin/bash
 DIR="$HOME/.config/"
 
-rofi -no-lazy-grab -show drun -theme $DIR/rofi/themes/launcher.rasi
+rofi -no-lazy-grab -show drun -no-default-config -theme $DIR/rofi/themes/launcher.rasi
 #+end_src
 
 **** MPD Control via Rofi
@@ -3081,8 +3108,7 @@ rofi -no-lazy-grab -show drun -theme $DIR/rofi/themes/launcher.rasi
 This =Rofi= script launches a window that allows management of =MPD=. The
 script is bound in the =i3wm= configuration to ~<Ctrl>~-~<Mod>~-~m~.
 
-#+begin_src shell :tangle ~/.config/rofi/bin/mpd :mkdirp yes :tangle-mode (identity #o755)
-#!/bin/bash
+#+begin_src sh :tangle ~/.config/rofi/bin/mpd
 
 DIR="$HOME/.config/rofi"
 
@@ -3164,9 +3190,7 @@ This =Rofi= Network menu provides a simple overview of the current
 network connection(s) and the ability to turn wifi off. It is bound to
 ~<Ctrl>~-~<Mod>~-~n~.
 
-#+begin_src shell :tangle ~/.config/rofi/bin/network :mkdirp yes :tangle-mode (identity #o755)
-#!/bin/bash
-
+#+begin_src sh :tangle ~/.config/rofi/bin/network
 DIR="$HOME/.config/rofi"
 
 rofi_command="rofi -theme $DIR/themes/network.rasi"
@@ -3230,8 +3254,7 @@ esac
 
 **** Network Menu
 
-#+begin_src python :tangle ~/.config/rofi/bin/network-menu :mkdirp yes :tangle-mode (identity #o755)
-#!/usr/bin/env python3
+#+begin_src python :tangle ~/.config/rofi/bin/network-menu :shebang #!/usr/bin/env python3
 # encoding:utf8
 """NetworkManager command line dmenu script.
 To add new connections or enable/disable networking requires policykit
@@ -4091,9 +4114,8 @@ if __name__ == '__main__':
 #+end_src
 
 **** Power Menu
-#+begin_src shell :tangle ~/.config/rofi/bin/power-menu :mkdirp yes :tangle-mode (identity #o755)
-#!/bin/bash
 
+#+begin_src sh :tangle ~/.config/rofi/bin/power-menu
 DIR="$HOME/.config/rofi"
 
 rofi_command="rofi -theme $DIR/themes/powermenu.rasi"
@@ -4169,9 +4191,7 @@ window to the right of the screen to allow a selection of different
 types of screenshots. The default option, in the center, allows
 capturing an area directly to the clipboard for pasting.
 
-#+begin_src shell :tangle ~/.config/rofi/bin/screenshot :mkdirp yes :tangle-mode (identity #o755)
-#!/bin/bash
-
+#+begin_src sh :tangle ~/.config/rofi/bin/screenshot
 DIR="$HOME/.config/rofi"
 
 rofi_command="rofi -theme $DIR/themes/screenshot.rasi"
@@ -4204,16 +4224,43 @@ This script launches a Rofi window that allows the browsing of
 currently opened windows. It is bound to ~<Ctrl>~-~<Mod>~-~w~ in =i3wm='s
 config.
 
-#+begin_src shell :tangle ~/.config/rofi/bin/windows :mkdirp yes :tangle-mode (identity #o755)
-#!/bin/sh
+#+begin_src sh :tangle ~/.config/rofi/bin/windows
 DIR="$HOME/.config/rofi"
 
 rofi -no-lazy-grab -show window -theme $DIR/themes/window.rasi
 #+end_src
 
 *** Theme(s)
+**** Ask for Password
+
+#+begin_src css :tangle ~/.config/rofi/themes/askpass.rasi
+@import "colors.rasi"
+
+,* {
+  transparency: "real";
+  background-color: @background;
+  text-color: @foreground;
+  font: "JetBrains Mono Medium 10";
+}
+
+#window {
+  border: 2px;
+  border-radius: 12px;
+  border-color:	@selected;
+  width: 300px;
+  y-offset: -5%;
+  padding: 20px;
+}
+
+#entry {
+  expand: true;
+  width: 150px;
+  text-color: @urgent;
+}
+#+end_src
+
 **** Colors
-#+begin_src css :tangle ~/.config/rofi/themes/colors.rasi :mkdirp yes
+#+begin_src css :tangle ~/.config/rofi/themes/colors.rasi
 ,* {
   background:			#1e222a;
   background-alt:		#262A32;
@@ -4225,7 +4272,7 @@ rofi -no-lazy-grab -show window -theme $DIR/themes/window.rasi
 }
 #+end_src
 **** Confirm
-#+begin_src css :tangle ~/.config/rofi/themes/confirm.rasi :mkdirp yes
+#+begin_src css :tangle ~/.config/rofi/themes/confirm.rasi
 @import "colors.rasi"
 
 ,* {
@@ -4249,49 +4296,53 @@ rofi -no-lazy-grab -show window -theme $DIR/themes/window.rasi
   width: 							150px;
   text-color:						@urgent;
 }
+element-text {
+    background-color: inherit;
+    text-color:       inherit;
+}
 #+end_src
+
 **** Launcher
 
-#+begin_src css :tangle ~/.config/rofi/themes/launcher.rasi :mkdirp yes
+#+begin_src scss :tangle ~/.config/rofi/themes/launcher.rasi
 configuration {
-  lines:							10;
-  columns:						2;
-  font: 							"JetBrains Mono Medium 10";
-  bw: 							0;
-  location: 						0;
-  padding: 						0;
-  fixed-num-lines: 				true;
-  show-icons: 					false;
-  sidebar-mode: 					true;
-  separator-style: 				"none";
-  hide-scrollbar: 				true;
-  fullscreen: 					false;
-  fake-transparency: 				false;
-  scroll-method: 					1;
-  window-format: 					"[{w}] ··· {c} ···   {t}";
-  click-to-exit: 					true;
-  show-match: 					false;
+  font: 				"JetBrains Mono Medium 10";
+  // bw: 					0;
+  location: 				0;
+  // padding: 				0;
+  fixed-num-lines: 			true;
+  show-icons: 				false;
+  sidebar-mode: 			true;
+  // separator-style: 			"none";
+  // hide-scrollbar: 			true;
+  // fullscreen: 				false;
+  // fake-transparency: 			false;
+  scroll-method: 			1;
+  window-format: 			"[{w}] ··· {c} ···   {t}";
+  click-to-exit: 			true;
+  // show-match: 				false;
   combi-hide-mode-prefix: 		false;
-  display-window: 				"";
-  display-windowcd: 				"";
-  display-run: 					"";
-  display-ssh: 					"";
-  display-drun: 					"";
-  display-combi: 					"";
+  display-window: 			"";
+  display-windowcd: 			"";
+  display-run: 				"";
+  display-ssh: 				"";
+  display-drun: 			"";
+  display-combi: 			"";
 }
 
 @import "colors.rasi"
 
 ,* {
-  background-color:             	@background;
+  background-color:             @background;
+  text-color:                   @foreground;
 }
 
 window {
-  border: 						0px;
-  border-color: 					@selected;
-  border-radius: 					20px;
-  padding: 						30;
-  width: 							40%;
+  border: 0px;
+  border-color:	@selected;
+  border-radius: 20px;
+  padding: 30;
+  width: 40%;
 }
 
 prompt {
@@ -4338,6 +4389,8 @@ listview {
   spacing: 						4px;
   scrollbar: 						false;
   padding: 						5px 5px 0px 5px;
+  lines:				10;
+  columns:		                2;
 }
 
 element {
@@ -4425,11 +4478,16 @@ message {
 textbox {
   text-color: 					@foreground;
 }
+
+element-text {
+    background-color: inherit;
+    text-color:       inherit;
+}
 #+end_src
 
 **** Window
 
-#+begin_src css :tangle ~/.config/rofi/themes/window.rasi :mkdirp yes
+#+begin_src css :tangle ~/.config/rofi/themes/window.rasi
 configuration {
     font:                           "JetBrains Mono Medium 10";
     show-icons:                     false;
@@ -4450,7 +4508,7 @@ window {
     transparency:                   "real";
     background-color:               @background;
     text-color:                     @foreground;
-	border:							0px;
+    border:							0px;
     border-radius:                  12px;
     border-color:					@selected;
     width:                          500px;
@@ -4542,10 +4600,12 @@ element-icon {
 }
 
 element-text {
-    expand:                         true;
-    horizontal-align:               0;
-    vertical-align:                 0;
-    margin:                         2px 0px 2px 2px;
+  expand:                         true;
+  horizontal-align:               0;
+  vertical-align:                 0;
+  margin:                         2px 0px 2px 2px;
+  background-color: inherit;
+  text-color:       inherit;
 }
 
 element selected {
@@ -4700,8 +4760,9 @@ element-text {
   horizontal-align:               0;
   vertical-align:                 0;
   margin:                         2px 0px 2px 2px;
+  background-color: inherit;
+  text-color: inherit;
 }
-
 element selected {
   background-color:               @selected;
   text-color:                     @background;
@@ -4734,7 +4795,7 @@ element.selected.active {
 #+end_src
 
 **** Network
-#+begin_src css :tangle ~/.config/rofi/themes/network.rasi :mkdirp yes
+#+begin_src css :tangle ~/.config/rofi/themes/network.rasi
 configuration {
   font:                           "JetBrains Mono Medium 10";
   show-icons:                     false;
@@ -4852,6 +4913,8 @@ element-text {
   expand:                         true;
   horizontal-align:               0;
   vertical-align:                 0;
+  background-color: inherit;
+  text-color:       inherit;
 }
 
 element selected {
@@ -4885,7 +4948,7 @@ element.selected.active {
 }
 #+end_src
 **** Network Menu
-#+begin_src css :tangle ~/.config/rofi/themes/networkmenu.rasi :mkdirp yes
+#+begin_src css :tangle ~/.config/rofi/themes/networkmenu.rasi
 configuration {
   font:                           "JetBrains Mono Medium 10";
   show-icons:                     false;
@@ -5002,6 +5065,8 @@ element-text {
   horizontal-align:               0;
   vertical-align:                 0;
   margin:                         2px 0px 2px 2px;
+  background-color: inherit;
+  text-color:       inherit;
 }
 
 element selected {
@@ -5035,7 +5100,7 @@ element.selected.active {
 }
 #+end_src
 **** Network Menu Config
-#+begin_src shell :tangle ~/.config/rofi/themes/networkmenu_config.ini
+#+begin_src sh :tangle ~/.config/rofi/themes/networkmenu_config.ini
 [dmenu]
 dmenu_command = rofi -dmenu -theme ~/.config/rofi/themes/networkmenu.rasi
 # # Note that dmenu_command can contain arguments as well like `rofi -width 30`
@@ -5067,7 +5132,7 @@ gui_if_available = True
 #+end_src
 
 **** MPD
-#+begin_src css :tangle ~/.config/rofi/themes/mpd.rasi :mkdirp yes
+#+begin_src css :tangle ~/.config/rofi/themes/mpd.rasi
 configuration {
   font:                           "JetBrains Mono Medium 10";
   show-icons:                     false;
@@ -5185,6 +5250,8 @@ element-text {
   expand:                         true;
   horizontal-align:               0;
   vertical-align:                 0;
+  background-color: inherit;
+  text-color:       inherit;
 }
 
 element selected {
@@ -5219,7 +5286,7 @@ element.selected.active {
 #+end_src
 
 **** Power Menu
-#+begin_src css :tangle ~/.config/rofi/themes/powermenu.rasi :mkdirp yes
+#+begin_src css :tangle ~/.config/rofi/themes/powermenu.rasi
 configuration {
   font:                           "JetBrains Mono Medium 10";
   show-icons:                     false;
@@ -5238,7 +5305,7 @@ configuration {
 @import "colors.rasi"
 
 window {
-  transparency:                   "real";
+  transparency:                   "fake";
   background-color:               @background;
   text-color:                     @foreground;
   border:							0px;
@@ -5336,6 +5403,8 @@ element-text {
   expand:                         true;
   horizontal-align:               0;
   vertical-align:                 0;
+  background-color: inherit;
+  text-color:       inherit;
 }
 
 element selected {
@@ -5369,7 +5438,7 @@ element.selected.active {
 }
 #+end_src
 **** Screenshot
-#+begin_src css :tangle ~/.config/rofi/themes/screenshot.rasi :mkdirp yes
+#+begin_src css :tangle ~/.config/rofi/themes/screenshot.rasi
 configuration {
   font:                           "JetBrains Mono Medium 10";
   show-icons:                     false;
@@ -5486,6 +5555,8 @@ element-text {
   expand:                         true;
   horizontal-align:               0;
   vertical-align:                 0;
+  background-color: inherit;
+  text-color:       inherit;
 }
 
 element selected {
@@ -5640,7 +5711,10 @@ The following configuration defines:
 | ~:empty~  | Empties the ~/home/<user>/.Trash~ directory                                          |
 | ~:moveit~ | An in-application wrapper for the ~mv~ command, without support for flags or options |
 
-#+begin_src python :tangle ~/.config/ranger/commands.py :mkdirp yes
+#+begin_src python :tangle ~/.config/ranger/commands.py :shebang #!/usr/bin/env python3
+import os
+from ranger.api.commands import Command
+
 class empty(Command):
     """:empty
     Empties the trash directory ~/.Trash
@@ -5670,7 +5744,7 @@ legacy and should be updated to use ~mpv~ instead./
 This configuration for =mpv= is somewhat simplistic but provides some
 sane defaults that can be further customized as needed.
 
-#+begin_src conf :noweb yes :tangle ~/.config/mpv/mpv.conf :mkdirp yes
+#+begin_src conf :noweb yes :tangle ~/.config/mpv/mpv.conf
 <<mpv-config>>
 #+end_src
 
@@ -5789,7 +5863,7 @@ needed.
 A typical usage of =mpd= with these dotfiles is to run the daemon via
 =Systemd= as the logged in user.
 
-#+begin_src conf :noweb yes :tangle ~/.config/mpd/mpd.conf :mkdirp yes :comments org
+#+begin_src conf :noweb yes :tangle ~/.config/mpd/mpd.conf
 <<mpd-config>>
 #+end_src
 
@@ -5851,7 +5925,7 @@ mkdir -p ~/.config/mpd/playlists
 
 Configure the =ncmpcpp= music library front-end for =mpd=.
 
-#+begin_src emacs-lisp :noweb yes :tangle ~/.config/ncmpcpp/config :mkdirp yes
+#+begin_src emacs-lisp :noweb yes :tangle ~/.config/ncmpcpp/config
 <<ncmpcpp-config>>
 #+end_src
 
@@ -6158,7 +6232,7 @@ Before any of these tweaks will work, the setting =toolkit.legacyUserProfileCust
 #+end_src
 *** userChrome.css
 
-#+begin_src css :tangle ~/.mozilla/firefox/8zl2ickg.default-release/chrome/userChrome.css :mkdirp yes
+#+begin_src css :tangle ~/.mozilla/firefox/8zl2ickg.default-release/chrome/userChrome.css
 @-moz-document url(chrome://browser/content/browser.xhtml)
 {
   #main-window,
@@ -6176,7 +6250,7 @@ Before any of these tweaks will work, the setting =toolkit.legacyUserProfileCust
 
 *** userContent.css
 
-#+begin_src css :tangle ~/.mozilla/firefox/8zl2ickg.default-release/chrome/userContent.css :mkdirp yes
+#+begin_src css :tangle ~/.mozilla/firefox/8zl2ickg.default-release/chrome/userContent.css
 @charset "utf-8";
 /* CSS Document */
 
@@ -6204,7 +6278,7 @@ User level =Systemd= configurations live in =~/.config/systemd/user/=
 This systemd service sets a random desktop wallpaper fifteen minutes
 after boot (when enabled) or whenever run.
 
-#+begin_src shell :tangle ~/.config/systemd/user/wallpaper-changer.service
+#+begin_src sh :tangle ~/.config/systemd/user/wallpaper-changer.service
 [Unit]
 Description=Choose a random desktop wallpaper
 
@@ -6218,7 +6292,7 @@ WantedBy=default.target
 This systemd timer can be enabled to automatically change the random
 wallpaper at a given interval.
 
-#+begin_src shell :tangle ~/.config/systemd/user/wallpaper-changer.timer
+#+begin_src sh :tangle ~/.config/systemd/user/wallpaper-changer.timer
 #/etc/systemd/system/foo.timer
 [Unit]
 Description=Change the desktop wallpaper periodically
@@ -6259,7 +6333,7 @@ Install system packages and such.
 commands are being executed by a non-root user. I don't have a great
 way around this at the moment.
 
-#+begin_src shell :noweb yes :shebang #!/bin/bash :output both :results verbatim
+#+begin_src sh :noweb yes :shebang #!/bin/bash :output both :results verbatim
 <<pacman-install>>
 <<arch-install-yay>>
 <<yay-install>>
@@ -6270,7 +6344,7 @@ way around this at the moment.
 
 Get all the prerequisites necessary for setting up the environment.
 
-#+begin_src shell :noweb yes :shebang #!/bin/bash :output both :results verbatim
+#+begin_src sh :noweb yes :shebang #!/bin/bash :output both :results verbatim
 <<zsh-downloads>>
 <<zsh-post-tangle>>
 <<update-xdg-user-dirs>>
@@ -6281,7 +6355,7 @@ Get all the prerequisites necessary for setting up the environment.
 
 Handle all the bits and bobs needed for setting up the system itself.
 
-#+begin_src shell :noweb yes :shebang #!/bin/bash :output both :results verbatim
+#+begin_src sh :noweb yes :shebang #!/bin/bash :output both :results verbatim
 <<i3-post-tangle>>
 #+end_src
 
@@ -6290,7 +6364,7 @@ Handle all the bits and bobs needed for setting up the system itself.
 Create directories referenced by various application configurations
 and download any dependencies.
 
-#+begin_src shell :noweb yes :shebang #!/bin/bash :output both :results verbatim
+#+begin_src sh :noweb yes :shebang #!/bin/bash :output both :results verbatim
 <<create-vim-dirs>>
 <<get-vim-extras>>
 <<create-mpd-dirs>>
@@ -6298,7 +6372,7 @@ and download any dependencies.
 
 ** Emacs-centric
 
-#+begin_src shell :noweb yes :shebang #!/bin/bash :output both :results verbatim
+#+begin_src sh :noweb yes :shebang #!/bin/bash :output both :results verbatim
 <<systemd-enable-emacs>>
 #+end_src
 

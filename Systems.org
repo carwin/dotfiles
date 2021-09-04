@@ -11,6 +11,9 @@
   - [[#buster][buster]]
   - [[#punchy][punchy]]
   - [[#cutman][cutman]]
+- [[#updating][Updating]]
+  - [[#update-script][Update script]]
+  - [[#tangle-dotfiles][Tangle Dotfiles]]
 - [[#functions-and-export][Functions and Export]]
 :END:
 
@@ -127,6 +130,49 @@ using =i3= and =gtk= applications somewhat annoying.
 
 =cutman= is a Pixel 5. I've yet to get into figuring out how to use
 Emacs with it, but I suspect Termux is a major part of it.
+
+* Updating
+** Update script
+
+This shell script is used to update the dotfiles from outside of Emacs.
+
+#+begin_src sh :tangle .bin/update-dotfiles :shebang #!/bin/sh :mkdirp yes
+# Navigate to the directory of this script (generally ~/Projects/home/dotfiles/.bin)
+cd $(dirname $(readlink -f $0))
+cd ..
+
+# The heavy lifting is done by an Emacs script
+emacs -Q --script ~/.emacs.d/tangle-dotfiles.el
+
+# Make sure any running Emacs instance gets updated settings
+emacsclient -e '(load-file "~/.emacs.d/cy-system-settings.el")' -a "echo 'Emacs is not currently running'"
+#+end_src
+
+** Tangle Dotfiles
+
+This special tidbit is responsible for tangling everything in this repository in the proper order.
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/tangle-dotfiles.el
+(require 'org)
+(load-file "~/.emacs.d/cy-system-settings.el")
+
+;; Don't ask when evaluating code blocks
+(setq org-confirm-babel-evaluate nil)
+
+(let* ((dotfiles-path (expand-file-name "~/Projects/home/dotfiles"))
+       (org-files (directory-files dotfiles-path nil "\\.org$")))
+
+  (defun cy/tangle-org-file (org-file)
+    (message "\n\033[1;32mUpdating %s\033[0m\n" org-file)
+    (org-babel-tangle-file (expand-file-name org-file dotfiles-path)))
+
+  ;; Tangle Systems.org first
+  (cy/tangle-org-file "Systems.org")
+
+  (dolist (org-file org-files)
+    (unless (member org-file '("README.org" "Systems.org"))
+      (cy/tangle-org-file org-file))))
+#+end_src
 
 * =Functions and Export=
 

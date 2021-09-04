@@ -78,7 +78,8 @@ Auto-update packages when Emacs starts.
    (auto-package-update-maybe))
 #+end_src
 
-Extend =use-package= to allow /ensuring/ that system packages are present, and, if not, attempt to install them.
+Extend =use-package= to allow /ensuring/ that system packages are present,
+and, if not, attempt to install them.
 
 #+begin_src emacs-lisp
 (use-package use-package-ensure-system-package
@@ -303,7 +304,8 @@ using the =evil-collection= package.
     (evil-collection-init 'dashboard)) ; Make sure Evil bindings work on the Dashboard.
 #+end_src
 
-Add another collection of =evil= configurations specifically for navigating some =org-mode= areas like the Agenda.
+Add another collection of =evil= configurations specifically for
+navigating some =org-mode= areas like the Agenda.
 
 #+begin_src emacs-lisp
 (use-package evil-org
@@ -1098,18 +1100,29 @@ Using the =ws-butler= package, automatically remove trailing whitespace.
   (prog-mode . ws-butler-mode)))
 #+end_src
 
+@deprecated
+#+begin_quote
+It turns out this gets pretty dang annoying when you've got hundreds
+of blocks to tangle out every time you make an edit. Prefer a manual
+process via script, which itself lives in Systems.org.
+
+I'm leaving this in because its interesting to know how to configure,
+but I'm not going to actually evaluate it.
+-- me
+#+end_quote
+
 Automatically tangle when saved without having to worry about
-=org-confirm-babel-evaluate-all=. Instead, do it some time around the =after-save=
-hook.
+=org-confirm-babel-evaluate-all=. Instead, do it some time around the
+=after-save= hook.
 
 #+begin_src emacs-lisp
-(defun cy/org-babel-tangle-dont-ask ()
-  ;; Dynamic scoping to the rescue
-  (let ((org-confirm-babel-evaluate nil))
-    (org-babel-tangle)))
+;; (defun cy/org-babel-tangle-dont-ask ()
+;;   ;; Dynamic scoping to the rescue
+;;   (let ((org-confirm-babel-evaluate nil))
+;;     (org-babel-tangle)))
 
-(add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'cy/org-babel-tangle-dont-ask
-                                              'run-at-end 'only-in-org-mode)))
+;; (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'cy/org-babel-tangle-dont-ask
+;;                                               'run-at-end 'only-in-org-mode)))
 #+end_src
 
 Stateful Keymaps with Hydra
@@ -2113,6 +2126,9 @@ Configure a replacemnt for the old =org-roam-server= that was used with roam v1.
 
 #+begin_src emacs-lisp
 (use-package websocket
+  :after org-roam)
+
+(use-package simple-httpd
   :after org-roam)
 
 (use-package org-roam-ui
