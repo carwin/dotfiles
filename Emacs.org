@@ -3,7 +3,8 @@
 #+EMAIL:   cy@carw.in
 #+PROPERTY: header-args:emacs-lisp :tangle ~/.emacs.d/init.el :mkdirp yes
 
-This is Carwin's Emacs configuration. The goal is that it's portable enough to be moved around between machines.
+This is Carwin's Emacs configuration. The goal is that it's portable
+enough to be moved around between machines.
 
 * Table of Contents
 :PROPERTIES:
@@ -32,7 +33,11 @@ Load paths from shell
 Load settings for this particular system.
 
 #+begin_src emacs-lisp
-(load-file "~/.emacs.d/per-system-settings.el")
+(load-file "~/.emacs.d/cy-system-settings.el")
+#+end_src
+
+#+begin_src emacs-lisp
+;;(org-babel-lob-ingest (concat (file-name-directory buffer-file-name) "Systems.org"))
 #+end_src
 
 Set Emacs to run as a server to be connected to via =emacsclient=.
@@ -42,7 +47,6 @@ Set Emacs to run as a server to be connected to via =emacsclient=.
 (setq server-socket-file (concat "/tmp/emacs" (format "%s" (user-real-uid)) "/server"))
 (unless (file-exists-p server-socket-file)
   (server-start))
-
 #+end_src
 
 ** Package Management
@@ -295,6 +299,7 @@ using the =evil-collection= package.
 (use-package evil-collection
     :after evil
     :init
+    (setq evil-want-keybinding nil)
     (setq evil-collection-company-use-tng nil)
     :ensure t
     :custom
@@ -423,7 +428,7 @@ themes directory within the dotfiles repository for keeping themes together.
 #+begin_src emacs-lisp
 (add-to-list 'custom-theme-load-path
              (concat
-              "~/Projects/home/dotfiles/" "emacs-themes"))
+              (cy/system-settings-get 'dotfiles/dir) "/emacs-themes"))
 #+end_src
 
 Enable one of the themes, either from the custom theme directory or from the
@@ -441,14 +446,16 @@ Prettify fringe bitmaps.
 (define-fringe-bitmap 'left-curly-arrow [255] nil nil '(center t))
 #+end_src
 
-Configure a leader based key binding for choosing and toggling theemes under the =<leader>-t= parent.
+Configure a leader based key binding for choosing and toggling theemes
+under the =<leader>-t= parent.
 
 #+begin_src emacs-lisp
 (cy/leader-key-def
   "tc" '(consult-theme :which-key "choose theme"))
 #+end_src
 
-Set the background of HTML color strings in buffers to the color they represent.
+Set the background of HTML color strings in buffers to the color they
+represent.
 
 #+begin_src emacs-lisp
 (use-package rainbow-mode
@@ -797,19 +804,18 @@ Configure preferred settings for =dired=, the primary built-in file browsing mec
 
 (cy/leader-key-def
   "d"   '(:ignore t :which-key "dired")
-  "dd"  '(dired :which-key "Here")
+  "dd"  `(,(cy/dired-link "~/Documents") :which-key "Here")
   "dh"  `(,(cy/dired-link "~") :which-key "Home")
   "di"  `(,(cy/dired-link "~/Notes/Inbox.org") :which-key "Inbox")
-  "dj"  `(,(cy/dired-link "~/Notes/Journal.org") :which-key "Journal")
   "dn"  `(,(cy/dired-link "~/Notes") :which-key "Notes")
   "do"  `(,(cy/dired-link "~/Downloads") :which-key "Downloads")
   "dp"  `(,(cy/dired-link "~/Projects") :which-key "Projects")
   "dv"  `(,(cy/dired-link "~/Videos") :which-key "Videos")
-  "dm"  `(,(cy/dired-link "~/Projects/work/mobomo") :which-key "Mobomo Projects")
-  "d."  `(,(cy/dired-link "~/Projects/home/dotfiles") :which-key "dotfiles"))
+  "d."  `(,(cy/dired-link (cy/system-settings-get 'dotfiles/dir)) :which-key "dotfiles"))
 #+end_src
 
-Setup =deft= as a nice alternative way to browse files, specifically installed for =org-roam=.
+Setup =deft= as a nice alternative way to browse files, specifically
+installed for =org-roam=.
 
 If this ever gets super slow, look into installing the Notdeft fork.
 
@@ -828,7 +834,8 @@ If this ever gets super slow, look into installing the Notdeft fork.
   "<SPC>" '(deft :which-key "deft"))
 #+end_src
 
-Configure =neotree=, a file browser and project explorer like =NerdTree= for =vim= that displays in a side window.
+Configure =neotree=, a file browser and project explorer like =NerdTree=
+for =vim= that displays in a side window.
 
 #+begin_src emacs-lisp
 (use-package neotree
@@ -1040,19 +1047,12 @@ auto-save in these files may be quite cumbersome due to the large
 amount of tangling and script running that happens throughout.
 
 #+begin_src emacs-lisp
-(defun cy/auto-save-exclude-dir-list ()
-  `(directory-files "~/Projects/home/dotfiles" t "\\.org$"))
-#+end_src
-
-#+begin_src emacs-lisp
 (use-package super-save
   :ensure t
   :defer 1
   :diminish super-saver-mode
   :config
   (super-save-mode +1)
-  ;; (setq super-save-exclude (concat (file-name-directory buffer-file-name) "*.org"))
-  ;; (setq super-save-exclude (cy/auto-save-exclude-dir-list))
   (setq super-save-exclude '(("Desktop.org")
 			     ("Emacs.org")
 			     ("Systems.org")
@@ -1062,7 +1062,8 @@ amount of tangling and script running that happens throughout.
   (setq super-save-auto-save-when-idle nil))
 #+end_src
 
-Automatically revert files in open buffers that have been changed elsewhere.
+Automatically revert files in open buffers that have been changed
+elsewhere.
 
 #+begin_src emacs-lisp
 (global-auto-revert-mode 1)

@@ -9,8 +9,10 @@
   - [[#base-configuration][Base Configuration]]
   - [[#guts][guts]]
   - [[#buster][buster]]
-  - [[#punchy][punchy]]
+  - [[#blank][blank]]
   - [[#cutman][cutman]]
+  - [[#archived-machine-configurations][Archived Machine Configurations]]
+    - [[#punchy][punchy]]
 - [[#updating][Updating]]
   - [[#update-script][Update script]]
   - [[#tangle-dotfiles][Tangle Dotfiles]]
@@ -32,17 +34,23 @@ the declared overrides are mashed together on a per-system basis using
 
 #+begin_src emacs-lisp :tangle (concat user-emacs-directory "cy-system-settings.el") :noweb yes
 (require 'map) ;; needed for map-merge
-
+(require 'org)
 <<system-functions>>
 
 (setq cy/system-settings
       (map-merge
        'list
        `((desktop/dpi . 180)
+         ;; (user/home . ,(concat "/home/" user-login-name))
+         (user/home . "~/")
+         (user/config . "~/.config/")
+         (user/dots . "~/Projects/home/dotfiles/")
+         (user/dots/output . "~/Projects/home/dotfiles/tangled/")
+
          (dotfiles/dir . ,(shell-command-to-string "printf %s \"$DOTDIR\""))
          (dotfiles/out . ,(concat (shell-command-to-string "printf %s \"$DOTDIR\"") "/tangled"))
-         (user/home . ,(concat "/home/" user-login-name))
          (config/dir . ,(shell-command-to-string "printf %s \"$XDG_CONFIG_HOME\""))
+
          (emacs/dashboard-agenda-face-size . 100)
          (emacs/default-face-size . 100)
          (emacs/variable-face-size . 2.45)
@@ -50,6 +58,8 @@ the declared overrides are mashed together on a per-system basis using
        <<system-settings>>))
 
 <<export>>
+
+(org-babel-lob-ingest (concat <<dotfiles-location>> "/Systems.org"))
 #+end_src
 
 Individual machines / systems are named with brevity and
@@ -63,6 +73,43 @@ to when referencing the system in configuration:
  - greatname :: =Linux= and =Android=
  - GREATNAME :: =Windows= and =WSL=
  - GreatName :: =OSX=
+
+Many of the tangled shell scripts and configuration files look for and
+use the location of dotfiles project directory. The location of the
+dotfiles directory can vary between systems (see [[file:Systems.org][Systems.org]]), and is
+usually something we can get via ~cy/system-settings-get()~. But to keep
+a singular canonical source of truth for this location in this
+literate configuration, we'll provide a named code block that uses the
+get custom settings function to output the path. This named block can
+be referenced using Emacs' noweb syntax.
+
+To use this across files in this repository, ~org-babel-lob-ingest~ is used
+to read this file to make the value available.
+
+In addition to the dotfiles directory, this process is repeated for a
+handful of other commonly referenced variables that may need to appear
+in either Emacs Lisp or Shell scripts.
+
+The goal, again, is to keep one singular reference to each path across
+the entire project.
+
+ - dotfiles-location :: The location of these Org files.
+#+name: dotfiles-location
+#+begin_src emacs-lisp :exports none
+(cy/system-settings-get 'user/dots)
+#+end_src
+
+ - user-config-location :: The location of user configuration, typically ~/home/<user>/.config~.
+#+name: user-config-location
+#+begin_src emacs-lisp :exports none
+(cy/system-settings-get 'user/config)
+#+end_src
+
+ - dotfiles-output-location :: Files which are tangled out from these org files.
+#+name: dotfiles-output-location
+#+begin_src emacs-lisp
+(cy/system-settings-get 'user/dots/output)
+#+end_src
 
 ** guts
 
@@ -108,17 +155,51 @@ background.
     (emacs/fixed-face-size . 110)))
 #+end_src
 
-** punchy
+** blank
 
-=punchy= is a work-provided ThinkPad p43s that I use primarily for my
-day job. It runs =Windows 10= and =Ubuntu 20.04= via =WSL2=. Emacs, on this
-machine, is run via =WSL= and forwarded to an X session on Windows
-provided by the X410 application.
+=blank= is a work-provided 13" MacBook Pro (2020). It has a 2.3 GHz
+Quad-Core Intel Core i7, 16GB of RAM and an Intel Iris 2560x1600
+display.
 
-The screen is wonderful, but there are some HiDPI quirks that make
-using =i3= and =gtk= applications somewhat annoying.
+Because this is a macOS machine, there're a lot of things that need to
+be tweaked and trying to use Emacs in the way I always have on this
+thing has pointed out a number of flaws in my setup.
 
 #+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep
+(when (equal system-name "blank.local")
+  `((desktop/dpi . 90)
+    (user/home . "~/")
+    (config/dir . ,(shell-command-to-string "source ~/.profile && printf %s \"$XDG_CONFIG_HOME\""))
+    (emacs/default-face-size . 110)))
+#+end_src
+
+There are some Quirks that need to be handled outside of Emacs for
+things to work:
+
+1. When Emacs is installed via Homebrew, macOS needs to grant Ruby
+   (~/usr/bin/ruby~ or whichever is the default) full filesystem
+   access. This is due to the fact that the Homebrew installation of
+   Emacs is actually launched via a Ruby script.
+
+** cutman
+
+=cutman= is a Pixel 5. I've yet to get into figuring out how to use
+Emacs with it, but I suspect Termux is a major part of it.
+
+** Archived Machine Configurations
+
+*** punchy
+
+=punchy= was a work-provided ThinkPad p43s. It runs =Windows 10= and
+=Ubuntu 20.04= via =WSL2=. Emacs, on this machine, was run mostly via =WSL=
+and forwarded to an X session on Windows provided by the X410
+application.
+
+The screen was wonderful, but in Linux especially there were some
+HiDPI quirks that make using =i3= and =gtk= applications somewhat
+annoying.
+
+#+begin_src emacs-lisp
 (when (equal system-name "PUNCHY")
   '((desktop/dpi . 89)
     (emacs/variable-face-size . 1.1)
@@ -126,17 +207,13 @@ using =i3= and =gtk= applications somewhat annoying.
     (emacs/default-face-size . 100)))
 #+end_src
 
-** cutman
-
-=cutman= is a Pixel 5. I've yet to get into figuring out how to use
-Emacs with it, but I suspect Termux is a major part of it.
 
 * Updating
 ** Update script
 
 This shell script is used to update the dotfiles from outside of Emacs.
 
-#+begin_src sh :tangle .bin/update-dotfiles :shebang #!/bin/sh :mkdirp yes
+#+begin_src sh :tangle .bin/update-dotfiles :shebang #!/bin/sh :mkdirp yes :noweb yes
 # Navigate to the directory of this script (generally ~/Projects/home/dotfiles/.bin)
 cd $(dirname $(readlink -f $0))
 cd ..
@@ -152,14 +229,15 @@ emacsclient -e '(load-file "~/.emacs.d/cy-system-settings.el")' -a "echo 'Emacs 
 
 This special tidbit is responsible for tangling everything in this repository in the proper order.
 
-#+begin_src emacs-lisp :tangle ~/.emacs.d/tangle-dotfiles.el
+#+begin_src emacs-lisp :tangle ~/.emacs.d/tangle-dotfiles.el :noweb yes
 (require 'org)
 (load-file "~/.emacs.d/cy-system-settings.el")
-
+(print (concat <<dotfiles-location>> "Systems.org"))
 ;; Don't ask when evaluating code blocks
 (setq org-confirm-babel-evaluate nil)
 
-(let* ((dotfiles-path (expand-file-name "~/Projects/home/dotfiles"))
+(let* ((dotfiles-path
+        <<dotfiles-location>>)
        (org-files (directory-files dotfiles-path nil "\\.org$")))
 
   (defun cy/tangle-org-file (org-file)
@@ -183,6 +261,29 @@ variables defined in this file.
 (defun cy/system-settings-get (setting)
  (alist-get setting cy/system-settings))
 #+end_src
+
+In addition to needing a canonical source of truth for things like
+home and config directories, it is also somewhat bothersome to
+continually write out all the conditional elisp for tangling certain
+files based on ~system-type~ or ~system-name~.
+
+Convenience functions are provided below and exposed using the Library
+of Babel.
+
+#+begin_src emacs-lisp :noweb-ref system-functions
+(defun tangle-linux (path file)
+  "Return the concatenated path and file if the system is 'gnu/linux."
+  (when (eq system-type 'gnu/linux)
+    (concat path file)))
+#+end_src
+
+#+begin_src emacs-lisp :noweb-ref system-functions
+(defun tangle-macos (path file)
+  "Return the concatenated path and file if the system is macOS."
+  (when (eq system-type 'darwin)
+    (concat path file)))
+#+end_src
+
 
 
 Provide ='cy-system= so it can be required by sibling files that require

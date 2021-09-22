@@ -68,11 +68,6 @@ between systems like DPI, resolution, etc...
 (load-file (concat user-emacs-directory "cy-system-settings.el"))
 #+end_src
 
-#+name: get-setting
-#+begin_src emacs-lisp :var name="nil" :session system-settings
-(cy/system-settings-get (intern name))
-#+end_src
-
 * System Packages
 
 /The majority of this document assumes that Arch Linux is installed
@@ -312,8 +307,8 @@ fi
 
 Add PHP's =composer= globals into =$PATH=.
 
-#+begin_src conf :noweb-ref dot-profile
-export PATH="$PATH:$HOME/.config/composer/vendor/bin"
+#+begin_src conf :noweb yes :noweb-ref dot-profile
+export PATH="$PATH:<<user-config-location()>>/composer/vendor/bin"
 #+end_src
 
 Add NVIDIA's [[https://wiki.archlinux.org/title/GPGPU#CUDA][CUDA]] stuff into =$PATH=.
@@ -360,8 +355,8 @@ someday this will be the standard.
  - ~XDG_STATE_HOME~ :: Analogous to ~/var/lib~.
  - ~XDG_RUNTIME_DIR~ :: Used for non-essential, user specific data files like sockets, named pipes, etc...
 
-#+begin_src conf :noweb-ref dot-profile
-export XDG_CONFIG_HOME="$HOME/.config"
+#+begin_src conf :noweb yes :noweb-ref dot-profile
+export XDG_CONFIG_HOME="<<user-config-location()>>"
 export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_STATE_HOME="$HOME/.local/lib"
@@ -446,19 +441,22 @@ The call chain works like this:
 
  1. =zsh= is invoked.
  2. =zsh= finds ~.zshenv~ and begins parsing.
- 3. Within ~.zshenv~, =zsh= is told to source ~~/.profile~ which contains the environment variable declaration for ~$XDG_CONFIG_HOME~.
- 4. After sourcing ~~/.profile~, =zsh= now looks in ~${XDG_CONFIG_HOME}/zsh/~ for a ~.zprofile~, then a ~.zshrc~ -- loading them in that order.
+ 3. Within ~.zshenv~, =zsh= is told to source ~~/.profile~ which contains
+    the environment variable declaration for ~$XDG_CONFIG_HOME~.
+ 4. After sourcing ~~/.profile~, =zsh= now looks in
+    ~${XDG_CONFIG_HOME}/zsh/~ for a ~.zprofile~, then a ~.zshrc~ -- loading
+    them in that order.
 
 The =dotsloc= environment variable is also defined here, rather than
 in ~.zshrc~, to make it available to non-interactive instances of the
 shell.  This is useful for jumping to the dotfiles directory from a
 script.
 
-#+begin_src conf :tangle (concat (cy/system-settings-get 'user/home) "/.zshenv")
+#+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/home) ".zshenv")
 # emulate sh -c 'source ~/.profile'
 source ${HOME}/.profile
-ZDOTDIR=${XDG_CONFIG_HOME}/zsh/
-DOTDIR=${HOME}/Projects/home/dotfiles
+ZDOTDIR=<<user-config-location()>>/zsh/
+DOTDIR=<<dotfiles-location()>>
 #+end_src
 
 **** =.zprofile=
@@ -469,7 +467,7 @@ alternative to ~.zlogin~ (both are sourced for login shells). Neither
 at all and instead be used to set the terminal type and run a series
 of external commands like =fortune=.
 
-#+begin_src conf :tangle (concat (cy/system-settings-get 'config/dir) "/zsh/.zprofile")
+#+begin_src conf :tangle (concat (cy/system-settings-get 'user/config) "zsh/.zprofile")
 #export TERM="xterm-256color"
 shopt -s expand_aliases
 #+end_src
@@ -602,15 +600,15 @@ Define custom command aliases.
  - em :: Run =emacsclient=.
  - emc :: The same as ~em~, but adds the ~-c~ parameter and runs it in the background.
 
-#+begin_src conf :noweb-ref zshrc
+#+begin_src conf :noweb-ref zshrc :noweb yes
 alias ls='ls --color=auto'
 alias 7zultra='7z a -t7z -m0=lzma2 -mx=0 -mfb=64 -md=32m -ms=on'
 alias curlheaders='curl -I'
 alias curlheadersproxy='curl --socks5 localhost:11080 -I'
 alias scrote='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/foo.png && rm ~/foo.png'
 alias webcam='mplayer tv:// -tv driver=v412:width=1920:height=1080:device=/dev/video0 -fps 15 -vf screenshot'
-alias dots='cd ~/Projects/home/dotfiles'
-alias updots='~/Projects/home/dotfiles/.bin/update-dotfiles'
+alias dots='cd <<dotfiles-location()>>'
+alias updots='<<dotfiles-location()>>/.bin/update-dotfiles'
 alias work='cd ~/Projects/work'
 alias notes='cd ~/Notes'
 alias docs='cd ~/Documents'
@@ -686,7 +684,7 @@ custom work-in-progress prompt defined below.
 Tangle out all of the ~.zshrc~ source blocks defined above into the
 final file.
 
-#+begin_src conf :tangle (concat (cy/system-settings-get 'config/dir) "/zsh/.zshrc") :noweb yes
+#+begin_src conf :tangle (concat (cy/system-settings-get 'user/config) "zsh/.zshrc")
 <<zshrc>>
 #+end_src
 
@@ -697,18 +695,20 @@ For convenience, simply evaluate this block or the
 collection of ~:noweb-ref~ blocks that includes this one which is
 defined at the bottom of this file.
 
-#+begin_src sh :noweb-ref zsh-downloads
-#!/bin/bash
-git clone https://github.com/zsh-users/antigen.git ~/.config/zsh/custom/plugins/antigen
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.config/zsh/custom/plugins/zsh-syntax-highlighting
-git clone git@github.com:chriskempson/base16-shell.git ~/.config/zsh/custom/plugins/base16-shell
+#+begin_src sh :noweb yes :noweb-ref zsh-downloads
+mkdir -p <<user-config-location()>>zsh/custom/plugins
+git clone https://github.com/zsh-users/antigen.git <<user-config-location()>>zsh/custom/plugins/antigen
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git <<user-config-location()>>zsh/custom/plugins/zsh-syntax-highlighting
+git clone git@github.com:chriskempson/base16-shell.git <<user-config-location()>>zsh/custom/plugins/base16-shell
 #+end_src
+
+#+RESULTS:
 
 *Work In Progress*
 
 Carwin's custom =zsh= prompt.
 
-#+begin_src conf :tangle ~/.config/zsh/prompt
+#+begin_src conf :tangle (concat (cy/system-settings-get 'user/config) "zsh/prompt")
 # Left prompt
 export PS1="%F{223}%n%F{224}@%F{211}%m %F{179}%~%b%F{255} › "
 
@@ -751,7 +751,7 @@ continue using =X=.
 This file handles a variety of things, from shell colors to terminal
 emulator settings.
 
-#+begin_src conf :noweb yes :tangle ~/.Xresources
+#+begin_src conf :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/home) ".Xresources")
 <<xresources-config>>
 #+end_src
 
@@ -940,7 +940,7 @@ dmenu.foreground:    #d8dee9
 #+end_src
 
 After changing this file, it is necessary to reload it via: ~xrdb
-~/.Xresources~
+~/.Xresources~. For convenience, evaluate this block:
 
 #+begin_src sh :shebang #!/bin/bash :noweb-ref source-xresources
 xrdb ~/.Xresources
@@ -957,7 +957,7 @@ Here it is used primarily to attempt better Xft font display. This
 somewhat duplicates similar entries in =$HOME/.Xresources= but various
 differences in system configuration may require one or the other.
 
-#+begin_src conf :tangle ~/.config/xsettingsd/xsettingsd.conf :noweb yes
+#+begin_src conf :tangle (tangle-linux (cy/system-settings-get 'user/config) "xsettingsd/xsettingsd.conf")
 Xft/Antialias 1
 Xft/Hinting 1
 Xft/HintStyle "hintslight"
@@ -1066,7 +1066,7 @@ any other provided alias is just a rarely used convenience.
 Collect all the =.gitconfig= bits in this section and tangle them out
 into ~/homr/<user>/.gitconfig~.
 
-#+begin_src conf :tangle (concat (cy/system-settings-get 'user/home) "/.gitconfig") :noweb yes :shebang #!/bin/bash
+#+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/home) ".gitconfig")
 <<gitconfig>>
 #+end_src
 
@@ -1125,8 +1125,8 @@ client.background       #1E222A
 Run the ~autostart.sh~ script that is tangled out of this file a little
 later. It stores all the commands to be run when =i3= is initialized.
 
-#+begin_src conf :noweb-ref i3config
-exec_always --no-startup-id ~/.config/i3/bin/autostart.sh
+#+begin_src conf :noweb yes :noweb-ref i3config
+exec_always --no-startup-id <<user-config-location()>>i3/bin/autostart.sh
 #+end_src
 
 Define keybindings for commonly used applications within =i3=.
@@ -1144,17 +1144,17 @@ Define keybindings for commonly used applications within =i3=.
 | ~$mod+Ctrl+r~     | Execute as root menu |
 | ~$mod+Ctrl+w~     | Window menu          |
 
-#+begin_src conf :noweb-ref i3config
-bindsym $mod+F1 exec ~/.config/rofi/bin/launcher
-bindsym $mod+d exec ~/.config/rofi/bin/launcher
-bindsym $sup+n exec ~/.config/rofi/bin/network-menu
-bindsym $sup+x exec ~/.config/rofi/bin/power-menu
-bindsym $mod+Control+m exec ~/.config/rofi/bin/mpd
-bindsym $mod+Control+n exec ~/.config/rofi/bin/network
-bindsym $mod+Control+s exec ~/.config/rofi/bin/screenshot
-bindsym Print exec ~/.config/rofi/bin/screenshot
-bindsym $mod+Control+r exec ~/.config/rofi/bin/asroot
-bindsym $mod+Control+w exec ~/.config/rofi/bin/windows
+#+begin_src conf :noweb yes :noweb-ref i3config
+bindsym $mod+F1 exec <<user-config-location()>>rofi/bin/launcher
+bindsym $mod+d exec <<user-config-location()>>rofi/bin/launcher
+bindsym $sup+n exec <<user-config-location()>>rofi/bin/network-menu
+bindsym $sup+x exec <<user-config-location()>>rofi/bin/power-menu
+bindsym $mod+Control+m exec <<user-config-location()>>rofi/bin/mpd
+bindsym $mod+Control+n exec <<user-config-location()>>rofi/bin/network
+bindsym $mod+Control+s exec <<user-config-location()>>rofi/bin/screenshot
+bindsym Print exec <<user-config-location()>>rofi/bin/screenshot
+bindsym $mod+Control+r exec <<user-config-location()>>rofi/bin/asroot
+bindsym $mod+Control+w exec <<user-config-location()>>rofi/bin/windows
 #+end_src
 
 | PulseAudio general (via pactl) |                |
@@ -1189,18 +1189,18 @@ bindsym XF86AudioNext exec "mpc next"
 | ~$mod+Ctrl+l~     | Lock screen |
 | ~XF86ScreenSaver~ | Lock screen |
 
-#+begin_src conf :noweb-ref i3config
+#+begin_src conf :noweb yes :noweb-ref i3config
 # -- Lockscreen --
-bindsym $mod+Control+l exec ~/.config/i3/bin/i3lock.sh
-bindsym XF86ScreenSaver exec ~/.config/i3/bin/i3lock.sh
+bindsym $mod+Control+l exec <<user-config-location()>>i3/bin/i3lock.sh
+bindsym XF86ScreenSaver exec <<user-config-location()>>i3/bin/i3lock.sh
 #+end_src
 
 Set =i3= to automatically lock the screen after ten minutes of
 inactivity using ~xautolock~ and the =i3lock.sh= script tangled out later
 in this file.
 
-#+begin_src conf :noweb-ref i3config
-exec xautolock -time 10 -locker "~/.config/i3/bin/i3lock.sh"
+#+begin_src conf :noweb yes :noweb-ref i3config
+exec xautolock -time 10 -locker "<<user-config-location()>>i3/bin/i3lock.sh"
 #+end_src
 
 Now that most of the application specific bindings are out of the way,
@@ -1447,7 +1447,7 @@ for_window [class=Emacs] move container to workspace $prim
 Output the =i3= configuration defined in this section into a single
 configuration file on the system.
 
-#+begin_src emacs-lisp :noweb yes :tangle ~/.config/i3/config
+#+begin_src emacs-lisp :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "i3/config")
 <<i3config>>
 #+end_src
 
@@ -1458,7 +1458,7 @@ configuration file on the system.
 This script is called whenever =i3= starts up. It's purpose is to
 automatically spawn programs and processes.
 
-#+begin_src sh :noweb yes :tangle ~/.config/i3/bin/autostart.sh :shebang #!/bin/bash
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/autostart.sh")
 <<i3-autostart-script>>
 #+end_src
 
@@ -1489,21 +1489,21 @@ ibus-daemon -drxR &
 
 Launch =Dunst= to serve notifications.
 
-#+begin_src sh :noweb-ref i3-autostart-script
-~/.config/i3/bin/launch-dunst.sh
+#+begin_src sh :noweb-ref i3-autostart-script :noweb yes
+<<user-config-location()>>i3/bin/launch-dunst.sh
 #+end_src
 
 Launch =Polybar= to give the window manager some interactive chrome.
 
-#+begin_src sh :noweb-ref i3-autostart-script
-~/.config/i3/bin/launch-polybar.sh
+#+begin_src sh :noweb-ref i3-autostart-script :noweb yes
+<<user-config-location()>>i3/bin/launch-polybar.sh
 #+end_src
 
 Launch the =picom= compositor for X to allow things like transparency
 and fading of windows.
 
-#+begin_src sh :noweb-ref i3-autostart-script
-~/.config/i3/bin/launch-compton.sh
+#+begin_src sh :noweb yes :noweb-ref i3-autostart-script
+<<user-config-location()>>i3/bin/launch-compton.sh
 #+end_src
 
 Set the desktop wallpaper to the contents of ~$HOME/.fehbg~. This file
@@ -1527,7 +1527,7 @@ xmodmap ~/.Xmodmap &
 This =i3lock= script is triggered manually by way of keystroke from =i3=
 or an automatic inactivity timer provided by the =xautolock= package.
 
-#+begin_src sh :noweb yes :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/i3lock.sh") :shebang  #!/bin/bash
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/i3lock.sh")
 <<i3-lock-script>>
 #+end_src
 
@@ -1602,7 +1602,7 @@ i3lock \
 
 ***** i3's =Dunst= Launcher
 
-#+begin_src sh :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/launch-dunst.sh") :shebang #!/bin/bash
+#+begin_src sh :tangle (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/launch-dunst.sh")
 if [[ `pidof dunst` ]]; then
     pkill dunst
 fi
@@ -1618,7 +1618,7 @@ dunst \
 
 =i3= launches this script at startup to display Polybar.
 
-#+begin_src sh :noweb yes :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/launch-polybar.sh") :shebang #!/bin/bash
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/launch-polybar.sh")
 <<i3-polybar-launcher>>
 #+end_src
 
@@ -1636,8 +1636,8 @@ while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
 
 Launch polybar
 
-#+begin_src sh :noweb-ref i3-polybar-launcher
-polybar main -c ~/.config/polybar/config.ini &
+#+begin_src sh :noweb yes :noweb-ref i3-polybar-launcher
+polybar main -c <<user-config-location()>>polybar/config.ini &
 #+end_src
 
 ***** i3's Compositor Launcher
@@ -1646,7 +1646,7 @@ This script launches the picom / compton compositor when =i3= starts
 up. Lots of systems still call it "Compton" but the program has been
 renamed to "Picom" for some reason.
 
-#+begin_src sh :noweb yes :tangle (concat (cy/system-settings-get 'config/dir) "/i3/bin/launch-compton.sh") :shebang #!/bin/bash
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/launch-compton.sh")
 <<i3-compositor-launcher>>
 #+end_src
 
@@ -1664,15 +1664,15 @@ while pgrep -u $UID -x compton >/dev/null; do sleep 1; done
 
 Launch the compositor.
 
-#+begin_src sh :noweb-ref i3-compositor-launcher
-compton --config ~/.config/picom/picom.conf &
+#+begin_src sh :noweb yes :noweb-ref i3-compositor-launcher
+compton --config <<user-config-location()>>picom/picom.conf &
 #+end_src
 
 *** Polybar
 
 Configure polybar's colors.
 
-#+begin_src conf :tangle ~/.config/polybar/colors.ini
+#+begin_src conf :tangle (tangle-linux (cy/system-settings-get 'user/config) "polybar/colors.ini")
 [color]
 BG = #1e222a
 BGL = #2c3038
@@ -1691,7 +1691,7 @@ CYAN = #56b6c2
 
 Set up all the general configurations for Polybar.
 
-#+begin_src conf :tangle ~/.config/polybar/config.ini
+#+begin_src conf :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "polybar/config.ini")
 ;; Global WM Settings
 
 [global/wm]
@@ -1708,9 +1708,9 @@ margin-top = 0
 ;; File Inclusion
 ; include an external file, like module file, etc.
 
-include-file = ~/.config/polybar/colors.ini
-include-file = ~/.config/polybar/modules.ini
-include-file = ~/.config/polybar/decor.ini
+include-file = <<user-config-location()>>polybar/colors.ini
+include-file = <<user-config-location()>>polybar/modules.ini
+include-file = <<user-config-location()>>polybar/decor.ini
 
 ;; _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
 
@@ -1991,7 +1991,7 @@ pseudo-transparency = false
 
 Decorate =Polybar= by defining some new, purely visual, modules.
 
-#+begin_src conf :tangle ~/.config/polybar/decor.ini
+#+begin_src conf :tangle (tangle-linux (cy/system-settings-get 'user/config) "polybar/decor.ini")
 [module/sep]
 type = custom/text
 content = -
@@ -2025,7 +2025,7 @@ content-foreground = ${color.BGL}
 Set up the available modules for =Polybar=. Most of these are some
 variation of the default.
 
-#+begin_src conf :noweb yes :tangle ~/.config/polybar/modules.ini
+#+begin_src conf :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "polybar/modules.ini")
 <<polybar-modules>>
 #+end_src
 
@@ -2621,7 +2621,7 @@ interface = wlp6s0
 
 ***** Generic / Combined Network
 
-#+begin_src conf :noweb-ref polybar-modules
+#+begin_src conf :noweb yes :noweb-ref polybar-modules
 ; Normal Module
 [module/network]
 type = internal/network
@@ -2682,12 +2682,12 @@ format-disconnected-foreground = ${color.FGA}
 ;   %linkspeed% [wired]
 ; Default: %ifname% %local_ip%
 ;label-connected = "%essid%  %downspeed%"
-label-connected = "%{A1:~/.config/rofi/bin/network_menu &:}%essid% | %downspeed%%{A}"
+label-connected = "%{A1:<<user-config-location()>>rofi/bin/network_menu &:}%essid% | %downspeed%%{A}"
 
 ; Available tokens:
 ;   %ifname%    [wireless+wired]
 ; Default: (none)
-label-disconnected = "%{A1:~/.config/rofi/bin/network_menu &:}Offline%{A}"
+label-disconnected = "%{A1:<<user-config-location()>>rofi/bin/network_menu &:}Offline%{A}"
 
 ; Available tokens:
 ;   %ifname%    [wireless+wired]
@@ -2870,7 +2870,7 @@ ramp-foreground = ${color.YELLOW}
 
 ***** Menu (Application launcher)
 
-#+begin_src conf :noweb-ref polybar-modules
+#+begin_src conf :noweb yes :noweb-ref polybar-modules
 [module/menu]
 type = custom/text
 
@@ -2879,7 +2879,7 @@ content-font = 3
 content-foreground = ${color.GREEN}
 content-padding = 0
 
-click-left = ~/.config/rofi/bin/launcher
+click-left = <<user-config-location()>>rofi/bin/launcher
 ;;click-middle = path_to_script
 ;;click-right = path_to_script
 
@@ -2889,7 +2889,7 @@ click-left = ~/.config/rofi/bin/launcher
 
 ***** Sysmenu (Power)
 
-#+begin_src conf :noweb-ref polybar-modules
+#+begin_src conf :noweb yes :noweb-ref polybar-modules
 [module/sysmenu]
 type = custom/text
 
@@ -2898,7 +2898,7 @@ content-font = 3
 content-foreground = ${color.RED}
 content-padding = 0
 
-click-left = ~/.config/rofi/bin/power-menu
+click-left = <<user-config-location()>>rofi/bin/power-menu
 #+end_src
 
 * Applications
@@ -2928,7 +2928,7 @@ system and is the area of this file most likely to change.
 =Dunst= serves as the notification system. It's configuration is minimal
 and is mostly concerned with color, placement, and format.
 
-#+begin_src conf :noweb yes :tangle ~/.config/dunst/dunstrc
+#+begin_src conf :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "dunst/dunstrc")
 <<dunst-config>>
 #+end_src
 
@@ -3038,9 +3038,9 @@ following bin scripts have a corresponding ~.rasi~ theme file.
 This Asroot script is used to launch applications as the root user.
 @TODO: Confirm the binding, I don't often use this.
 
-#+begin_src sh :tangle ~/.config/rofi/bin/asroot :shebang #!/bin/bash
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/bin/asroot")
 
-DIR="$HOME/.config/rofi/bin"
+DIR="<<user-config-location()>>rofi/bin"
 
 rofi_command="rofi -theme $DIR/../themes/asroot.rasi"
 
@@ -3084,12 +3084,12 @@ case $chosen in
 
 A simple confirmation dialog for =Rofi= scripts.
 
-#+begin_src sh :tangle ~/.config/rofi/bin/confirm :shebang #!/bin/bash
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/bin/confirm")
 rofi -dmenu\
      -i\
      -no-fixed-num-lines\
      -p "Are You Sure? : "\
-     -theme ~/.config/rofi/themes/confirm.rasi
+     -theme <<user-config-location()>>rofi/themes/confirm.rasi
 #+end_src
 
 **** Launcher
@@ -3097,8 +3097,8 @@ rofi -dmenu\
 This =Rofi= script is the primary launcher for applications. It uses
 =i3wm='s default launcher binding of ~<Mod>~-~d~.
 
-#+begin_src sh :tangle ~/.config/rofi/bin/launcher :shebang #!/bin/bash
-DIR="$HOME/.config/"
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/bin/launcher")
+DIR="<<user-config-location()>>"
 
 rofi -no-lazy-grab -show drun -no-default-config -theme $DIR/rofi/themes/launcher.rasi
 #+end_src
@@ -3108,9 +3108,9 @@ rofi -no-lazy-grab -show drun -no-default-config -theme $DIR/rofi/themes/launche
 This =Rofi= script launches a window that allows management of =MPD=. The
 script is bound in the =i3wm= configuration to ~<Ctrl>~-~<Mod>~-~m~.
 
-#+begin_src sh :tangle ~/.config/rofi/bin/mpd
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/bin/mpd")
 
-DIR="$HOME/.config/rofi"
+DIR="<<user-config-location()>>rofi"
 
 rofi_command="rofi -theme $DIR/themes/mpd.rasi"
 
@@ -3190,8 +3190,8 @@ This =Rofi= Network menu provides a simple overview of the current
 network connection(s) and the ability to turn wifi off. It is bound to
 ~<Ctrl>~-~<Mod>~-~n~.
 
-#+begin_src sh :tangle ~/.config/rofi/bin/network
-DIR="$HOME/.config/rofi"
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/bin/network")
+DIR="<<user-config-location()>>rofi"
 
 rofi_command="rofi -theme $DIR/themes/network.rasi"
 
@@ -3254,7 +3254,7 @@ esac
 
 **** Network Menu
 
-#+begin_src python :tangle ~/.config/rofi/bin/network-menu :shebang #!/usr/bin/env python3
+#+begin_src python :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/bin/network-menu") :shebang #!/usr/bin/env python3
 # encoding:utf8
 """NetworkManager command line dmenu script.
 To add new connections or enable/disable networking requires policykit
@@ -3262,7 +3262,7 @@ permissions setup per:
 https://wiki.archlinux.org/index.php/NetworkManager#Set_up_PolicyKit_permissions
 OR running the script as root
 Add dmenu formatting options and default terminal if desired to
-$HOME/.config/i3/rofi/themes/networkmenu_config.ini
+<<user-config-location()>>i3/rofi/themes/networkmenu_config.ini
 """
 import pathlib
 import struct
@@ -3289,7 +3289,7 @@ LOOP = GLib.MainLoop()
 CONNS = CLIENT.get_connections()
 
 CONF = configparser.ConfigParser()
-CONF.read(expanduser("~/.config/rofi/themes/networkmenu_config.ini"))
+CONF.read(expanduser("<<user-config-location()>>rofi/themes/networkmenu_config.ini"))
 
 def dmenu_cmd(num_lines, prompt="Networks", active_lines=None):  # pylint: disable=too-many-branches
     """Parse nmd.ini if it exists and add options to the dmenu command
@@ -4115,8 +4115,8 @@ if __name__ == '__main__':
 
 **** Power Menu
 
-#+begin_src sh :tangle ~/.config/rofi/bin/power-menu
-DIR="$HOME/.config/rofi"
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/bin/power-menu")
+DIR="<<user-config-location()>>rofi"
 
 rofi_command="rofi -theme $DIR/themes/powermenu.rasi"
 
@@ -4136,30 +4136,30 @@ _msg="Options  -  yes / y / no / n"
 chosen="$(echo -e "$options" | $rofi_command -p "UP - $uptime" -dmenu -selected-row 2)"
 case $chosen in
     $shutdown)
-		ans=$($HOME/.config/rofi/bin/confirm &)
+		ans=$(<<user-config-location()>>rofi/bin/confirm &)
 		if [[ $ans == "yes" ]] || [[ $ans == "YES" ]] || [[ $ans == "y" ]]; then
 			systemctl poweroff
 		elif [[ $ans == "no" ]] || [[ $ans == "NO" ]] || [[ $ans == "n" ]]; then
 			exit
         else
-			rofi -theme ~/.config/rofi/themes/askpass.rasi -e "$_msg"
+			rofi -theme <<user-config-location()>>rofi/themes/askpass.rasi -e "$_msg"
         fi
         ;;
     $reboot)
-		ans=$($HOME/.config/rofi/bin/confirm &)
+		ans=$(<<user-config-location()>>rofi/bin/confirm &)
 		if [[ $ans == "yes" ]] || [[ $ans == "YES" ]] || [[ $ans == "y" ]]; then
 			systemctl reboot
 		elif [[ $ans == "no" ]] || [[ $ans == "NO" ]] || [[ $ans == "n" ]]; then
 			exit
         else
-			rofi -theme ~/.config/rofi/themes/askpass.rasi -e "$_msg"
+			rofi -theme <<user-config-location()>>rofi/themes/askpass.rasi -e "$_msg"
         fi
         ;;
     $lock)
         ~/.config/i3/bin/i3lock.sh
         ;;
     $suspend)
-		ans=$($HOME/.config/rofi/bin/confirm &)
+		ans=$(<<user-config-location()>>rofi/bin/confirm &)
 		if [[ $ans == "yes" ]] || [[ $ans == "YES" ]] || [[ $ans == "y" ]]; then
 			mpc -q pause
 			amixer set Master mute
@@ -4167,17 +4167,17 @@ case $chosen in
 		elif [[ $ans == "no" ]] || [[ $ans == "NO" ]] || [[ $ans == "n" ]]; then
 			exit
         else
-			rofi -theme ~/.config/rofi/themes/askpass.rasi -e "$_msg"
+			rofi -theme <<user-config-location()>>rofi/themes/askpass.rasi -e "$_msg"
         fi
         ;;
     $logout)
-		ans=$($HOME/.config/rofi/bin/confirm &)
+		ans=$(<<user-config-location()>>rofi/bin/confirm &)
 		if [[ $ans == "yes" ]] || [[ $ans == "YES" ]] || [[ $ans == "y" ]]; then
 			i3-msg exit
 		elif [[ $ans == "no" ]] || [[ $ans == "NO" ]] || [[ $ans == "n" ]]; then
 			exit
         else
-			rofi -theme ~/.config/rofi/themes/askpass.rasi -e "$_msg"
+			rofi -theme <<user-config-location()>>rofi/themes/askpass.rasi -e "$_msg"
         fi
         ;;
 esac
@@ -4191,8 +4191,8 @@ window to the right of the screen to allow a selection of different
 types of screenshots. The default option, in the center, allows
 capturing an area directly to the clipboard for pasting.
 
-#+begin_src sh :tangle ~/.config/rofi/bin/screenshot
-DIR="$HOME/.config/rofi"
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/bin/screenshot")
+DIR="<<user-config-location()>>rofi"
 
 rofi_command="rofi -theme $DIR/themes/screenshot.rasi"
 
@@ -4224,8 +4224,8 @@ This script launches a Rofi window that allows the browsing of
 currently opened windows. It is bound to ~<Ctrl>~-~<Mod>~-~w~ in =i3wm='s
 config.
 
-#+begin_src sh :tangle ~/.config/rofi/bin/windows
-DIR="$HOME/.config/rofi"
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/bin/windows")
+DIR="<<user-config-location()>>rofi"
 
 rofi -no-lazy-grab -show window -theme $DIR/themes/window.rasi
 #+end_src
@@ -4233,7 +4233,7 @@ rofi -no-lazy-grab -show window -theme $DIR/themes/window.rasi
 *** Theme(s)
 **** Ask for Password
 
-#+begin_src css :tangle ~/.config/rofi/themes/askpass.rasi
+#+begin_src css :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/askpass.rasi")
 @import "colors.rasi"
 
 ,* {
@@ -4260,7 +4260,7 @@ rofi -no-lazy-grab -show window -theme $DIR/themes/window.rasi
 #+end_src
 
 **** Colors
-#+begin_src css :tangle ~/.config/rofi/themes/colors.rasi
+#+begin_src css :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/colors.rasi")
 ,* {
   background:			#1e222a;
   background-alt:		#262A32;
@@ -4272,7 +4272,7 @@ rofi -no-lazy-grab -show window -theme $DIR/themes/window.rasi
 }
 #+end_src
 **** Confirm
-#+begin_src css :tangle ~/.config/rofi/themes/confirm.rasi
+#+begin_src css :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/confirm.rasi")
 @import "colors.rasi"
 
 ,* {
@@ -4304,7 +4304,7 @@ element-text {
 
 **** Launcher
 
-#+begin_src scss :tangle ~/.config/rofi/themes/launcher.rasi
+#+begin_src scss :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/launcher.rasi")
 configuration {
   font: 				"JetBrains Mono Medium 10";
   // bw: 					0;
@@ -4342,7 +4342,8 @@ window {
   border-color:	@selected;
   border-radius: 20px;
   padding: 30;
-  width: 40%;
+  // width: 40%; // for buster
+  width: 10%;    // for guts
 }
 
 prompt {
@@ -4487,7 +4488,7 @@ element-text {
 
 **** Window
 
-#+begin_src css :tangle ~/.config/rofi/themes/window.rasi
+#+begin_src css :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/window.rasi")
 configuration {
     font:                           "JetBrains Mono Medium 10";
     show-icons:                     false;
@@ -4642,7 +4643,7 @@ element.selected.active {
 
 **** Asroot
 
-#+begin_src css :tangle ~/.config/rofi/themes/asroot.rasi
+#+begin_src css :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/asroot.rasi")
 
 configuration {
   font:                           "JetBrains Mono Medium 10";
@@ -4795,7 +4796,7 @@ element.selected.active {
 #+end_src
 
 **** Network
-#+begin_src css :tangle ~/.config/rofi/themes/network.rasi
+#+begin_src css :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/network.rasi")
 configuration {
   font:                           "JetBrains Mono Medium 10";
   show-icons:                     false;
@@ -4948,7 +4949,7 @@ element.selected.active {
 }
 #+end_src
 **** Network Menu
-#+begin_src css :tangle ~/.config/rofi/themes/networkmenu.rasi
+#+begin_src css :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/networkmenu.rasi")
 configuration {
   font:                           "JetBrains Mono Medium 10";
   show-icons:                     false;
@@ -5100,9 +5101,9 @@ element.selected.active {
 }
 #+end_src
 **** Network Menu Config
-#+begin_src sh :tangle ~/.config/rofi/themes/networkmenu_config.ini
+#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/networkmenu_config.ini")
 [dmenu]
-dmenu_command = rofi -dmenu -theme ~/.config/rofi/themes/networkmenu.rasi
+dmenu_command = rofi -dmenu -theme <<user-config-location()>>rofi/themes/networkmenu.rasi
 # # Note that dmenu_command can contain arguments as well like `rofi -width 30`
 # # Rofi and dmenu are set to case insensitive by default `-i`
 # l = number of lines to display, defaults to number of total network options
@@ -5132,7 +5133,7 @@ gui_if_available = True
 #+end_src
 
 **** MPD
-#+begin_src css :tangle ~/.config/rofi/themes/mpd.rasi
+#+begin_src css :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/mpd.rasi")
 configuration {
   font:                           "JetBrains Mono Medium 10";
   show-icons:                     false;
@@ -5286,7 +5287,7 @@ element.selected.active {
 #+end_src
 
 **** Power Menu
-#+begin_src css :tangle ~/.config/rofi/themes/powermenu.rasi
+#+begin_src css :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/powermenu.rasi")
 configuration {
   font:                           "JetBrains Mono Medium 10";
   show-icons:                     false;
@@ -5438,7 +5439,7 @@ element.selected.active {
 }
 #+end_src
 **** Screenshot
-#+begin_src css :tangle ~/.config/rofi/themes/screenshot.rasi
+#+begin_src css :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/screenshot.rasi")
 configuration {
   font:                           "JetBrains Mono Medium 10";
   show-icons:                     false;
@@ -5597,6 +5598,10 @@ system uses =i3=, this isn't actually an extremely integral part of the
 usual workflow, though it is useful to have configured for when its
 needed.
 
+#+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/home) ".tmux.conf")
+<<tmux-config>>
+#+end_src
+
 @todo I think tmux now supports using XDG_CONFIG_HOME so it can be stored in ~/.config/tmux/.
 
 The configuration starts by defining some simpler keybindings than
@@ -5711,7 +5716,7 @@ The following configuration defines:
 | ~:empty~  | Empties the ~/home/<user>/.Trash~ directory                                          |
 | ~:moveit~ | An in-application wrapper for the ~mv~ command, without support for flags or options |
 
-#+begin_src python :tangle ~/.config/ranger/commands.py :shebang #!/usr/bin/env python3
+#+begin_src python :tangle (concat (cy/system-settings-get 'user/config) "ranger/commands.py") :shebang #!/usr/bin/env python3
 import os
 from ranger.api.commands import Command
 
@@ -5744,7 +5749,7 @@ legacy and should be updated to use ~mpv~ instead./
 This configuration for =mpv= is somewhat simplistic but provides some
 sane defaults that can be further customized as needed.
 
-#+begin_src conf :noweb yes :tangle ~/.config/mpv/mpv.conf
+#+begin_src conf :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "mpv/mpv.conf")
 <<mpv-config>>
 #+end_src
 
@@ -5863,7 +5868,7 @@ needed.
 A typical usage of =mpd= with these dotfiles is to run the daemon via
 =Systemd= as the logged in user.
 
-#+begin_src conf :noweb yes :tangle ~/.config/mpd/mpd.conf
+#+begin_src conf :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "mpd/mpd.conf")
 <<mpd-config>>
 #+end_src
 
@@ -5871,14 +5876,14 @@ In this setup, =mpd='s main library is a directory mounted at
 ~/home/<user>/Audio/Music~ and all =mpd= related files are stored in the
 ~$XDG_CONFIG_HOME/mpd~ directory.
 
-#+begin_src conf :noweb-ref mpd-config
+#+begin_src conf :noweb yes :noweb-ref mpd-config
 music_directory  "~/Audio/Music"
-playlist_directory  "~/.config/mpd/playlists"
-db_file   "~/.config/mpd/database"
+playlist_directory  "<<user-config-location()>>mpd/playlists"
+db_file   "<<user-config-location()>>mpd/database"
 log_file   "syslog"
-pid_file   "~/.config/mpd/pid"
-state_file   "~/.config/mpd/state"
-sticker_file   "~/.config/mpd/sticker.sql"
+pid_file   "<<user-config-location()>>mpd/pid"
+state_file   "<<user-config-location()>>mpd/state"
+sticker_file   "<<user-config-location()>>mpd/sticker.sql"
 #+end_src
 
 Bind =mpd= to the local system.
@@ -5917,19 +5922,19 @@ The rest of =mpd='s configuration can be left to its default values.
 On a new system, the playlists directory will need to be created
 before =mpd= can use it.
 
-#+begin_src sh :noweb-ref create-mpd-dirs
-mkdir -p ~/.config/mpd/playlists
+#+begin_src sh :noweb yes :noweb-ref create-mpd-dirs
+mkdir -p <<user-config-location()>>mpd/playlists
 #+end_src
 
 ** ncmpcpp
 
 Configure the =ncmpcpp= music library front-end for =mpd=.
 
-#+begin_src emacs-lisp :noweb yes :tangle ~/.config/ncmpcpp/config
+#+begin_src emacs-lisp :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "ncmpcpp/config")
 <<ncmpcpp-config>>
 #+end_src
 
-#+begin_src conf :noweb-ref ncmpcpp-config
+#+begin_src conf :noweb yes :noweb-ref ncmpcpp-config
 mpd_host = 127.0.0.1
 mpd_port = 6600
 
@@ -5974,14 +5979,14 @@ enable_window_title = yes
 
 external_editor = vim
 use_console_editor = yes
-# execute_on_song_change = "~/.config/ncmpcpp/art.sh"
+# execute_on_song_change = "<<user-config-location()>>ncmpcpp/art.sh"
 #+end_src
 
 ** vim
 
 =Vim= configuration. Ol' trusty.
 
-#+begin_src emacs-lisp :noweb yes :tangle ~/.vimrc
+#+begin_src emacs-lisp :noweb yes :tangle (concat (cy/system-settings-get 'user/home) ".vimrc")
 <<vim-config>>
 #+end_src
 
@@ -5991,8 +5996,8 @@ functionality is pulled in via plugins.
 Check for a plugin manager, and, if it doesn't exist, go get it.
 
 #+begin_src conf :noweb-ref vim-config
-if empty(glob('~/.vim/autoload/plug.vim'))
-  silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+if empty(glob('$HOME/.vim/autoload/plug.vim'))
+  silent !curl -fLo $HOME/.vim/autoload/plug.vim --create-dirs
     \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
   autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
@@ -6278,7 +6283,7 @@ User level =Systemd= configurations live in =~/.config/systemd/user/=
 This systemd service sets a random desktop wallpaper fifteen minutes
 after boot (when enabled) or whenever run.
 
-#+begin_src sh :tangle ~/.config/systemd/user/wallpaper-changer.service
+#+begin_src sh :tangle (tangle-linux (cy/system-settings-get 'user/config) "systemd/user/wallpaper-changer.service")
 [Unit]
 Description=Choose a random desktop wallpaper
 
@@ -6292,7 +6297,7 @@ WantedBy=default.target
 This systemd timer can be enabled to automatically change the random
 wallpaper at a given interval.
 
-#+begin_src sh :tangle ~/.config/systemd/user/wallpaper-changer.timer
+#+begin_src sh :tangle (tangle-linux (cy/system-settings-get 'user/config) "systemd/user/wallpaper-changer.timer")
 #/etc/systemd/system/foo.timer
 [Unit]
 Description=Change the desktop wallpaper periodically
