@@ -132,6 +132,26 @@ Tags are used to filter all tasks to find anything actionable in a particular co
          (org-agenda-files org-agenda-files)))))
 #+end_src
 
+* Recent Files
+
+=dashboard= is the first thing the user sees upon starting Emacs, it is currently configured to show the upcoming agenda as well as the most recent files the user has visited using =recentf-mode=. Because the dashboard needs to keep the agenda files open, that list of recent files gets filled with agenda files at all times, which isn't very useful.
+
+This block tells =recentf-mode= to ignore the agenda files.
+
+/Users/carwin/Notes/Calendar/Personal.org
+
+/Users/carwin/Notes/Calendar/Work.org
+
+#+begin_src emacs-lisp
+(setq recentf-exclude `("/tmp/"
+                        "/ssh:"
+                        "/sudo:"
+                        "recentf$"
+                        ,(expand-file-name (concat (cy/system-settings-get 'user/notes) "Inbox.org"))
+                        ,(expand-file-name (concat (cy/system-settings-get 'user/notes) "Calendar/.*org$"))
+                        ,(expand-file-name (concat (cy/system-settings-get 'user/notes) "Habits.org"))))
+#+end_src
+
 * Habits
 
 #+begin_src emacs-lisp

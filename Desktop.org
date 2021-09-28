@@ -271,6 +271,13 @@ Ensure ~/usr/local/bin~ is in =$PATH=.
 export PATH="$PATH:/usr/local/bin"
 #+end_src
 
+Throw ~/usr/local/sbin~ in for good measure. Homebrew on macOS systems
+sometimes puts things here.
+
+#+begin_src conf :noweb-ref dot-profile
+export PATH="$PATH:/usr/local/sbin"
+#+end_src
+
 Ensure ~$HOME/.local/bin~ is in =$PATH=, =Python= likes to use this
 directory.
 
@@ -308,7 +315,7 @@ fi
 Add PHP's =composer= globals into =$PATH=.
 
 #+begin_src conf :noweb yes :noweb-ref dot-profile
-export PATH="$PATH:<<user-config-location()>>/composer/vendor/bin"
+export PATH="$PATH:<<user-config-location()>>composer/vendor/bin"
 #+end_src
 
 Add NVIDIA's [[https://wiki.archlinux.org/title/GPGPU#CUDA][CUDA]] stuff into =$PATH=.
@@ -455,7 +462,7 @@ script.
 #+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/home) ".zshenv")
 # emulate sh -c 'source ~/.profile'
 source ${HOME}/.profile
-ZDOTDIR=<<user-config-location()>>/zsh/
+ZDOTDIR=<<user-config-location()>>zsh/
 DOTDIR=<<dotfiles-location()>>
 #+end_src
 
@@ -469,7 +476,8 @@ of external commands like =fortune=.
 
 #+begin_src conf :tangle (concat (cy/system-settings-get 'user/config) "zsh/.zprofile")
 #export TERM="xterm-256color"
-shopt -s expand_aliases
+# setopt -s expand_aliases
+setopt aliases
 #+end_src
 
 #+end_src
@@ -570,7 +578,11 @@ zstyle ':completion:*' completer _expand _complete _correct _approximate
 zstyle ':completion:*' format 'Completing %d'
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*' menu select=2
-eval "$(dircolors -b)"
+if [[ $(uname -s) == 'Darwin' ]]; then
+  eval "$(gdircolors -b)"
+else
+  eval "$(dircolors -b)"
+fi
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' list-colors ''
 zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
@@ -601,14 +613,15 @@ Define custom command aliases.
  - emc :: The same as ~em~, but adds the ~-c~ parameter and runs it in the background.
 
 #+begin_src conf :noweb-ref zshrc :noweb yes
-alias ls='ls --color=auto'
+[[ $(uname -s) == 'Darwin' ]] && alias ls='gls --color=auto' || alias ls='ls --color=auto'
+# alias ls='ls --color=auto'
 alias 7zultra='7z a -t7z -m0=lzma2 -mx=0 -mfb=64 -md=32m -ms=on'
 alias curlheaders='curl -I'
 alias curlheadersproxy='curl --socks5 localhost:11080 -I'
 alias scrote='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/foo.png && rm ~/foo.png'
 alias webcam='mplayer tv:// -tv driver=v412:width=1920:height=1080:device=/dev/video0 -fps 15 -vf screenshot'
-alias dots='cd <<dotfiles-location()>>'
-alias updots='<<dotfiles-location()>>/.bin/update-dotfiles'
+alias dots='<<dotfiles-location()>>'
+alias updots='<<dotfiles-location()>>.bin/update-dotfiles'
 alias work='cd ~/Projects/work'
 alias notes='cd ~/Notes'
 alias docs='cd ~/Documents'
@@ -620,10 +633,11 @@ Configure some system-dependent variables. Most of these are added to
 handle some quirky behavior within =WSL= instances.
 
 #+begin_src conf :noweb-ref zshrc
-export GPG_TTY=$(tty)
 
-# System dependent variables:
-if [[ "$(< /proc/sys/kernel/osrelease)" == *microsoft* ]]; then
+if [[ -f "/proc/sys/kernel/osrelease" ]]; then
+  export GPG_TTY=$(tty)
+  # System dependent variables:
+  if [[ "$(< /proc/sys/kernel/osrelease)" == *microsoft* ]]; then
     export $(dbus-launch)
     export LIBGL_ALWAYS_INDIRECT=1
     export WSL_VERSION=$(wsl.exe -l -v | grep -a '[*]' | sed 's/[^0-9]*//g')
@@ -635,19 +649,23 @@ if [[ "$(< /proc/sys/kernel/osrelease)" == *microsoft* ]]; then
     # in Emacs directly, opting instead for the pinentry-gtk2 package.
     kill -0 $SSH_AGENT_PID &> /dev/null
     if [[ $? -eq 1 ]]; then
-        eval $( gpg-agent \
-            --daemon \
-            --allow-emacs-pinentry \
-            --allow-loopback-pinentry \
-            --enable-ssh-support);
-    fi
+            eval $( gpg-agent \
+                --daemon \
+                --allow-emacs-pinentry \
+                --allow-loopback-pinentry \
+                --enable-ssh-support);
+        fi
 
-    # Start Docker daemon when logging in if not runnint
-    RUNNING=`ps aux | grep dockerd | grep -v grep`
-    if [ -z "$RUNNING" ]; then
-        sudo dockerd > /dev/null 2>&1 &
-        disown
-    fi
+        # Start Docker daemon when logging in if not runnint
+        RUNNING=`ps aux | grep dockerd | grep -v grep`
+        if [ -z "$RUNNING" ]; then
+            sudo dockerd > /dev/null 2>&1 &
+            disown
+        fi
+  fi
+  # Linux
+else
+  # Darwin
 fi
 #+end_src
 
@@ -684,7 +702,7 @@ custom work-in-progress prompt defined below.
 Tangle out all of the ~.zshrc~ source blocks defined above into the
 final file.
 
-#+begin_src conf :tangle (concat (cy/system-settings-get 'user/config) "zsh/.zshrc")
+#+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/config) "zsh/.zshrc")
 <<zshrc>>
 #+end_src
 
@@ -751,7 +769,7 @@ continue using =X=.
 This file handles a variety of things, from shell colors to terminal
 emulator settings.
 
-#+begin_src conf :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/home) ".Xresources")
+#+begin_src conf :noweb yes (tangle-linux (cy/system-settings-get 'user/home) ".Xresources")
 <<xresources-config>>
 #+end_src
 
@@ -957,7 +975,7 @@ Here it is used primarily to attempt better Xft font display. This
 somewhat duplicates similar entries in =$HOME/.Xresources= but various
 differences in system configuration may require one or the other.
 
-#+begin_src conf :tangle (tangle-linux (cy/system-settings-get 'user/config) "xsettingsd/xsettingsd.conf")
+#+begin_src conf (tangle-linux (cy/system-settings-get 'user/config) "xsettingsd/xsettingsd.conf")
 Xft/Antialias 1
 Xft/Hinting 1
 Xft/HintStyle "hintslight"
@@ -1447,7 +1465,7 @@ for_window [class=Emacs] move container to workspace $prim
 Output the =i3= configuration defined in this section into a single
 configuration file on the system.
 
-#+begin_src emacs-lisp :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "i3/config")
+#+begin_src emacs-lisp :noweb yes (tangle-linux (cy/system-settings-get 'user/config) "i3/config")
 <<i3config>>
 #+end_src
 
@@ -1458,7 +1476,7 @@ configuration file on the system.
 This script is called whenever =i3= starts up. It's purpose is to
 automatically spawn programs and processes.
 
-#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/autostart.sh")
+#+begin_src sh :noweb yes (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/autostart.sh")
 <<i3-autostart-script>>
 #+end_src
 
@@ -1527,7 +1545,7 @@ xmodmap ~/.Xmodmap &
 This =i3lock= script is triggered manually by way of keystroke from =i3=
 or an automatic inactivity timer provided by the =xautolock= package.
 
-#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/i3lock.sh")
+#+begin_src sh :noweb yes (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/i3lock.sh")
 <<i3-lock-script>>
 #+end_src
 
@@ -1602,7 +1620,7 @@ i3lock \
 
 ***** i3's =Dunst= Launcher
 
-#+begin_src sh :tangle (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/launch-dunst.sh")
+#+begin_src sh (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/launch-dunst.sh")
 if [[ `pidof dunst` ]]; then
     pkill dunst
 fi
@@ -1618,7 +1636,7 @@ dunst \
 
 =i3= launches this script at startup to display Polybar.
 
-#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/launch-polybar.sh")
+#+begin_src sh :noweb yes (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/launch-polybar.sh")
 <<i3-polybar-launcher>>
 #+end_src
 
@@ -1646,7 +1664,7 @@ This script launches the picom / compton compositor when =i3= starts
 up. Lots of systems still call it "Compton" but the program has been
 renamed to "Picom" for some reason.
 
-#+begin_src sh :noweb yes :tangle (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/launch-compton.sh")
+#+begin_src sh :noweb yes (tangle-linux (cy/system-settings-get 'user/config) "i3/bin/launch-compton.sh")
 <<i3-compositor-launcher>>
 #+end_src
 
@@ -1672,7 +1690,7 @@ compton --config <<user-config-location()>>picom/picom.conf &
 
 Configure polybar's colors.
 
-#+begin_src conf :tangle (tangle-linux (cy/system-settings-get 'user/config) "polybar/colors.ini")
+#+begin_src conf (tangle-linux (cy/system-settings-get 'user/config) "polybar/colors.ini")
 [color]
 BG = #1e222a
 BGL = #2c3038

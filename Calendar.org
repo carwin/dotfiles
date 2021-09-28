@@ -12,7 +12,7 @@
   (setq org-gcal-client-id (password-store-get "org-gcal/gcal-client-id")
         org-gcal-client-secret (password-store-get "org-gcal/gcal-client-secret")
         org-gcal-fetch-file-alist '(("carwinyoung@gmail.com" .  "~/Notes/Calendar/Personal.org")
-                                      ("carwin@mobomo.com" .  "~/Notes/Calendar/Mobomo.org"))))
+                                    ("carwin.young@snyk.io" . "~/Notes/Calendar/Snyk.org"))))
 #+end_src
 
 Configure calendar bindings off the =<leader>= key.

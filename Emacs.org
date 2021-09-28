@@ -13,17 +13,20 @@ enough to be moved around between machines.
 
 * Bootstrap
 
-| =cy-systems=                        | [[file:Systems.org][./Systems.org]] |
-| =use-package=                       | @todo         |
-| =auto-package-update=               | @todo         |
-| =use-package-ensure-system-package= | @todo         |
-| =package=                           | Built-in      |
+| =cy-systems=                        | [[file:Systems.org][./Systems.org]]                                   |
+| =exec-path-from-shell=              | https://github.com/purcell/exec-path-from-shell |
+| =use-package=                       | @todo                                           |
+| =auto-package-update=               | @todo                                           |
+| =use-package-ensure-system-package= | @todo                                           |
+| =package=                           | Built-in                                        |
 
 Load paths from shell
 
 #+begin_src emacs-lisp
 (use-package exec-path-from-shell
-  :custom
+  :init
+  (setq exec-path-from-shell-arguments nil)
+  :config
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize))
   (when (daemonp)
@@ -34,10 +37,6 @@ Load settings for this particular system.
 
 #+begin_src emacs-lisp
 (load-file "~/.emacs.d/cy-system-settings.el")
-#+end_src
-
-#+begin_src emacs-lisp
-;;(org-babel-lob-ingest (concat (file-name-directory buffer-file-name) "Systems.org"))
 #+end_src
 
 Set Emacs to run as a server to be connected to via =emacsclient=.
@@ -88,19 +87,6 @@ and, if not, attempt to install them.
 #+begin_src emacs-lisp
 (use-package use-package-ensure-system-package
   :ensure t)
-#+end_src
-
-** Path Settings
-
-| =exec-path-from-shell= | @todo |
-
-Ensure Emacs' =PATH= is the same as the shell's
-
-#+begin_src emacs-lisp
-(use-package exec-path-from-shell
-  :init
-  (when (daemonp)
-    (exec-path-from-shell-initialize)))
 #+end_src
 
 ** Secrets
@@ -493,8 +479,8 @@ directory specified above.
 
 ** Buffers and Windows
 
-| =olivetti=     | https://github.com/rnkn/olivetti        |
 | =winner=       | Built-in                                |
+| =olivetti=     | https://github.com/rnkn/olivetti        |
 | =centaur-tabs= | https://github.com/ema2159/centaur-tabs |
 
 Apply system-specific configurations for font sizes and dpi, among other things provided in =./Systems.org=.
@@ -727,6 +713,9 @@ Configure preferred settings for =dired=, the primary built-in file browsing mec
   (setq dired-listing-switches "-agho --group-directories-first"
         dired-omit-files "^\\.[^.].*"
         dired-omit-verbose nil)
+  ;; On macOS systems, assume we have gls to use the BSD version of ls as gls.
+  (when (eq system-type 'darwin)
+    (setq insert-directory-program "/usr/local/bin/gls"))
 
   (autoload 'dired-omit-mode "dired-x")
 

@@ -11,46 +11,55 @@
 
 Configure =mu4e=, my favorite email client.
 
-The =mu4e= package ships with the system package =mu= on Arch Linux systems. This is likely the same for other *nix systems as well. Typically, Emacs has no context for where the necessary =mu4e= files reside.
+The =mu4e= package ships with the system package =mu= on Arch Linux
+systems. This is likely the same for other *nix systems as
+well. Typically, Emacs has no context for where the necessary =mu4e=
+files reside.
 
-Firstly, ensure that Emacs knows about the location on the system of the =mu4e= directory and its related ~.el~ files.
+Firstly, ensure that Emacs knows about the location on the system of
+the =mu4e= directory and its related ~.el~ files.
 
 #+begin_src emacs-lisp
 (add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu4e")
+(add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu/mu4e")
 #+end_src
 
 Locate Email signature files for different accounts.
 
 #+begin_src emacs-lisp
 (defun cy/work-sig ()
-  "Provides the path to	email signature for work mail."
+  "Provides the path to email signature for work mail."
   (shell-command-to-string "cat ~/Mail/Work/signature.sig"))
 (defun cy/home-sig ()
   "Provides the path to email signature for personal mail."
   (shell-command-to-string "cat ~/Mail/Home/signature.sig"))
 #+end_src
 
-Configure basic =mu4e= functionality. Define the mailboxes and set =mu4= to refreshe the defined mailboxes every 10 minutes
-and set the composition window to open in a new frame.
+Configure basic =mu4e= functionality. Define the mailboxes and set =mu4=
+to refreshe the defined mailboxes every 10 minutes and set the
+composition window to open in a new frame.
 
 #+begin_src emacs-lisp
 (use-package mu4e
   :ensure nil
-  :ensure-system-package mu
   :config
+  (setq mu4e-mu-binary "/usr/local/bin/mu")
   ;; This is set to 't' to avoid mail syncing issues when using mbsync
   (setq mu4e-change-filenames-when-moving t
         ;; Refresh mail using isync every 10 minutes
         mu4e-update-interval (* 15 60)
         mu4e-compose-in-new-frame nil
         mu4e-view-show-images t
-	mu4e-split-view 'vertical
+        mu4e-split-view 'vertical
         mu4e-get-mail-command "mbsync -a"
         mu4e-maildir "~/Mail")
+  ;; use imagemagick, if available
+  (when (fboundp 'imagemagick-register-types)
+    (imagemagick-register-types))
   (setq mu4e-contexts
-	(list
-	 ;; Personal account
-	 (make-mu4e-context
+        (list
+         ;; Personal account
+         (make-mu4e-context
           :name "Personal"
           :match-func
           (lambda (msg)
@@ -68,28 +77,7 @@ and set the composition window to open in a new frame.
                                               ("/Home/quarantine"    . ?q)
                                               ("/Home/trash"         . ?t)
                                               ("/Home/drafts"        . ?d)
-                                              ("/Home/archive"       . ?a)))))
-         ;; Work account
-	 (make-mu4e-context
-          :name "Work"
-          :match-func
-          (lambda (msg)
-            (when msg
-              (string-prefix-p "/Work" (mu4e-message-field msg :maildir))))
-          :vars '((user-mail-address . "carwin@mobomo.com")
-                  (user-full-name    . "Carwin Young")
-                  (mu4e-compose-signature . cy/work-sig)
-                  (mu4e-drafts-folder  . "/Work/drafts")
-                  (mu4e-sent-folder    . "/Work/sent")
-                  (mu4e-refile-folder  . "/Work/archive")
-                  (mu4e-trash-folder   . "/Work/trash")
-                  (mu4e-maildir-shortcuts . (("/Work/inbox"     . ?i)
-                                             ("/Work/sent"     . ?s)
-                                             ("/Work/trash"    . ?t)
-                                             ("/Work/drafts"   . ?d)
-                                             ("/Work/archive"  . ?a))))))))
-
-
+                                              ("/Home/archive"       . ?a))))))))
 #+end_src
 
 Define a function to assist in capturing todo items from Emails.
@@ -99,10 +87,10 @@ Define a function to assist in capturing todo items from Emails.
   (interactive)
   (call-interactively 'org-store-link)
   (org-capture nil "m"))
-
 #+end_src
 
-Assign a keybinding based off the =<leader>= key defined in =./Emacs.org= for capturing from todos within the =mu4e-headers= mode.
+Assign a keybinding based off the =<leader>= key defined in =./Emacs.org=
+for capturing from todos within the =mu4e-headers= mode.
 
 @todo, this doesn't work - but keep the documentation.
 
@@ -139,7 +127,8 @@ Send mail using =msmtp=.
 
 Configure calendar invite response functionality.
 
-Extend the main page to show details about individual mail directories with =mu4e-maildirs-extension=.
+Extend the main page to show details about individual mail directories
+with =mu4e-maildirs-extension=.
 
 #+begin_src emacs-lisp
 (use-package mu4e-maildirs-extension
@@ -167,48 +156,6 @@ Sync All
 SyncState *
 CopyArrivalDate yes
 
-#####################
-# Work Email        #
-#####################
-IMAPAccount work
-Host imap.gmail.com
-User carwin@mobomo.com
-PassCmd "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/mobomomail.gpg"
-SSLType IMAPS
-CertificateFile /etc/ssl/certs/ca-certificates.crt
-
-IMAPStore work-remote
-Account work
-
-MaildirStore work-local
-# Subfolders Verbatim
-Path ~/Mail/Work/
-Inbox ~/Mail/Work/inbox
-
-Channel work-inbox
-Master :work-remote:
-Slave :work-local:inbox
-
-Channel work-archive
-Master :work-remote:"[Gmail]/All Mail"
-Slave :work-local:archive
-
-Channel work-sent
-Master :work-remote:"[Gmail]/Sent Mail"
-Slave :work-local:sent
-
-Channel work-trash
-Master :work-remote:"[Gmail]/Trash"
-Slave :work-local:trash
-Create Slave
-
-# Get all the work channels together into a group.
-Group work
-Channel work-inbox
-Channel work-archive
-Channel work-sent
-Channel work-trash
-
 ##########################
 # Home Email             #
 ##########################
@@ -217,9 +164,11 @@ Host mail.runbox.com
 Port 993
 User narwic@1000needles.net
 PassCmd "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/personalmail.gpg"
+# PassCmd
 SSLType IMAPS
 SSLVersions TLSv1.2
-CertificateFile /etc/ssl/certs/ca-certificates.crt
+# CertificateFile /etc/ssl/certs/ca-certificates.crt
+CertificateFile /usr/local/etc/openssl@1.1/cert.pem
 
 IMAPStore home-remote
 Account home
@@ -270,12 +219,16 @@ Channel home-drafts
 
 * System =msmtp= Configuration
 
-=msmtp= is used by =mu4e= for sending mail instead of the basic smtp process. This is preferred because we have different contexts and emails from which we want to send mail and =msmtp= makes that much easier.
+=msmtp= is used by =mu4e= for sending mail instead of the basic smtp
+process. This is preferred because we have different contexts and
+emails from which we want to send mail and =msmtp= makes that much
+easier.
 
 #+begin_src sh :tangle ~/.msmtprc
 defaults
 tls on
-tls_trust_file /etc/ssl/certs/ca-certificates.crt
+# tls_trust_file /etc/ssl/certs/ca-certificates.crt
+tls_trust_file /usr/local/etc/openssl@1.1/cert.pem
 logfile ~/.local/log/msmtp.log
 
 # Home
@@ -285,16 +238,5 @@ host mail.runbox.com
 port 587
 from cy@carw.in
 user narwic@1000needles.net
-passwordeval "gpg2 -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/personalmail.gpg"
-
-# Work
-account Work
-auth on
-host smtp.gmail.com
-port 587
-from carwin@mobomo.com
-user carwin@mobomo.com
-passwordeval "gpg2 -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/mobomomail.gpg"
-
-# account default : home
+passwordeval "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/personalmail.gpg"
 #+end_src

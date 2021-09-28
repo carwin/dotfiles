@@ -44,6 +44,8 @@ the declared overrides are mashed together on a per-system basis using
          ;; (user/home . ,(concat "/home/" user-login-name))
          (user/home . "~/")
          (user/config . "~/.config/")
+         (user/fonts . "~/.local/fonts")
+         (user/notes . "~/Notes/")
          (user/dots . "~/Projects/home/dotfiles/")
          (user/dots/output . "~/Projects/home/dotfiles/tangled/")
 
@@ -168,18 +170,26 @@ thing has pointed out a number of flaws in my setup.
 #+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep
 (when (equal system-name "blank.local")
   `((desktop/dpi . 90)
-    (user/home . "~/")
-    (config/dir . ,(shell-command-to-string "source ~/.profile && printf %s \"$XDG_CONFIG_HOME\""))
+    (user/config . "~/.config/")
+    (user/fonts . "~/Library/Fonts/")
+    (user/dots . "~/Projects/dotfiles/")
+    (user/dots/output . "~/Projects/dotfiles/tangled/")
+
+    ;; (config/dir . ,(shell-command-to-string "source ~/.profile && printf %s \"$XDG_CONFIG_HOME\""))
     (emacs/default-face-size . 110)))
 #+end_src
 
 There are some Quirks that need to be handled outside of Emacs for
 things to work:
 
-1. When Emacs is installed via Homebrew, macOS needs to grant Ruby
-   (~/usr/bin/ruby~ or whichever is the default) full filesystem
-   access. This is due to the fact that the Homebrew installation of
-   Emacs is actually launched via a Ruby script.
+ 1. When Emacs is installed via Homebrew, macOS needs to grant Ruby
+    (~/usr/bin/ruby~ or whichever is the default) full filesystem
+    access. This is due to the fact that the Homebrew installation of
+    Emacs is actually launched via a Ruby script.
+ 2. =vterm= requires that =libvterm= be installed via Homebrew. Additionally, when
+    prompted to compile ~vterm-module~ the first time the process failed with no
+    errors. Calling ~M-x vterm~ directly gave another prompt which pointed out
+    that =cmake= was not installed. After installing it via Homebrew it worked.
 
 ** cutman
 
@@ -215,7 +225,11 @@ This shell script is used to update the dotfiles from outside of Emacs.
 
 #+begin_src sh :tangle .bin/update-dotfiles :shebang #!/bin/sh :mkdirp yes :noweb yes
 # Navigate to the directory of this script (generally ~/Projects/home/dotfiles/.bin)
-cd $(dirname $(readlink -f $0))
+if [[ $(uname -s) == 'Darwin' ]]; then
+  cd $(dirname $(greadlink -f $0))
+else
+  cd $(dirname $(readlink -f $0))
+fi
 cd ..
 
 # The heavy lifting is done by an Emacs script
@@ -273,15 +287,17 @@ of Babel.
 #+begin_src emacs-lisp :noweb-ref system-functions
 (defun tangle-linux (path file)
   "Return the concatenated path and file if the system is 'gnu/linux."
-  (when (eq system-type 'gnu/linux)
-    (concat path file)))
+  (if (eq system-type 'gnu/linux)
+      (concat path file)
+    "no"))
 #+end_src
 
 #+begin_src emacs-lisp :noweb-ref system-functions
 (defun tangle-macos (path file)
   "Return the concatenated path and file if the system is macOS."
-  (when (eq system-type 'darwin)
-    (concat path file)))
+  (if (eq system-type 'darwin)
+      (concat path file)
+    "no"))
 #+end_src
 
 
