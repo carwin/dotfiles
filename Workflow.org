@@ -72,6 +72,19 @@ Tags are used to filter all tasks to find anything actionable in a particular co
    ("followup" . ?f)))
 #+end_src
 
+* GTasks Integration
+
+#+begin_src emacs-lisp
+(use-package org-gtasks
+  :after org
+  :load-path "~/.emacs.d/org-gtasks"
+  :config
+  (org-gtasks-register-account :name "Carwin Young"
+                               :directory "~/Notes/"
+                               :client-id (password-store-get "org-gtasks/gtasks-client-id")
+                               :client-secret (password-store-get "org-gtasks/gtasks-client-secret")))
+#+end_src
+
 * Agendas
 
 #+begin_src emacs-lisp
