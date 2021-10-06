@@ -2,3 +2,4 @@
 tangled/
 .bin/
 .cache/
+.DS_Store
