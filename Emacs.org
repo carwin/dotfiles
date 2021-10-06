@@ -1261,12 +1261,14 @@ Set up a dashboard to use as a starting point when Emacs' launches without a rec
                           (bookmarks . 5)
                           (projects . 5)
                           (agenda . 5)))
+  ;; (add-to-list 'dashboard-items '(agenda) t)
   ;; (setq dashboard-match-agenda-entry "org-gcal")
-  ;; (setq dashboard-filter-agenda 'dashboard-no-filter-agenda)
+  (setq dashboard-filter-agenda-entry 'dashboard-filter-agenda-by-time)
   ;; (setq dashboard-filter-agenda t)
-  (setq dashboard-filter-agenda-entry #'dashboard-filter-agenda-by-time)
-  (setq dashboard-org-agenda-categories '("@home"))
-  (setq dashboard-week-agenda t)
+  (setq dashboard-match-agenda-entry nil)
+  ;; (setq dashboard-filter-agenda-entry #'dashboard-filter-agenda-by-time)
+  ;; (setq dashboard-org-agenda-categories '("@home"))
+  (setq dashboard-week-agenda nil)
   (dashboard-setup-startup-hook))
 
 (set-face-attribute 'dashboard-items-face nil :foreground nil :inherit 'fixed-pitch)
@@ -1418,6 +1420,52 @@ Try out =eglot= for a while to compare it with trusty =lsp-mode=.
   (add-to-list 'aggressive-indent-protected-commands 'comment-dwim))
 #+end_src
 
+** AWS Cloudformation
+#+begin_src emacs-lisp
+;; Set up a mode for JSON based templates
+
+(define-derived-mode cfn-json-mode js-mode
+    "CFN-JSON"
+    "Simple mode to edit CloudFormation template in JSON format."
+    (setq js-indent-level 2))
+
+(add-to-list 'magic-mode-alist
+             '("\\({\n *\\)? *[\"']AWSTemplateFormatVersion" . cfn-json-mode))
+
+;; Set up a mode for YAML based templates if yaml-mode is installed
+;; Get yaml-mode here https://github.com/yoshiki/yaml-mode
+(when (featurep 'yaml-mode)
+
+  (define-derived-mode cfn-yaml-mode yaml-mode
+    "CFN-YAML"
+    "Simple mode to edit CloudFormation template in YAML format.")
+
+  (add-to-list 'magic-mode-alist
+               '("\\(---\n\\)?AWSTemplateFormatVersion:" . cfn-yaml-mode)))
+
+;; Set up cfn-lint integration if flycheck is installed
+;; Get flycheck here https://www.flycheck.org/
+(when (featurep 'flycheck)
+  (flycheck-define-checker cfn-lint
+    "AWS CloudFormation linter using cfn-lint.
+
+Install cfn-lint first: pip install cfn-lint
+
+See `https://github.com/aws-cloudformation/cfn-python-lint'."
+
+    :command ("cfn-lint" "-f" "parseable" source)
+    :error-patterns ((warning line-start (file-name) ":" line ":" column
+                              ":" (one-or-more digit) ":" (one-or-more digit) ":"
+                              (id "W" (one-or-more digit)) ":" (message) line-end)
+                     (error line-start (file-name) ":" line ":" column
+                            ":" (one-or-more digit) ":" (one-or-more digit) ":"
+                            (id "E" (one-or-more digit)) ":" (message) line-end))
+    :modes (cfn-json-mode cfn-yaml-mode))
+
+  (add-to-list 'flycheck-checkers 'cfn-lint)
+  (add-hook 'cfn-json-mode-hook 'flycheck-mode)
+  (add-hook 'cfn-yaml-mode-hook 'flycheck-mode))
+#+end_src
 ** CSS
 
 | =css-mode=  | Built-in |

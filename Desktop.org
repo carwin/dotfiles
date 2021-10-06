@@ -285,6 +285,13 @@ directory.
 export PATH="$PATH:$HOME/.local/bin"
 #+end_src
 
+On =macOS=, Python things installed via ~pip install --user ...~ get put
+here:
+
+#+begin_src conf :noweb-ref dot-profile
+export PATH="$PATH:$HOME/Library/Python/3.9/bin"
+#+end_src
+
 Add =Ruby= gems into =$PATH= and, if =rvm= is installed, somewhere we expect
 it to be, source it and load =rvm= into a shell session as a function.
 
@@ -326,9 +333,20 @@ export PATH="$PATH:/opt/cuda/bin"
 
 Source the Node Version Manager (=nvm=) in much the same way as =rvm=, above.
 
-#+begin_src conf :noweb-ref dot-profile
-[[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
-[[ -s /usr/share/nvm/init-nvm.sh ]] && . /usr/share/nvm/init-nvm.sh
+#+name: source-nvm-by-system-type
+#+begin_src emacs-lisp
+(if (equal system-type 'darwin)
+    (format "%s"
+            "export NVM_DIR=\"$HOME/.nvm\"
+             [ -s \"/usr/local/opt/nvm/nvm.sh\" ] && . \"/usr/local/opt/nvm/nvm.sh\"  # This loads nvm
+             [ -s \"/usr/local/opt/nvm/etc/bash_completion.d/nvm\" ] && . \"/usr/local/opt/nvm/etc/bash_completion.d/nvm\"  # This loads nvm bash_completion")
+  (format "%s"
+          "[[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh
+           [[ -s /usr/share/nvm/init-nvm.sh ]] && . /usr/share/nvm/init-nvm.sh"))
+#+end_src
+
+#+begin_src conf :noweb yes :noweb-ref dot-profile
+<<source-nvm-by-system-type()>>
 #+end_src
 
 Define the color values used by the =ls= command when it is invoked with
@@ -607,8 +625,8 @@ Define custom command aliases.
  - dots :: Jump to the dotfiles directory.
  - updots :: Update my dotfiles by running a script that tells Emacs to evaluate these Org files as a script.
  - work :: Jump to the work projects directory.
- - notes :: Jump to the ~~/Notes~ directory.
- - docs :: Jump to ~~/Documents~.
+ - notes :: Jump to the ~$HOME/Notes~ directory.
+ - docs :: Jump to ~$HOME/Documents~.
  - em :: Run =emacsclient=.
  - emc :: The same as ~em~, but adds the ~-c~ parameter and runs it in the background.
 
@@ -622,11 +640,14 @@ alias scrote='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/fo
 alias webcam='mplayer tv:// -tv driver=v412:width=1920:height=1080:device=/dev/video0 -fps 15 -vf screenshot'
 alias dots='<<dotfiles-location()>>'
 alias updots='<<dotfiles-location()>>.bin/update-dotfiles'
-alias work='cd ~/Projects/work'
-alias notes='cd ~/Notes'
-alias docs='cd ~/Documents'
+alias work='cd $HOME/Projects/work'
+alias notes='cd $HOME/Notes'
+alias docs='cd $HOME/Documents'
 alias em='emacsclient'
 alias emc='emacsclient -c &'
+# @todo: These only for macOS
+alias python='/usr/local/bin/python3'
+alias pip='/usr/local/bin/pip3'
 #+end_src
 
 Configure some system-dependent variables. Most of these are added to
@@ -684,9 +705,9 @@ Source any custom =zsh= plugins.
 from a command completion. Start with ~base16_~ and hit ~<Tab>~ to see the
 theme options.
 
-The settings are stored in ~~/.base16_theme~. Remove that directory to
+The settings are stored in ~$HOME/.base16_theme~. Remove that directory to
 go back to ~.Xresources~ styles or whatever other configuration the
-current terminal emulator uses (e.g.: ~~/.config/termite/config~)
+current terminal emulator uses (e.g.: ~$HOME/.config/termite/config~)
 
 #+begin_src conf :noweb-ref zshrc
 source ${ZDOTDIR}/custom/plugins/base16-shell/base16-shell.plugin.zsh
@@ -958,10 +979,10 @@ dmenu.foreground:    #d8dee9
 #+end_src
 
 After changing this file, it is necessary to reload it via: ~xrdb
-~/.Xresources~. For convenience, evaluate this block:
+~$HOME/.Xresources~. For convenience, evaluate this block:
 
 #+begin_src sh :shebang #!/bin/bash :noweb-ref source-xresources
-xrdb ~/.Xresources
+xrdb $HOME/.Xresources
 #+end_src
 
 *** xsettingsd
@@ -1082,7 +1103,7 @@ any other provided alias is just a rarely used convenience.
 #+end_src
 
 Collect all the =.gitconfig= bits in this section and tangle them out
-into ~/homr/<user>/.gitconfig~.
+into ~$HOME/.gitconfig~.
 
 #+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/home) ".gitconfig")
 <<gitconfig>>
