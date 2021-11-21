@@ -13,7 +13,8 @@ productivity workflow I plan on using with Org.
 
 * File Paths
 
-The location where my Notes folder lives. There's a function here in case I need to adjust my Notes directory based on machine.
+The location where my Notes folder lives. There's a function here in
+case I need to adjust my Notes directory based on machine.
 
 #+begin_src emacs-lisp
 (setq org-directory "~/Notes")
@@ -35,13 +36,15 @@ I try to keep my set of workflow states simple so that I can filter on them easi
 - =BACK= - A task in the backlog to be done some day but not now.
 - =WAIT= - Waiting for someone else to be actionable again
 - =DONE= - It's done!
+- CANCELLED - Used almost exclusively for events, but also handy for things I'd like to remember were once planned.
 
-  I also make sure to set them up in the order I want `org-sort-entries' to sort them in when I use the o option invoking that command.
+I also make sure to set them up in the order I want `org-sort-entries'
+to sort them in when I use the o option invoking that command.
 
 #+begin_src emacs-lisp
 (setq org-todo-keywords
   '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d!)")
-    (sequence "|" "WAIT(w)" "BACK(b)")))
+    (sequence "|" "WAIT(w)" "BACK(b)" "CANCELLED(c!)")))
 
 ;; @todo: org-todo-keyword-faces
 (setq org-todo-keyword-faces
@@ -54,7 +57,10 @@ I try to keep my set of workflow states simple so that I can filter on them easi
 
 * Tags
 
-Tags are used to filter all tasks to find anything actionable in a particular context. I use the @home and @work tags for explicit contexts and then the rest are used for filtering tasks for agenda views.
+Tags are used to filter all tasks to find anything actionable in a
+particular context. I use the @home and @work tags for explicit
+contexts and then the rest are used for filtering tasks for agenda
+views.
 
 - =followup= - Someone is waiting on me to follow up on this task, it should be prioritized above others.
 - =batch= - The task can be batched with others (low effort)
@@ -95,13 +101,12 @@ Tags are used to filter all tasks to find anything actionable in a particular co
 (setq org-agenda-window-setup 'current-window)
 (setq org-agenda-span 'day)
 (setq org-agenda-start-with-log-mode t)
-;; (setq org-agenda-tag-filter-preset '("-HABIT"))
 (setq org-agenda-files (list (cy/org-path "Inbox.org")
-                             (cy/org-path "Habits.org")
+                             ;; (cy/org-path "Habits.org")
                              ;; (cy/org-path "Roam-v2/Journal/")
-                             (cy/org-path "Calendar/")))
+                             (cy/org-path "Calendar/Personal.org")))
 
-(setq org-agenda-custom-commands
+(org org-agenda-custom-commands
       `(("d" "Dashboard"
          ((agenda ""
                 ((org-deadline-warning-days 7)
@@ -113,19 +118,8 @@ Tags are used to filter all tasks to find anything actionable in a particular co
                  ((org-agenda-overriding-header "Next Actions")))
           (todo "TODO"
                  ((org-agenda-overriding-header "Unprocessed Inbox Tasks")
-                  ;; (org-agenda-files (remove '(,(cy/org-path "Habits.org")) org-agenda-files))
-                  ;; (setq org-agenda-files `(,org-directory))
-                  ;; (org-agenda-files '(,(cy/org-path "Inbox.org") ,(cy/org-path "Roam-v2/Journal/")))
                   (org-agenda-files '(,(cy/org-path "Inbox.org")))
-                  ;; (remove '(,(cy/org-path "Habits.org")) org-agenda-files)
                   (org-agenda-text-search-extra-files nil)))))
-       ("h" "Habits"
-        ((agenda ""))
-        ((org-agenda-show-log t)
-         (org-agenda-span 'week)
-         (org-agenda-ndays 7)
-         (org-agenda-log-mode-items '(state))
-         (org-agenda-skip-function '(org-agenda-skip-entry-if 'notregexp ":HABIT:"))))
 
        ("t" "Custom Timeline"
         ((todo "TODO"
@@ -151,13 +145,14 @@ Tags are used to filter all tasks to find anything actionable in a particular co
 
 * Recent Files
 
-=dashboard= is the first thing the user sees upon starting Emacs, it is currently configured to show the upcoming agenda as well as the most recent files the user has visited using =recentf-mode=. Because the dashboard needs to keep the agenda files open, that list of recent files gets filled with agenda files at all times, which isn't very useful.
+=dashboard= is the first thing the user (me) sees upon starting Emacs,
+it is currently configured to show the upcoming agenda as well as the
+most recent files the user has visited using =recentf-mode=. Because the
+dashboard needs to keep the agenda files open, that list of recent
+files gets filled with agenda files at all times, which isn't very
+useful.
 
 This block tells =recentf-mode= to ignore the agenda files.
-
-/Users/carwin/Notes/Calendar/Personal.org
-
-/Users/carwin/Notes/Calendar/Work.org
 
 #+begin_src emacs-lisp
 (setq recentf-exclude `("/tmp/"
@@ -173,7 +168,7 @@ This block tells =recentf-mode= to ignore the agenda files.
 
 #+begin_src emacs-lisp
 (setq org-habit-show-habits-only-for-today nil
-      ;; org-habit-graph-column
+      org-habit-graph-column
       org-habit-preceding-days 4
       org-habit-following-days 4)
 #+end_src
@@ -256,7 +251,9 @@ The =org-contacts= package doesn't ship with much in the way of templates, so I 
 
 * Module Setup
 
-This Org file produces a file called =cy-workflow.el= which gets loaded up in =init.el= Export it as a feature so that it can be loaded with =require=.
+This Org file produces a file called =cy-workflow.el= which gets loaded
+up in =init.el= Export it as a feature so that it can be loaded with
+=require=.
 
 #+begin_src emacs-lisp
 (provide 'cy-workflow)

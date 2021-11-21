@@ -37,6 +37,12 @@ Load settings for this particular system.
 
 #+begin_src emacs-lisp
 (load-file "~/.emacs.d/cy-system-settings.el")
+
+(cond
+ ((string-equal system-type "darwin") ; macOS
+  (progn
+    (setq mac-option-modifier 'meta)
+    (setq mac-command-modifier 'super))))
 #+end_src
 
 Set Emacs to run as a server to be connected to via =emacsclient=.
@@ -120,7 +126,8 @@ Configure an interface for talking to the system's =pass= to manage secrets.
 (scroll-bar-mode -1)                           ; Disable scroll bar
 (tool-bar-mode -1)                             ; Disable the toolbar
 (tooltip-mode -1)                              ; Disable tooltips
-(menu-bar-mode -1)                             ; Disable the menu bar
+;(menu-bar-mode -1)                             ; Disable the menu bar
+(menu-bar-mode t)                              ; Enable the menu bar in macOS for Yabai to properly control it?
 (set-default-coding-systems 'utf-8)           ; Default to utf-8 encoding
 #+end_src
 
@@ -793,14 +800,14 @@ Configure preferred settings for =dired=, the primary built-in file browsing mec
 
 (cy/leader-key-def
   "d"   '(:ignore t :which-key "dired")
-  "dd"  `(,(cy/dired-link "~/Documents") :which-key "Here")
-  "dh"  `(,(cy/dired-link "~") :which-key "Home")
-  "di"  `(,(cy/dired-link "~/Notes/Inbox.org") :which-key "Inbox")
-  "dn"  `(,(cy/dired-link "~/Notes") :which-key "Notes")
-  "do"  `(,(cy/dired-link "~/Downloads") :which-key "Downloads")
-  "dp"  `(,(cy/dired-link "~/Projects") :which-key "Projects")
-  "dv"  `(,(cy/dired-link "~/Videos") :which-key "Videos")
-  "d."  `(,(cy/dired-link (cy/system-settings-get 'dotfiles/dir)) :which-key "dotfiles"))
+  "dd"  `(,(cy/dired-link (envpath "HOME" "/Documents")) :which-key "Here")
+  "dh"  `(,(cy/dired-link (envpath "HOME" "")) :which-key "Home")
+  "di"  `(,(cy/dired-link (envpath "HOME" "/Notes/Inbox.org")) :which-key "Inbox")
+  "dn"  `(,(cy/dired-link (envpath "HOME" "/Notes")) :which-key "Notes")
+  "do"  `(,(cy/dired-link (envpath "HOME" "/Downloads")) :which-key "Downloads")
+  "dp"  `(,(cy/dired-link (envpath "HOME" "/Projects")) :which-key "Projects")
+  "dv"  `(,(cy/dired-link (envpath "HOME" "/Videos")) :which-key "Videos")
+  "d."  `(,(cy/dired-link (cy/system-settings-get 'user/dots)) :which-key "dotfiles"))
 #+end_src
 
 Setup =deft= as a nice alternative way to browse files, specifically
@@ -817,7 +824,9 @@ If this ever gets super slow, look into installing the Notdeft fork.
   (deft-recursive t)
   (deft-use-filter-string-for-filename t)
   (deft-default-extension "org")
-  (deft-directory "~/Notes/Roam"))
+  (deft-use-filename-as-title t)
+  ;; (deft-directory (envpath "HOME" "Notes/Roam")))
+  (deft-directory (envpath "HOME" ".deft")))
 
 (cy/leader-key-def
   "<SPC>" '(deft :which-key "deft"))
@@ -868,7 +877,7 @@ workspaces.
 	    treemacs-no-png-images                   nil
 	    treemacs-no-delete-other-windows         t
 	    treemacs-project-follow-cleanup          nil
-	    treemacs-persist-file                    ('cy/cache-concat treemacs-persist)
+	    treemacs-persist-file                    (cy/cache-concat "treemacs-persist")
 	    treemacs-position                        'left
 	    treemacs-read-string-input               'from-child-frame
 	    treemacs-recenter-distance               0.1
@@ -998,10 +1007,10 @@ Minimal completion-at-point. Everyone else seems to be doing it with =corfu=, wh
   (corfu-commit-predicate nil)
   ;; (corfu-echo-documentation t)
   :bind (:map corfu-map
-	      ("TAB" . corfu-next)
-	      ([tab] . corfu-next)
-	      ("S-TAB" . corfu-previous)
-	      ([backtab] . corfu-previous))
+	            ("TAB" . corfu-next)
+	            ([tab] . corfu-next)
+	            ("S-TAB" . corfu-previous)
+	            ([backtab] . corfu-previous))
   :init
   (corfu-global-mode))
 #+end_src
@@ -1382,18 +1391,116 @@ Add prerequisite for =magit= package.
 
 * Diagnostics
 
+| =lsp-mode=          | https://github.com/emacs-lsp/lsp-mode                  |
+| =lsp-docker=        | https://github.com/emacs-lsp/lsp-docker                |
+| =dap-mode=          | https://github.com/emacs-lsp/dap-mode                  |
+| =elisp-tree-sitter= | https://github.com/emacs-tree-sitter/elisp-tree-sitter |
+| =lsp-ui=            | https://emacs-lsp.github.io/lsp-ui/                    |
+| =consult-lsp=       | https://github.com/gagbo/consult-lsp                   |
+
+Configure =lsp-mode= (/language server protocol/).
+
+#+begin_src emacs-lisp
+(use-package lsp-mode
+  :init
+  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+  (setq lsp-keymap-prefix "C-c l")
+  :hook (;; replace XXX-mode with concrete major-mode (e.g. python-mode)
+         (js-mode . lsp)
+         (js2-mode . lsp)
+         (web-mode . lsp)
+         ;; if you want which-key integration
+         (lsp-mode . lsp-enable-which-key-integration))
+  :commands lsp lsp-deferred)
+#+end_src
+
+Now configure some of the interactivity provided by =lsp-ui=.
+
+#+begin_src emacs-lisp
+(use-package lsp-ui :commands lsp-ui-mode)
+(setq lsp-ui-doc-enable t
+      lsp-ui-doc-delay 3
+      lsp-ui-doc-show-with-cursor t
+      lsp-ui-doc-show-with-mouse t)
+#+end_src
+
+Consult LSP stuff:
+
+#+begin_src emacs-lisp
+(use-package consult-lsp)
+#+end_src
+
+Now that =lsp-mode= is set up, it needs individual language servers
+to talk to. As an alternative to installing and managing local sources or individual packages, =lsp-docker= can connect to a running Docker container with a collection of language servers and manage the communication with =lsp-mode=.
+
+First, pull the container.
+
+#+begin_src sh
+docker pull emacslsp/lsp-docker-langservers
+#+end_src
+
+Second, register the Docker client(s).
+
+#+begin_src emacs-lisp
+(use-package docker
+  :ensure t
+  :bind ("C-c d" . docker))
+
+(defvar lsp-docker-client-packages
+  '(lsp-css lsp-clients lsp-bash lsp-go lsp-pyls lsp-html lsp-typescript
+            lsp-terraform lsp-clangd lsp-dockerfile lsp-javascript))
+
+(setq lsp-docker-client-configs
+      '((:server-id bash-ls :docker-server-id bashls-docker :server-command "bash-language-server start")
+        (:server-id clangd :docker-server-id clangd-docker :server-command "clangd")
+        (:server-id css-ls :docker-server-id cssls-docker :server-command "css-languageserver --stdio")
+        (:server-id dockerfile-ls :docker-server-id dockerfilels-docker :server-command "docker-langserver --stdio")
+        (:server-id gopls :docker-server-id gopls-docker :server-command "gopls")
+        (:server-id html-ls :docker-server-id htmls-docker :server-command "html-languageserver --stdio")
+        (:server-id pyls :docker-server-id pyls-docker :server-command "pyls")
+        (:server-id ts-ls :docker-server-id tsls-docker :server-command "typescript-language-server --stdio")))
+
+(use-package lsp-docker)
+
+(lsp-docker-init-clients
+ :path-mappings '(("$HOME/Projects/" . "/Projects"))
+ :client-packages lsp-docker-client-packages
+ :client-configs lsp-docker-client-configs)
+#+end_src
+
+Configure =dap-mode= as a debugger.
+
+The =dap-mode= debugger relies on individual adapters to provide
+debugging for specific languages. More information about the available
+options can be found here:
+https://emacs-lsp.github.io/dap-mode/page/configuration/.
+
+#+begin_src emacs-lisp
+(use-package dap-mode)
+(require 'dap-firefox)
+(require 'dap-node)
+
+(dap-mode 1)
+(dap-ui-mode 1)
+(dap-tooltip-mode 1)
+(tooltip-mode 1)
+(dap-ui-controls-mode 1)
+;; (use-package dap-LANGUAGE) to load the dap adapter for a language
+
+#+end_src
+
 Try out =eglot= for a while to compare it with trusty =lsp-mode=.
 
 #+begin_src emacs-lisp
-(use-package eglot
-  :hook ((typescript-mode . eglot-ensure))
-  :commands (eglot)
-  :custom
-  (eglot-autoshutdown t)
-  :config
-  (add-to-list 'eglot-server-programs '(js-mode . ("typescript-language-server" "--stdio")))
-  (add-to-list 'eglot-server-programs '(js2-mode . ("typescript-language-server" "--stdio"))))
-  ;; (add-to-list 'eglot-stay-out-of 'eldoc-documentation-strategy))
+;; (use-package eglot
+;;   :hook ((typescript-mode . eglot-ensure))
+;;   :commands (eglot)
+;;   :custom
+;;   (eglot-autoshutdown t)
+;;   :config
+;;   (add-to-list 'eglot-server-programs '(js-mode . ("typescript-language-server" "--stdio")))
+;;   (add-to-list 'eglot-server-programs '(js2-mode . ("typescript-language-server" "--stdio"))))
+;; (add-to-list 'eglot-stay-out-of 'eldoc-documentation-strategy))
 #+end_src
 * Linters
 
@@ -1405,6 +1512,7 @@ Try out =eglot= for a while to compare it with trusty =lsp-mode=.
 
 * Languages
 
+Aggressively indent all the things.
 
 #+begin_src emacs-lisp
 (use-package aggressive-indent
@@ -1420,6 +1528,18 @@ Try out =eglot= for a while to compare it with trusty =lsp-mode=.
   (add-to-list 'aggressive-indent-protected-commands 'comment-dwim))
 #+end_src
 
+** AsciiDoc
+
+#+begin_src emacs-lisp
+(use-package adoc-mode)
+#+end_src
+
+** Terraform
+#+begin_src emacs-lisp
+(use-package terraform-mode
+  :hook (terraform-mode . terraform-format-on-save-mode))
+;; (add-hook 'terraform-mode-hook #'terraform-format-on-save-mode)
+#+end_src
 ** AWS Cloudformation
 #+begin_src emacs-lisp
 ;; Set up a mode for JSON based templates
@@ -1518,7 +1638,7 @@ Configure the js-mode
   (add-hook 'json-minor-mode-hook #'cy/set-js-indentation)
   (setq js2-mode-show-strict-warnings nil)
   :custom
-  (add-to-list 'exec-path (expand-file-name "~/.nvm/go/bin"))
+  (add-to-list 'exec-path (expand-file-name "$HOME/.nvm/go/bin"))
 
   (js-switch-indent-offset 2)
   (js2-highlight-level 3)
@@ -1669,8 +1789,8 @@ You can use pyvenv package to use virtualenv environments in Emacs. The pyvenv-a
 
 (use-package go-mode
   :init
-  (add-to-list 'exec-path (expand-file-name "~/go/bin"))
-  (add-to-list 'exec-path (expand-file-name "~/go/src/golang.org/x/lint/misc/emacs"))
+  (add-to-list 'exec-path (expand-file-name "$HOME/go/bin"))
+  (add-to-list 'exec-path (expand-file-name "$HOME/go/src/golang.org/x/lint/misc/emacs"))
 (add-hook 'go-mode-hook 'lsp-deferred)) ;; Do this for golang support, it's built-in to lsp.
 
 #+end_src
@@ -1892,7 +2012,23 @@ Add =<leader>=-based keybindings for =org= documents.
   "a"    '(org-archive-subtree :which-key "archive"))
 #+end_src
 
+Captures via =org-roam= and regular ol' =org= share different parent
+keystrokes. It's much nicer to collect them all under =<leader>-c= for
+"capture."
+
+Define a couple functions for managing different types of captures:
+
 #+begin_src emacs-lisp
+;; (defun cy/capture (choice)
+;;   (lexical-let ((key choice))
+;;     (lambda ()
+;;       (interactive)
+;;       (message "choose: %s" key)
+;;       (let ((org-roam-directory (expand-file-name org-roam-dailies-directory org-roam-directory)))
+     ;; @TODO
+
+;; move this
+
 (defun cy/capture-roam (choice)
   "Capture template shortcuts from org-roam-capture"
   (lexical-let ((key choice))
@@ -1911,17 +2047,30 @@ Add =<leader>=-based keybindings for =org= documents.
     (lambda () (interactive)(org-capture nil key))))
 #+end_src
 
+Use the functions created above and define the keys for different
+types of captures.
+
 #+begin_src emacs-lisp
 (cy/leader-key-def
   "c"   '(:ignore t :which-key "capture")
   "ct"  `(,(cy/capture-org "t") :which-key "task")
   "cM"  `(,(cy/capture-org "m") :which-key "mail")
   "cc"  `(,(cy/capture-org "c") :which-key "contact")
-  "cp"  `(,(cy/capture-org "T") :which-key "people")
+  "cp"  `(,(cy/capture-org "p") :which-key "people")
   "ci"  `(,(cy/capture-roam "i") :which-key "idea")
   "cm"  `(,(cy/capture-roam "m") :which-key "meeting")
   "cj"  `(,(cy/capture-roam "j") :which-key "journal"))
 #+end_src
+
+When using a macOS sytem, I often use a launcher application called
+=Alfred=. The following allows for quickly calling captures from Alfred.
+
+#+begin_src emacs-lisp
+(if (eq system-type 'darwin)
+  (load (concat (cy/system-settings-get 'user/dots) "alfred-org-capture/el/alfred-org-capture.el")))
+#+end_src
+
+Make =org-mode= header stars look prettier.
 
 #+begin_src emacs-lisp
 (use-package org-superstar
@@ -1994,7 +2143,7 @@ this before I even understood what Org mode was, it's my origin story.
   ;; :load-path "~/Projects/home/org-roam"  ;; For testing the latest changes.
   :after org
   :init
-  (setq org-roam-directory (file-truename "~/Notes/Roam-v2")
+  (setq org-roam-directory (file-truename (envpath "HOME" "/Notes/Roam-v2"))
         org-roam-db-gc-threshold most-positive-fixnum
         org-id-link-to-org-use-id 'create-if-interactive)
   ;; (add-to-list 'display-buffer-alist
@@ -2171,7 +2320,7 @@ Configure a replacemnt for the old =org-roam-server= that was used with roam v1.
 
 (use-package org-roam-ui
   :after org-roam
-  :load-path "~/Projects/pkgs/org-roam-ui/"
+  :load-path (envpath "HOME" "Projects/pkgs/org-roam-ui/")
   :hook (after-init . org-roam-ui-mode)
   :config
   (setq org-roam-ui-sync-theme t
@@ -2232,30 +2381,26 @@ Force a page break after table of contents
 
 Start pinentry in order for Emacs to be able to prompt for passphrases when necessary.
 
-I'm not sure which of the two following blocks is the one that actually ended up working for =mu4e= and =magit= but it needs to be sorted out.
+I'm not sure which of the two following blocks is the one that
+actually ended up working for =mu4e= and =magit= but it needs to be sorted
+out.
 
 #+begin_src emacs-lisp
-(use-package pinentry
-  :hook
-  (after-init . pinentry-start))
-#+end_src
-
-#+begin_src emacs-lisp
-(use-package pinentry
-    :config
-    (pinentry-start))
+(require 'epg)
 (setq epa-pinentry-mode 'loopback)
+
+(use-package pinentry)
 #+end_src
 
 In the case of GPG-signed commits use the below configuration files.
 
-E.g: In =~./profile=:
+E.g: In =$HOME/.profile=:
 
 #+begin_src shell
 export GPG_TTY=$TTY
 #+end_src
 
-In =~/.gnupg/gpg-agent.conf=
+In =$HOME/.gnupg/gpg-agent.conf=
 
 #+begin_src conf
 allow-emacs-pinentry
@@ -2263,7 +2408,7 @@ allow-loopback-pinentry
 pinentry-program /usr/local/bin/pinentry
 #+end_src
 
-In =~/path/to/my/project/.git/config=
+In =$HOME/path/to/my/project/.git/config=
 
 #+begin_src conf
 [user]

@@ -41,17 +41,12 @@ the declared overrides are mashed together on a per-system basis using
       (map-merge
        'list
        `((desktop/dpi . 180)
-         ;; (user/home . ,(concat "/home/" user-login-name))
-         (user/home . "~/")
-         (user/config . "~/.config/")
-         (user/fonts . "~/.local/fonts")
-         (user/notes . "~/Notes/")
-         (user/dots . "~/Projects/home/dotfiles/")
-         (user/dots/output . "~/Projects/home/dotfiles/tangled/")
-
-         (dotfiles/dir . ,(shell-command-to-string "printf %s \"$DOTDIR\""))
-         (dotfiles/out . ,(concat (shell-command-to-string "printf %s \"$DOTDIR\"") "/tangled"))
-         (config/dir . ,(shell-command-to-string "printf %s \"$XDG_CONFIG_HOME\""))
+         (user/home . ,(envpath "HOME" ""))
+         (user/config . ,(envpath "HOME" ".config"))
+         (user/fonts . ,(envpath "HOME" ".local/fonts"))
+         (user/notes . ,(envpath "HOME" "Notes/"))
+         (user/dots . ,(envpath "HOME" "Projects/home/dotfiles/"))
+         (user/dots/output . ,(envpath "HOME" "Projects/home/dotfiles/tangled/"))
 
          (emacs/dashboard-agenda-face-size . 100)
          (emacs/default-face-size . 100)
@@ -109,7 +104,7 @@ the entire project.
 
  - dotfiles-output-location :: Files which are tangled out from these org files.
 #+name: dotfiles-output-location
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports none
 (cy/system-settings-get 'user/dots/output)
 #+end_src
 
@@ -167,13 +162,13 @@ Because this is a macOS machine, there're a lot of things that need to
 be tweaked and trying to use Emacs in the way I always have on this
 thing has pointed out a number of flaws in my setup.
 
-#+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep
+#+begin_src emacs-lisp :noweb-ref system-settings
 (when (equal system-name "blank.local")
   `((desktop/dpi . 90)
-    (user/config . "~/.config/")
-    (user/fonts . "~/Library/Fonts/")
-    (user/dots . "~/Projects/dotfiles/")
-    (user/dots/output . "~/Projects/dotfiles/tangled/")
+    (user/config . "/Users/carwin/.config/")
+    (user/fonts . "/Users/carwin/Library/Fonts/")
+    (user/dots . "/Users/carwin/Projects/dotfiles/")
+    (user/dots/output . "/Users/carwin/Projects/dotfiles/tangled/")
 
     ;; (config/dir . ,(shell-command-to-string "source ~/.profile && printf %s \"$XDG_CONFIG_HOME\""))
     (emacs/default-face-size . 110)))
@@ -241,9 +236,10 @@ emacsclient -e '(load-file "~/.emacs.d/cy-system-settings.el")' -a "echo 'Emacs 
 
 ** Tangle Dotfiles
 
-This special tidbit is responsible for tangling everything in this repository in the proper order.
+This special tidbit is responsible for tangling everything in this
+repository in the proper order.
 
-#+begin_src emacs-lisp :tangle ~/.emacs.d/tangle-dotfiles.el :noweb yes
+#+begin_src emacs-lisp :tangle (concat user-emacs-directory "tangle-dotfiles.el") :noweb yes :results silent
 (require 'org)
 (load-file "~/.emacs.d/cy-system-settings.el")
 (print (concat <<dotfiles-location>> "Systems.org"))
@@ -300,7 +296,14 @@ of Babel.
     "no"))
 #+end_src
 
+This function exists to avoid repeating calls to expand environment
+vars like =$HOME= and append paths to them with ~concat~.
 
+#+begin_src emacs-lisp :noweb-ref system-functions
+(defun envpath (envar path)
+  "Perform the getenv function on `envar` and return its output with `path` appended"
+  (concat (concat (getenv envar) "/") path))
+#+end_src
 
 Provide ='cy-system= so it can be required by sibling files that require
 it.

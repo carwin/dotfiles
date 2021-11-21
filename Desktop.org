@@ -14,7 +14,7 @@
 - [[#environment][Environment]]
   - [[#profile][.profile]]
   - [[#xdg-user-directories][XDG User Directories]]
-  - [[#shell-configurations][Shell Configurations]]
+  - [[#shell-configurations][shell configurations]]
   - [[#x-window-system][X Window System]]
   - [[#git][Git]]
   - [[#window-manager][Window Manager]]
@@ -52,6 +52,11 @@ more or less the same.
 - Where possible, use variables to describe common paths, avoiding references to static paths: e.g.: ~$XDG_CONFIG_HOME~ and ~$HOME~.
 - Provide shell scripts to retrieve or set any dependencies laid out in configuration.
 - Present content to myself as if I had amnesia and forgot how my configuration worked.
+- Implement the following formatting rules:
+  + Break configurations apart into the smallest describable blocks.
+  + Use ~noweb~ to stitch together configurations belonging the same file.
+  + Implement the ~noweb-ref~ block that collects the ~noweb~ blocks at the top of each section.
+  + Use ~ to surround references to Emacs functions or variables and = to surround functions or variables outside of Emacs.
 
 * System-specific Settings
 
@@ -223,24 +228,29 @@ variables, etc... live.
 
 ** =.profile=
 
+#+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/home) ".profile")
+<<dot-profile>>
+#+end_src
+
 I use a =.profile= file because it's easy to source for my primary shell
 (=zsh=), works with =bash=, and login managers read it.  This covers the
 absolute basics of my configuration in a lot of instances.
 
-This file follows the stylistic convention of using ~export~ rather than
-simply declaring variables.  Though this is mostly a preference, there
-are instances where using ~export~ may save some headaches.
+This file follows the stylistic convention of using POSIX =export=
+rather than simply declaring variables.  Though this is mostly a
+preference, there are instances where using =export= may save some
+headaches.
 
-~export~ sets the =$PATH= variable explicitly and sets the environment
+=export= sets the =$PATH= variable explicitly and sets the environment
 variables for child processes, though this isn't strictly necessary in
 most cases, because =$PATH= would already be set for the current
 environment when a child process runs.  You should expect dragons in
-cases where a script using this =POSIX= ~export~ built-in to set a
+cases where a script using this POSIX =export= built-in to set a
 variable calls another script which, by some mechanism, ceases to
 export that variable, in such a case it likely is no longer available
 in the parent environment either.
 
-While using the ~export~ built-in doesn't prevent the shooting of one's
+While using the =export= built-in doesn't prevent the shooting of one's
 own foot in that very specific way, it will prevent some scoping
 problems for the life of the shell.
 
@@ -258,31 +268,18 @@ export VISUAL="emacsclient --alternate-editor=vim"
 export ALTERNATE_EDITOR="emacs -Q"
 #+end_src
 
-Set the terminal to report 256 Colors if we're using xterm.
+Set the terminal to report 256 Colors if we're using =xterm=.
 
 #+begin_src conf :noweb-ref dot-profile
 [[ "$TERM" == "xterm" ]] && export TERM=xterm-256-color
 #+end_src
 
-
-Ensure ~/usr/local/bin~ is in =$PATH=.
-
-#+begin_src conf :noweb-ref dot-profile
-export PATH="$PATH:/usr/local/bin"
-#+end_src
-
-Throw ~/usr/local/sbin~ in for good measure. Homebrew on macOS systems
-sometimes puts things here.
+To avoid =PATH= becoming cluttered and unwieldy, empty it and set some
+sane defaults. Lots of things like to modify the path on various
+systems, this should cover nearly everything.
 
 #+begin_src conf :noweb-ref dot-profile
-export PATH="$PATH:/usr/local/sbin"
-#+end_src
-
-Ensure ~$HOME/.local/bin~ is in =$PATH=, =Python= likes to use this
-directory.
-
-#+begin_src conf :noweb-ref dot-profile
-export PATH="$PATH:$HOME/.local/bin"
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:$HOME/.local/bin:/opt/X11/bin"
 #+end_src
 
 On =macOS=, Python things installed via ~pip install --user ...~ get put
@@ -291,12 +288,13 @@ here:
 #+begin_src conf :noweb-ref dot-profile
 export PATH="$PATH:$HOME/Library/Python/3.9/bin"
 #+end_src
+@todo: Figure out a way to get the Python version from the host and use it here.
 
 Add =Ruby= gems into =$PATH= and, if =rvm= is installed, somewhere we expect
 it to be, source it and load =rvm= into a shell session as a function.
 
 For Emacs' "dumb" =$TERM= don't do anything but export a variable to
-silence complaints.  =rvm= doesn't play nicely with dumb terms.
+silence complaints. =rvm= doesn't play nicely with dumb terms.
 
 #+begin_src conf :noweb-ref dot-profile
 case $TERM in
@@ -331,7 +329,8 @@ Add NVIDIA's [[https://wiki.archlinux.org/title/GPGPU#CUDA][CUDA]] stuff into =$
 export PATH="$PATH:/opt/cuda/bin"
 #+end_src
 
-Source the Node Version Manager (=nvm=) in much the same way as =rvm=, above.
+Source the Node Version Manager (=nvm=) in much the same way as =rvm=,
+above.
 
 #+name: source-nvm-by-system-type
 #+begin_src emacs-lisp
@@ -350,7 +349,7 @@ Source the Node Version Manager (=nvm=) in much the same way as =rvm=, above.
 #+end_src
 
 Define the color values used by the =ls= command when it is invoked with
-the ~--color~ argument.
+the =--color= argument.
 
 #+begin_src conf :noweb-ref dot-profile
 # LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
@@ -361,10 +360,16 @@ Set environment variables related to input methods. These environment
 variables are required to make =ibus= and =ibus-anthy= work for inputting
 text in Japanese and Korean in particular.
 
-#+begin_src conf :noweb-ref dot-profile
+#+begin_src sh :noweb-ref dot-profile
 export GTK_IM_MODULE=ibus
 export XMODIFIERS=@im=ibus
 export QT_IM_MODULE=ibus
+#+end_src
+
+Export the =GPG_TTY= for macOS systems.
+
+#+begin_src conf :noweb-ref dot-profile
+export GPG_TTY=$(tty)
 #+end_src
 
 Specify the directories that fall within the [[https://wiki.archlinux.org/title/XDG_Base_Directory][XDG Base Directory]]
@@ -375,31 +380,25 @@ applications have yet to switch over to using these locations, but
 someday this will be the standard.
 
  - ~XDG_CONFIG_HOME~ :: Analogous to ~/etc~.
- - ~XDG_DATA_HOME~ :: Analogous to ~/usr/share~.
- - ~XDG_CACHE_HOME~ :: Analogous to ~/var/cache~.
- - ~XDG_STATE_HOME~ :: Analogous to ~/var/lib~.
+ - ~XDG_DATA_HOME~   :: Analogous to ~/usr/share~.
+ - ~XDG_CACHE_HOME~  :: Analogous to ~/var/cache~.
+ - ~XDG_STATE_HOME~  :: Analogous to ~/var/lib~.
  - ~XDG_RUNTIME_DIR~ :: Used for non-essential, user specific data files like sockets, named pipes, etc...
 
 #+begin_src conf :noweb yes :noweb-ref dot-profile
-export XDG_CONFIG_HOME="<<user-config-location()>>"
+export XDG_CONFIG_HOME=<<user-config-location()>>
 export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_STATE_HOME="$HOME/.local/lib"
 export XDG_RUNTIME_HOME="$HOME/.local/run"
 #+end_src
 
-Now, collect all the bits of =.profile= into a single file.
-
-#+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/home) "/.profile")
-<<dot-profile>>
-#+end_src
-
 ** XDG User Directories
 
 XDG user directories define the paths for "well-known" directories.
 
-These values can be queried while scripting using ~xdg-user-dir
-<varname>~ like so:
+These values can be queried while scripting using =xdg-user-dir
+<varname>= like so:
 
 #+begin_src sh
 > xdg-user-dir DOWNLOAD
@@ -408,7 +407,7 @@ These values can be queried while scripting using ~xdg-user-dir
 Using the configurations from this document, that would output:
 
 #+begin_src sh
-> /home/<user>/Downloads
+> $HOME/Downloads
 #+end_src
 
  - =XDG_DESKTOP_DIR= :: Desktop files. This is mostly ignored, but it seems like a basic necessity for certain things like =Wine= applications.
@@ -421,7 +420,7 @@ Using the configurations from this document, that would output:
  - =XDG_VIDEOS_DIR= :: Video storage.
 
 
-#+begin_src conf :tangle (concat (cy/system-settings-get 'config/dir) "/user-dirs.dirs")
+#+begin_src conf :tangle (concat (cy/system-settings-get 'user/config) "user-dirs.dirs")
 XDG_DESKTOP_DIR="$HOME/"
 XDG_DOWNLOAD_DIR="$HOME/Downloads"
 XDG_TEMPLATES_DIR="$HOME/Templates"
@@ -432,54 +431,87 @@ XDG_PICTURES_DIR="$HOME/Pictures"
 XDG_VIDEOS_DIR="$HOME/Videos"
 #+end_src
 
-After this file is changed, user-dirs need to be updated via: ~xdg-user-dirs-update~.
+After this file is changed, user-dirs need to be updated via:
+~xdg-user-dirs-update~.
 
 #+begin_src sh :noweb-ref update-xdg-user-dirs
-xdg-user-dirs-update
+if ! [[ $(uname -s) == 'Darwin' ]]; then
+    xdg-user-dirs-update;
+fi
 #+end_src
 
-** Shell Configurations
+** shell configurations
 
-*** ZSH
+*** fish
+
+Some macOS instructions.
+
+First install it with homebrew, ~brew install fish~.
+Install starship with homebrew too, ~brew install starship~. I did this with the bash script initially, but this should work fine as well.
+Edit ~/etc/shells~ to add ~/usr/local/bin/fish~ to the list of options.
+~chsh -s /usr/local/bin/fish~
+
+#+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/config) "fish/config.fish")
+# Put into pass.
+set -gx SNYK_INTERNAL_PROXY_CREDENTIALS "snyk-internal:X98ZgwE8QvfS8ruFkn2pNmY7vjexh4"
+set -gx SNYK_INTERNAL_BROKER_CREDENTIALS "snyk-services-user:F9sB4Bn7eLVNJ2KQ34EZ8hJbi9sFWKQTwTH4txPxG3wxvPogDR"
+set -gx SNYK_INTERNAL_PROXY_HOST "dev.snyk.io"
+
+# export SNYK_INTERNAL_PROXY_CREDENTIALS="snyk-internal:xxxxxxxxxx"
+# export SNYK_INTERNAL_BROKER_CREDENTIALS="snyk-services-user:xxxxxxxxxx"
+# export SNYK_INTERNAL_PROXY_HOST="dev.snyk.io"
+
+starship init fish | source
+#+end_src
+
+Create other files for things I want to eval when =fish= loads up.
+
+=fnm= is like =nvm= but faster.
+
+#+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/config) "fish/conf.d/fnm.fish")
+fnm env | source
+#+end_src
+
+*** zsh
 
 **** =.zshenv=
-Create a ~/home/<user>/.zshenv~ file to point invocations of =zsh= to look
-for configuration files within ~$XDG_CONFIG_HOME~. This is non-standard,
+create a ~/home/<user>/.zshenv~ file to point invocations of =zsh= to look
+for configuration files within ~$xdg_config_home~. this is non-standard,
 but likely will be some day.
 
 #+begin_quote
 ~.zshenv~ is sourced on all invocations of the shell unless the ~-f~
-option is set. It should contain commands to set the command search
+option is set. it should contain commands to set the command search
 path, plus other important environment variables. ~.zshenv~ should not
 contain commands that produce output or assume the shell is attached
 to a tty.
 
--- Zsh Manual
+-- zsh manual
 
 #+end_quote
 
-To keep the environment and command search paths standard between
-shells, I prefer to keep as much as I can in ~~/.profile~ and simply
+to keep the environment and command search paths standard between
+shells, i prefer to keep as much as i can in ~~/.profile~ and simply
 ~source~ it at the top of ~/.zshenv~.
 
-The call chain works like this:
+the call chain works like this:
 
  1. =zsh= is invoked.
  2. =zsh= finds ~.zshenv~ and begins parsing.
- 3. Within ~.zshenv~, =zsh= is told to source ~~/.profile~ which contains
-    the environment variable declaration for ~$XDG_CONFIG_HOME~.
- 4. After sourcing ~~/.profile~, =zsh= now looks in
-    ~${XDG_CONFIG_HOME}/zsh/~ for a ~.zprofile~, then a ~.zshrc~ -- loading
+ 3. within ~.zshenv~, =zsh= is told to source ~~/.profile~ which contains
+    the environment variable declaration for ~$xdg_config_home~.
+ 4. after sourcing ~~/.profile~, =zsh= now looks in
+    ~${xdg_config_home}/zsh/~ for a ~.zprofile~, then a ~.zshrc~ -- loading
     them in that order.
 
-The =dotsloc= environment variable is also defined here, rather than
+the =dotsloc= environment variable is also defined here, rather than
 in ~.zshrc~, to make it available to non-interactive instances of the
-shell.  This is useful for jumping to the dotfiles directory from a
+shell.  this is useful for jumping to the dotfiles directory from a
 script.
 
 #+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/home) ".zshenv")
 # emulate sh -c 'source ~/.profile'
-source ${HOME}/.profile
+source $HOME/.profile
 ZDOTDIR=<<user-config-location()>>zsh/
 DOTDIR=<<dotfiles-location()>>
 #+end_src
@@ -487,13 +519,13 @@ DOTDIR=<<dotfiles-location()>>
 **** =.zprofile=
 
 ~.zprofile~ is sourced before ~.zshrc~ and is meant to act as an
-alternative to ~.zlogin~ (both are sourced for login shells). Neither
+alternative to ~.zlogin~ (both are sourced for login shells). neither
 ~.zprofile~ nor ~.zlogin~ should be used to change the shell environment
 at all and instead be used to set the terminal type and run a series
 of external commands like =fortune=.
 
 #+begin_src conf :tangle (concat (cy/system-settings-get 'user/config) "zsh/.zprofile")
-#export TERM="xterm-256color"
+#export term="xterm-256color"
 # setopt -s expand_aliases
 setopt aliases
 #+end_src
@@ -502,98 +534,100 @@ setopt aliases
 
 **** =.zshrc=
 
-~.zshrc~ is where everything interesting happens. This file is sourced
-on every interactive invocation of =zsh=.
+=.zshrc= is where everything interesting happens. this file is sourced
+on every interactive invocation of Zsh.
 
-First, load up the =zsh= plugin manager =Antigen=.
+First, load up the =zsh= plugin manager =antigen=.
 
 #+begin_src conf :noweb-ref zshrc
-source ${ZDOTDIR:-$HOME/.zsh}/custom/plugins/antigen/antigen.zsh
+zmodload zsh/zprof
+# source ${ZDOTDIR:-$HOME/.zsh}/custom/plugins/antigen/antigen.zsh
 #+end_src
 
-This configuration uses =oh-my-zsh= as a plugin backend, which I very
-much dislike. Other options like =prezto= seem just as heavy as
+this configuration uses =oh-my-zsh= as a plugin backend, which i very
+much dislike. other options like =prezto= seem just as heavy as
 =oh-my-zsh= though.
 
-Set a theme, and pull in any required plugins.
+set a theme, and pull in any required plugins.
 
-| Antigen bundle / theme           | Desc.                                                                                | Link |
+| antigen bundle / theme           | desc.                                                                                | link |
 |----------------------------------+--------------------------------------------------------------------------------------+------|
-| =git=                              | Comes with a lot of aliases, I mainly use the stash features.                        | [[https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/git][Link]] |
-| =zdharma/fast-syntax-highlighting= | Faster, more configurable syntax highlighting than zsh-users/zsh-syntax-highlighting | [[https://github.com/zdharma/fast-syntax-highlighting][Link]] |
-| =spaceship-prompt=                 | A pretty nice prompt theme. To eventually be replaced with Carwin's custom prompt.   | [[https://github.com/spaceship-prompt/spaceship-prompt][Link]] |
+| =git=                              | comes with a lot of aliases, i mainly use the stash features.                        | [[https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/git][link]] |
+| =zdharma/fast-syntax-highlighting= | faster, more configurable syntax highlighting than zsh-users/zsh-syntax-highlighting | [[https://github.com/zdharma/fast-syntax-highlighting][link]] |
+| =spaceship-prompt=                 | a pretty nice prompt theme. to eventually be replaced with carwin's custom prompt.   | [[https://github.com/spaceship-prompt/spaceship-prompt][link]] |
 
-The =spaceship-prompt= comes with some built-in configurable options which can be found [[https://github.com/spaceship-prompt/spaceship-prompt/blob/master/docs/options.md][here]].
+the =spaceship-prompt= comes with some built-in configurable options which can be found [[https://github.com/spaceship-prompt/spaceship-prompt/blob/master/docs/options.md][here]].
 
 #+begin_src conf :noweb-ref zshrc
-antigen use oh-my-zsh
+# antigen use oh-my-zsh
+#
+# antigen bundle git
+#
+# antigen bundle zdharma/fast-syntax-highlighting
+#
+# antigen theme spaceship-prompt/spaceship-prompt
 
-antigen bundle git
-antigen bundle zdharma/fast-syntax-highlighting
-
-antigen theme spaceship-prompt/spaceship-prompt
-
-antigen apply
+# antigen apply
 #+end_src
 
-Setup =zsh= to make it easier to be lazy about changing directories and
+setup =zsh= to make it easier to be lazy about changing directories and
 enable extended globbing.
 
-The extended globbing feature allows asterisks to be used in a number
+the extended globbing feature allows asterisks to be used in a number
 of handy ways. ~ls **/foo~ will recursively list ~foo~ within the current
 directory tree. ~ls ***/foo~ will do the same thing but also follow
-symlinks. There are many other interesting features provided by the
-=EXTENDED_GLOB=, and most of them look fairly similar to regular
-expressions. For instance, ~ls [^ab]*~ matches any file not starting
+symlinks. there are many other interesting features provided by the
+=extended_glob=, and most of them look fairly similar to regular
+expressions. for instance, ~ls [^ab]*~ matches any file not starting
 with the letters ~a~ or ~b~.
 
 #+begin_src conf :noweb-ref zshrc
-setopt AUTO_CD # Don't make me use `cd`. You know what I wanted.
-setopt NO_CASE_GLOB # Case insensitive globbing.
-setopt EXTENDED_GLOB
+setopt auto_cd # don't make me use `cd`. you know what i wanted.
+setopt no_case_glob # case insensitive globbing.
+setopt extended_glob
 #+end_src
 
-Save =zsh= history to a ~.zhistory~ file, ignoring duplicate entries.
+save =zsh= history to a ~.zhistory~ file, ignoring duplicate entries.
 
 #+begin_src conf :noweb-ref zshrc
-HISTFILE=${ZDOTDIR:-$HOME}/.zhistory
-setopt EXTENDED_HISTORY # timestamp history lines
-SAVEHIST=5000
-HISTSIZE=2000
-setopt SHARE_HISTORY # share history across sessions
-setopt APPEND_HISTORY # just keep adding to history
-setopt INC_APPEND_HISTORY # write all the time, don't wait for shell to close
-setopt HIST_IGNORE_DUPS # do not store duplicates
-setopt HIST_IGNORE_ALL_DUPS # ignore duplicate entries
-setopt HISTIGNOREALLDUPS    # ignore duplicate entries alternative syntax.
-setopt HIST_EXPIRE_DUPS_FIRST # expire duplicates first
-setopt HIST_SAVE_NO_DUPS
-setopt HIST_IGNORE_SPACE
-setopt HIST_FIND_NO_DUPS # ignore duplicates when searching
-setopt HIST_REDUCE_BLANKS # remove blank lines from history
-setopt HIST_VERIFY # be really sure when using !!
+histfile=${ZDOTDIR:-$HOME}/.zhistory
+setopt extended_history # timestamp history lines
+savehist=5000
+histsize=2000
+setopt share_history # share history across sessions
+setopt append_history # just keep adding to history
+setopt inc_append_history # write all the time, don't wait for shell to close
+setopt hist_ignore_dups # do not store duplicates
+setopt hist_ignore_all_dups # ignore duplicate entries
+setopt histignorealldups    # ignore duplicate entries alternative syntax.
+setopt hist_expire_dups_first # expire duplicates first
+setopt hist_save_no_dups
+setopt hist_ignore_space
+setopt hist_find_no_dups # ignore duplicates when searching
+setopt hist_reduce_blanks # remove blank lines from history
+setopt hist_verify # be really sure when using !!
 #+end_src
 
-Allow =zsh= to provide corrections to commands which have been mistyped, even when using the ~AUTO_CD~ opt set above.
+allow =zsh= to provide corrections to commands which have been mistyped, even when using the ~auto_cd~ opt set above.
 
 #+begin_src conf :noweb-ref zshrc
-# Correction
-setopt CORRECT
-setopt CORRECT_ALL # Correct when using AUTO_CD
+# correction
+setopt correct
+setopt correct_all # correct when using auto_cd
 #+end_src
 
-Configure =zsh='s auto-completion features.
+configure =zsh='s auto-completion features.
 
 #+begin_src conf :noweb-ref zshrc
 autoload -Uz compinit && compinit
 
-# Color dirs
-export LS_COLORS # I don't know why this is necessary here, but colors don't work without it.
-# zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+# color dirs
+export ls_colors # i don't know why this is necessary here, but colors don't work without it.
+# zstyle ':completion:*' list-colors ${(s.:.)ls_colors}
 
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
-zstyle ':completion:*' format 'Completing %d'
+zstyle ':completion:*' format 'completing %d'
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*' menu select=2
 if [[ $(uname -s) == 'Darwin' ]]; then
@@ -690,6 +724,18 @@ else
 fi
 #+end_src
 
+Add a custom function for profiling Zsh startup which can sometimes
+get a bit bloated.
+
+#+begin_src bash :noweb-ref zshrc
+timezsh() {
+    shell=${1-$SHELL}
+    for i in $(seq 1 10); do
+        /usr/bin/time $SHELL -i -c exit;
+    done
+}
+#+end_src
+
 Load built-in =zsh= modules. ~url-quote-magic~ analyzes characters being
 typed in a command to decide if the character needs to be escaped.
 
@@ -710,7 +756,7 @@ go back to ~.Xresources~ styles or whatever other configuration the
 current terminal emulator uses (e.g.: ~$HOME/.config/termite/config~)
 
 #+begin_src conf :noweb-ref zshrc
-source ${ZDOTDIR}/custom/plugins/base16-shell/base16-shell.plugin.zsh
+# source ${ZDOTDIR}/custom/plugins/base16-shell/base16-shell.plugin.zsh
 #+end_src
 
 The below line is commented out, generally, but are used to load the
@@ -725,6 +771,7 @@ final file.
 
 #+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/config) "zsh/.zshrc")
 <<zshrc>>
+eval "$(starship init zsh)"
 #+end_src
 
 The following files should be pulled into the local filesystem via =git=
@@ -1026,6 +1073,8 @@ user.email="some-email@wherever.com"~.
   name = Carwin Young
   email = cy@carw.in
   signingkey = D6FA5A05B721CCDE
+[commit]
+  gpgsign = true
 #+end_src
 
 Make git's output prettier by configuring colors.
@@ -5641,7 +5690,7 @@ needed.
 <<tmux-config>>
 #+end_src
 
-@todo I think tmux now supports using XDG_CONFIG_HOME so it can be stored in ~/.config/tmux/.
+@todo I think tmux now supports using =XDG_CONFIG_HOME= so it can be stored in ~/.config/tmux/.
 
 The configuration starts by defining some simpler keybindings than
 what =tmux= ships with. To do that, the default prefix of ~Ctrl-b~ is
@@ -6025,7 +6074,7 @@ use_console_editor = yes
 
 =Vim= configuration. Ol' trusty.
 
-#+begin_src emacs-lisp :noweb yes :tangle (concat (cy/system-settings-get 'user/home) ".vimrc")
+#+begin_src emacs-lisp :noweb yes :tangle (concat (cy/system-settings-get 'user/home) ".vimrc") :tangle-mode (identity #o766)
 <<vim-config>>
 #+end_src
 
@@ -6053,6 +6102,9 @@ Plug 'pangloss/vim-javascript'
 Plug 'cakebaker/scss-syntax.vim'
 Plug 'evidens/vim-twig'
 Plug 'morhetz/gruvbox', { 'as': 'gruvbox' }
+Plug 'm-kat/aws-vim'
+Plug 'scrooloose/syntastic'
+Plug 'speshak/vim-cfn'
 
 " call these on-demand
 Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
@@ -6218,6 +6270,26 @@ au BufRead,BufNewFile *.theme set filetype=php
 
 " PHP
 autocmd FileType php set omnifunc=phpcomplete#CompletePHP
+#+end_src
+
+Add some extra statusline / trigger information for CloudFormation
+linting.
+
+#+begin_src vimrc :noweb-ref vim-config
+"cfn-lint
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+let g:syntastic_cloudformation_checkers = ['cfn_lint']
+
+" Set fileTypes for vim-cfn
+autocmd BufNewFile,BufRead *.template setfiletype yaml.cloudformation
+autocmd BufNewFile,BufRead *.template.yaml setfiletype yaml.cloudformation
 #+end_src
 
 As mentioned earlier when defining the key binding customization,

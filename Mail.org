@@ -2,7 +2,7 @@
 #+author: Carwin Young
 #+property: header-args:emacs-lisp :tangle (concat user-emacs-directory "cy-mail.el") :mkdirp yes
 
-* mu4e
+** mu4e
 
 | =mu4e=                    | System |
 | =mu4e-contrib=            | System |
@@ -45,16 +45,23 @@ composition window to open in a new frame.
   :ensure nil
   :config
   ;; mbsync's binary could be located in various places:
-  (setq mu4e-mu-binary (shell-command-to-string "printf %s \"$(which mu)\""))
+  (setq mu4e-mu-binary (shell-command-to-string "bash -c 'printf %s \"$(which mu)\"'"))
   ;; This is set to 't' to avoid mail syncing issues when using mbsync
   (setq mu4e-change-filenames-when-moving t
         ;; Refresh mail using isync every 10 minutes
         mu4e-update-interval (* 15 60)
         mu4e-compose-in-new-frame nil
         mu4e-view-show-images t
+        gnus-unbuttonized-mime-types nil    ;; Indicate mime type in message headers
         mu4e-split-view 'vertical
+        mu4e-headers-visible-columns 80     ;; How wide the vertical split pane should be
         mu4e-get-mail-command "mbsync -a"
         mu4e-maildir "~/Mail")
+  ;; Try to prefer text
+  (with-eval-after-load "mm-decode"
+    ;; (add-hook 'message-send-hook 'org-mime-htmlize)
+    (add-to-list 'mm-discouraged-alternatives "text/html")
+    (add-to-list 'mm-discouraged-alternatives "text/richtext"))
   ;; use imagemagick, if available
   (when (fboundp 'imagemagick-register-types)
     (imagemagick-register-types))
@@ -79,7 +86,25 @@ composition window to open in a new frame.
                                               ("/Home/quarantine"    . ?q)
                                               ("/Home/trash"         . ?t)
                                               ("/Home/drafts"        . ?d)
-                                              ("/Home/archive"       . ?a))))))))
+                                              ("/Home/archive"       . ?a)))))
+         (make-mu4e-context
+          :name "Work"
+          :match-func
+          (lambda (msg)
+            (when msg
+              (string-prefix-p "/Work" (mu4e-message-field msg :maildir))))
+          :vars '((user-mail-address . "carwin.young@snyk.io")
+                  (user-full-name . "Carwin Young")
+                  (mu4e-compose-signature . cy/work-sig)
+                  (mu4e-drafts-folder . "/Work/drafts")
+                  (mu4e-sent-folder   . "/Work/sent")
+                  (mu4e-refile-folder . "/Work/archive")
+                  (mu4e-trash-folder  . "/Work/trash")
+                  (mu4e-maildir-shortcuts . (("/Work/inbox"   . ?i)
+                                             ("/Work/sent"    . ?s)
+                                             ("/Work/trash"   . ?t)
+                                             ("/Work/drafts"  . ?d)
+                                             ("/Work/archive" . ?a))))))))
 #+end_src
 
 Define a function to assist in capturing todo items from Emails.
@@ -119,11 +144,15 @@ for capturing from todos within the =mu4e-headers= mode.
 Send mail using =msmtp=.
 
 #+begin_src emacs-lisp
-(setq sendmail-program "/usr/bin/msmtp"
-      message-sendmail-f-is-evil t
+(if (eq system-type 'darwin)
+    (setq sendmail-program "/usr/local/bin/msmtp")
+    (setq sendmail-program "/usr/bin/msmtp"))
+
+(setq message-sendmail-f-is-evil t
       message-sendmail-extra-arguments '("--read-envelope-from")
       send-mail-function 'smtpmail-send-it
       message-send-mail-function 'message-send-mail-with-sendmail)
+
 #+end_src
 
 Configure calendar invite response functionality.
@@ -155,6 +184,18 @@ The gaps surrounding some of these code blocks are important, the
 <<mbsyncrc>>
 #+end_src
 
+The certificate file changes based on whether the ~system-type~ is Linux
+or Darwin. First, define a named code block that can be called as a
+noweb reference.
+
+#+name: mail-cert-location
+#+begin_src emacs-lisp
+(if (eq system-type 'gnu/linux)
+    "CertificateFile /etc/ssl/certs/ca-certificates.crt"
+    "CertificateFile /usr/local/etc/openssl@1.1/cert.pem")
+#+end_src
+
+
 Global channel configuration.
 
 #+begin_src conf :noweb-ref mbsyncrc
@@ -181,17 +222,6 @@ User narwic@1000needles.net
 PassCmd "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/personalmail.gpg"
 SSLType IMAPS
 SSLVersions TLSv1.2
-#+end_src
-
-The certificate file changes based on whether the ~system-type~ is Linux
-or Darwin. First, define a named code block that can be called as a
-noweb reference.
-
-#+name: mail-cert-location
-#+begin_src emacs-lisp
-(if (eq system-type 'gnu/linux)
-    "CertificateFile /etc/ssl/certs/ca-certificates.crt"
-    "CertificateFile /usr/local/etc/openssl@1.1/cert.pem")
 #+end_src
 
 Now, use the output of the previously named elisp block to output the
@@ -232,6 +262,11 @@ Master :home-remote:"Archives"
 Slave :home-local:archive
 Create Slave
 
+Channel home-shopping
+Master :home-remote:"Shopping"
+Slave :home-local:shopping
+Create Slave
+
 Channel home-quarantine
 Master :home-remote:"Quarantine"
 Slave :home-local:quarantine
@@ -256,6 +291,70 @@ Channel home-quarantine
 Channel home-drafts
 #+end_src
 
+Configuration for work emails.
+
+#+begin_src conf :noweb yes :noweb-ref mbsyncrc :padline yes
+
+##########################
+# Work Email             #
+##########################
+IMAPAccount work
+Host imap.gmail.com
+Port 993
+User carwin.young@snyk.io
+PassCmd "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/snykmail.gpg"
+SSLType IMAPS
+SSLVersions TLSv1.2
+AuthMechs PLAIN
+#+end_src
+
+#+begin_src conf :noweb yes :noweb-ref mbsyncrc
+<<mail-cert-location()>>
+#+end_src
+
+Give a name to the account and the IMAP store.
+
+#+begin_src conf :noweb-ref mbsyncrc
+
+IMAPStore work-remote
+Account work
+
+#+end_src
+
+#+begin_src conf :noweb-ref mbsyncrc
+MaildirStore work-local
+# Subfolders verbatim
+Path ~/Mail/Work/
+Inbox ~/Mail/Work/inbox
+
+Channel work-inbox
+Master :work-remote:
+Slave :work-local:inbox
+Create Slave
+
+Channel work-archive
+Master :work-remote:"[Gmail]/All Mail"
+Slave :work-local:archive
+Create Slave
+
+Channel work-sent
+Master :work-remote:"[Gmail]/Sent Mail"
+Slave :work-local:sent
+Create Slave
+
+Channel work-trash
+Master :work-remote:"[Gmail]/Trash"
+Slave :work-local:trash
+Create Slave
+
+# Get all the work channels together into a group
+Group work
+Channel work-inbox
+Channel work-archive
+Channel work-sent
+Channel work-trash
+#+end_src
+
 * System =msmtp= Configuration
 
 =msmtp= is used by =mu4e= for sending mail instead of the basic smtp
@@ -263,13 +362,38 @@ process. This is preferred because we have different contexts and
 emails from which we want to send mail and =msmtp= makes that much
 easier.
 
-#+begin_src sh :tangle ~/.msmtprc
+The =msmtp= configuration lives at ~$HOME/.msmtprc~ on all systems. This
+block collects the various pieces of the =msmtp= configuration and
+outputs the file.
+
+#+begin_src emacs-lisp :noweb yes :tangle ~/.msmtprc
+<<msmtprc>>
+#+end_src
+
+Before actually putting together the configuration, there needs to be
+a way to change paths for the certificates based on ~system-type~. The
+following sets up a named code block that can be referenced via noweb.
+
+#+name: sendmail-cert-location
+#+begin_src emacs-lisp
+(if (eq system-type 'gnu/linux)
+    "tls_trust_file /etc/ssl/certs/ca-certificates.crt"   ;; linux
+    "tls_trust_file /usr/local/etc/openssl@1.1/cert.pem") ;; macOS
+#+end_src
+
+Now configure =msmtp=. Firstly set up the default basic program
+configuration.
+
+#+begin_src conf :noweb yes :noweb-ref msmtprc
 defaults
 tls on
-# tls_trust_file /etc/ssl/certs/ca-certificates.crt
-tls_trust_file /usr/local/etc/openssl@1.1/cert.pem
+<<sendmail-cert-location()>>
 logfile ~/.local/log/msmtp.log
+#+end_src
 
+Set up a personal email to send from.
+
+#+begin_src conf :noweb yes :noweb-ref msmtprc
 # Home
 account Home
 auth on
@@ -278,4 +402,17 @@ port 587
 from cy@carw.in
 user narwic@1000needles.net
 passwordeval "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/personalmail.gpg"
+#+end_src
+
+Set the work email to send from.
+
+#+begin_src conf :noweb yes :noweb-ref msmtprc
+# Work
+account Work
+auth on
+host smtp.gmail.com
+port 587
+from carwin.young@snyk.io
+user carwin.young@snyk.io
+passwordeval "gpg -q --for-your-eyes-only --no-tty -d ~/.password-store/mbsync/snykmail.gpg"
 #+end_src
