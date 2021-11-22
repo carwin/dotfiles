@@ -4392,7 +4392,7 @@ element-text {
 
 **** Launcher
 
-#+begin_src scss :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/launcher.rasi")
+#+begin_src scss :tangle (tangle-linux (cy/system-settings-get 'user/config) "rofi/themes/launcher.rasi") :noweb yes
 configuration {
   font: 				"JetBrains Mono Medium 10";
   // bw: 					0;
@@ -4431,7 +4431,8 @@ window {
   border-radius: 20px;
   padding: 30;
   // width: 40%; // for buster
-  width: 10%;    // for guts
+  // width: 10%;    // for guts
+  width: <<rofi-launcher-width()>>%
 }
 
 prompt {

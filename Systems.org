@@ -42,8 +42,8 @@ the declared overrides are mashed together on a per-system basis using
        'list
        `((desktop/dpi . 180)
          (user/home . ,(envpath "HOME" ""))
-         (user/config . ,(envpath "HOME" ".config"))
-         (user/fonts . ,(envpath "HOME" ".local/fonts"))
+         (user/config . ,(envpath "HOME" ".config/"))
+         (user/fonts . ,(envpath "HOME" ".local/fonts/"))
          (user/notes . ,(envpath "HOME" "Notes/"))
          (user/dots . ,(envpath "HOME" ".dotfiles"))
          (user/dots/output . ,(envpath "HOME" ".dotfiles/tangled/"))
@@ -51,7 +51,9 @@ the declared overrides are mashed together on a per-system basis using
          (emacs/dashboard-agenda-face-size . 100)
          (emacs/default-face-size . 100)
          (emacs/variable-face-size . 2.45)
-         (emacs/fixed-face-size . 1.5))
+         (emacs/fixed-face-size . 1.5)
+
+         (rofi/launcher-width . 40)) ; % of screen width
        <<system-settings>>))
 
 <<export>>
@@ -90,6 +92,11 @@ in either Emacs Lisp or Shell scripts.
 The goal, again, is to keep one singular reference to each path across
 the entire project.
 
+@todo: A stretch goal for improvement of this section would be to
+create a function which automatically generates/outputs these blocks
+for every variable in ~system-settings~. We don't need them all, but when
+we do, it's annoying and rather ugly.
+
  - dotfiles-location :: The location of these Org files.
 #+name: dotfiles-location
 #+begin_src emacs-lisp :exports none
@@ -108,6 +115,11 @@ the entire project.
 (cy/system-settings-get 'user/dots/output)
 #+end_src
 
+ - rofi-launcher-width :: The width of the Rofi launcher
+#+name: rofi-launcher-width
+#+begin_src emacs-lisp
+(format "%S" (cy/system-settings-get 'rofi/launcher-width))
+#+end_src
 ** guts
 
 =guts= is a custom desktop machine with multiple hard drives which
@@ -122,15 +134,16 @@ tweaking on =guts=.
     (user/dots . ,(concat (concat "/home/" user-login-name) "/.dotfiles"))
     (emacs/variable-face-size . 1.1)
     (emacs/fixed-face-size . 1.1)
-    (emacs/default-face-size . 100)))
+    (emacs/default-face-size . 100)
+    (rofi/launcher-width . 10)))
 
 ;; When booted into Windows
 (when (equal system-name "GUTS")
   '((desktop/dpi . 109)
     (emacs/variable-face-size . 1.1)
     (emacs/fixed-face-size . 1.1)
-    (emacs/default-face-size . 100)))
-
+    (emacs/default-face-size . 100)
+    (rofi/launcher-width . 10)))
 #+end_src
 
 ** buster
