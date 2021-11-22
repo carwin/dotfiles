@@ -80,19 +80,23 @@ views.
 
 * GTasks Integration
 
+Integration with Google Tasks works pretty well thanks to the
+org-gtasks package (which lives on GitHub somewhere), but I don't
+really have a use for it right now. Config kept here for posterity.
+
 #+begin_src emacs-lisp
-(use-package org-gtasks
-  :after org
-  :load-path "~/.emacs.d/org-gtasks"
-  :config
-  (org-gtasks-register-account :name "Snyk"
-                               :directory "~/Notes/"
-                               :client-id (password-store-get "org-gtasks/gtasks-client-id-snyk")
-                               :client-secret (password-store-get "org-gtasks/gtasks-client-secret-snyk"))
-  (org-gtasks-register-account :name "Carwin Young"
-                               :directory "~/Notes/"
-                               :client-id (password-store-get "org-gtasks/gtasks-client-id")
-                               :client-secret (password-store-get "org-gtasks/gtasks-client-secret")))
+;; (use-package org-gtasks
+;;   :after org
+;;   :load-path "~/.emacs.d/org-gtasks"
+;;   :config
+;;   (org-gtasks-register-account :name "Snyk"
+;;                                :directory "~/Notes/"
+;;                                :client-id (password-store-get "org-gtasks/gtasks-client-id-snyk")
+;;                                :client-secret (password-store-get "org-gtasks/gtasks-client-secret-snyk"))
+;;   (org-gtasks-register-account :name "Carwin Young"
+;;                                :directory "~/Notes/"
+;;                                :client-id (password-store-get "org-gtasks/gtasks-client-id")
+;;                                :client-secret (password-store-get "org-gtasks/gtasks-client-secret")))
 #+end_src
 
 * Agendas
@@ -106,7 +110,7 @@ views.
                              ;; (cy/org-path "Roam-v2/Journal/")
                              (cy/org-path "Calendar/Personal.org")))
 
-(org org-agenda-custom-commands
+(setq org-agenda-custom-commands
       `(("d" "Dashboard"
          ((agenda ""
                 ((org-deadline-warning-days 7)
@@ -167,10 +171,10 @@ This block tells =recentf-mode= to ignore the agenda files.
 * Habits
 
 #+begin_src emacs-lisp
-(setq org-habit-show-habits-only-for-today nil
-      org-habit-graph-column
-      org-habit-preceding-days 4
-      org-habit-following-days 4)
+;; (setq org-habit-show-habits-only-for-today nil
+;;       org-habit-graph-column
+;;       org-habit-preceding-days 4
+;;       org-habit-following-days 4)
 #+end_src
 
 * Contacts

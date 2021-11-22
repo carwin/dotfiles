@@ -57,23 +57,24 @@ Set Emacs to run as a server to be connected to via =emacsclient=.
 ** Package Management
 
 #+begin_src emacs-lisp
-(require 'package)
-(setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                         ;;("melpa-stable" . "https://stable.melpa.org/packages/")
-                         ("org" . "https://orgmode.org/elpa/")
-                         ("elpa" . "https://elpa.gnu.org/packages/")))
+  (require 'package)
+  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                           ;;("melpa-stable" . "https://stable.melpa.org/packages/")
+                           ;; ("org" . "https://orgmode.org/elpa/")
+                           ("nongnu-elpa" . "https://elpa.nongnu.org/nongnu/")
+                           ("elpa" . "https://elpa.gnu.org/packages/")))
 
-(package-initialize)
+  (package-initialize)
 
-(unless package-archive-contents
-  (package-refresh-contents))
+  (unless package-archive-contents
+    (package-refresh-contents))
 
-;; Initialize use-package for non-Linux platforms
-(unless (package-installed-p 'use-package)
-  (package-install 'use-package))
+  ;; Initialize use-package for non-Linux platforms
+  (unless (package-installed-p 'use-package)
+    (package-install 'use-package))
 
-(require 'use-package)
-(setq use-package-always-ensure t)
+  (require 'use-package)
+  (setq use-package-always-ensure t)
 #+end_src
 
 Auto-update packages when Emacs starts.
@@ -800,13 +801,13 @@ Configure preferred settings for =dired=, the primary built-in file browsing mec
 
 (cy/leader-key-def
   "d"   '(:ignore t :which-key "dired")
-  "dd"  `(,(cy/dired-link (envpath "HOME" "/Documents")) :which-key "Here")
+  "dd"  `(,(cy/dired-link (envpath "HOME" "Documents")) :which-key "Here")
   "dh"  `(,(cy/dired-link (envpath "HOME" "")) :which-key "Home")
-  "di"  `(,(cy/dired-link (envpath "HOME" "/Notes/Inbox.org")) :which-key "Inbox")
-  "dn"  `(,(cy/dired-link (envpath "HOME" "/Notes")) :which-key "Notes")
-  "do"  `(,(cy/dired-link (envpath "HOME" "/Downloads")) :which-key "Downloads")
-  "dp"  `(,(cy/dired-link (envpath "HOME" "/Projects")) :which-key "Projects")
-  "dv"  `(,(cy/dired-link (envpath "HOME" "/Videos")) :which-key "Videos")
+  "di"  `(,(cy/dired-link (envpath "HOME" "Notes/Inbox.org")) :which-key "Inbox")
+  "dn"  `(,(cy/dired-link (envpath "HOME" "Notes")) :which-key "Notes")
+  "do"  `(,(cy/dired-link (envpath "HOME" "Downloads")) :which-key "Downloads")
+  "dp"  `(,(cy/dired-link (envpath "HOME" "Projects")) :which-key "Projects")
+  "dv"  `(,(cy/dired-link (envpath "HOME" "Videos")) :which-key "Videos")
   "d."  `(,(cy/dired-link (cy/system-settings-get 'user/dots)) :which-key "dotfiles"))
 #+end_src
 
@@ -1332,9 +1333,10 @@ Display indicators for =git= related things in the fringe.
 Provide major-modes for =git= specific files.
 
 #+begin_src emacs-lisp
-(use-package gitattributes-mode)
-(use-package gitconfig-mode)
-(use-package gitignore-mode)
+;; (use-package gitattributes-mode)
+;; (use-package gitconfig-mode)
+;; (use-package gitignore-mode)
+(use-package git-modes)
 #+end_src
 
 Magit provides Git facilities directly from within Emacs.
@@ -1931,7 +1933,7 @@ Set up =org='s basic configuration, then expand on it in other sections.
 
 #+begin_src emacs-lisp
 (use-package org
-  :ensure org-plus-contrib
+  :ensure org-contrib
   :bind
   (:map org-mode-map
         ("<C-return>" . nil))
