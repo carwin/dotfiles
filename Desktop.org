@@ -4432,7 +4432,7 @@ window {
   padding: 30;
   // width: 40%; // for buster
   // width: 10%;    // for guts
-  width: <<rofi-launcher-width()>>%
+  width: <<rofi-launcher-width()>>%;
 }
 
 prompt {
