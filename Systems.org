@@ -160,7 +160,8 @@ background.
 
 #+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep
 (when (equal system-name "buster")
-  '((desktop/dpi . 90)
+  `((desktop/dpi . 90)
+    (user/dots . ,(concat (concat "/home/" user-login-name) "/Projects/home/dotfiles/"))
     (emacs/default-face-size . 110)
     (emacs/variable-face-size . 110)
     (emacs/fixed-face-size . 110)))
