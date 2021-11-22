@@ -45,7 +45,7 @@ the declared overrides are mashed together on a per-system basis using
          (user/config . ,(envpath "HOME" ".config/"))
          (user/fonts . ,(envpath "HOME" ".local/fonts/"))
          (user/notes . ,(envpath "HOME" "Notes/"))
-         (user/dots . ,(envpath "HOME" ".dotfiles"))
+         (user/dots . ,(envpath "HOME" ".dotfiles/"))
          (user/dots/output . ,(envpath "HOME" ".dotfiles/tangled/"))
 
          (emacs/dashboard-agenda-face-size . 100)
@@ -131,7 +131,7 @@ tweaking on =guts=.
 #+begin_src emacs-lisp :noweb-ref system-settings :noweb-sep
 (when (equal system-name "guts")
   `((desktop/dpi . 100)
-    (user/dots . ,(concat (concat "/home/" user-login-name) "/.dotfiles"))
+    (user/dots . ,(concat (concat "/home/" user-login-name) "/.dotfiles/"))
     (emacs/variable-face-size . 1.1)
     (emacs/fixed-face-size . 1.1)
     (emacs/default-face-size . 100)
