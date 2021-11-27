@@ -280,6 +280,7 @@ systems, this should cover nearly everything.
 
 #+begin_src conf :noweb-ref dot-profile
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:$HOME/.local/bin:/opt/X11/bin"
+export PATH="/usr/local/bin/gnu-getopt/bin:$PATH"
 #+end_src
 
 On =macOS=, Python things installed via ~pip install --user ...~ get put
@@ -514,6 +515,7 @@ script.
 source $HOME/.profile
 ZDOTDIR=<<user-config-location()>>zsh/
 DOTDIR=<<dotfiles-location()>>
+export PATH=/usr/local/bin/gnu-getopt/bin:$PATH
 #+end_src
 
 **** =.zprofile=
