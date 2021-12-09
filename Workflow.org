@@ -171,6 +171,9 @@ This block tells =recentf-mode= to ignore the agenda files.
 
 * Habits
 
+Though =org-habits= is no longer in use, it may be useful to keep the
+configuration around in case it becomes useful again.
+
 #+begin_src emacs-lisp
 ;; (setq org-habit-show-habits-only-for-today nil
 ;;       org-habit-graph-column
@@ -180,6 +183,9 @@ This block tells =recentf-mode= to ignore the agenda files.
 
 * Contacts
 
+Handle contacts via Org-mode. This isn't a wonderful solution, because
+it doesn't seem to pull from =mu4e=, although it =mu4e= will read from it.
+
 #+begin_src emacs-lisp
 (use-package org-contacts
   :ensure nil
@@ -187,7 +193,8 @@ This block tells =recentf-mode= to ignore the agenda files.
   :custom (org-contacts-files '("~/Notes/Contacts.org")))
 #+end_src
 
-The =org-contacts= package doesn't ship with much in the way of templates, so I create a few below:
+The =org-contacts= package doesn't ship with much in the way of
+templates, so I create a few below:
 
 #+begin_src emacs-lisp
 (defun cy/org-contacts-template-tel (&optional return-value)
@@ -199,6 +206,10 @@ The =org-contacts= package doesn't ship with much in the way of templates, so I 
 #+end_src
 
 * Capture Templates
+
+Basic workflow capture templates.
+
+@TODO: Split this up and document everything.
 
 #+begin_src emacs-lisp
 (defun cy/on-org-capture ()
