@@ -10,9 +10,10 @@
   - [[#guts][guts]]
   - [[#buster][buster]]
   - [[#blank][blank]]
-  - [[#cutman][cutman]]
+  - [[#enswell][enswell]]
   - [[#archived-machine-configurations][Archived Machine Configurations]]
     - [[#punchy][punchy]]
+  - [[#cutman][cutman]]
 - [[#updating][Updating]]
   - [[#update-script][Update script]]
   - [[#tangle-dotfiles][Tangle Dotfiles]]
@@ -201,10 +202,10 @@ things to work:
     errors. Calling ~M-x vterm~ directly gave another prompt which pointed out
     that =cmake= was not installed. After installing it via Homebrew it worked.
 
-** cutman
+** enswell
 
-=cutman= is a Pixel 5. I've yet to get into figuring out how to use
-Emacs with it, but I suspect Termux is a major part of it.
+=enswell= is a Pixel 5 phone (the RMA replacement of =cutman=). It has no
+current Emacs configuration, but needs to have.
 
 ** Archived Machine Configurations
 
@@ -227,6 +228,9 @@ annoying.
     (emacs/default-face-size . 100)))
 #+end_src
 
+** cutman
+
+=cutman= was a Pixel 5 phone that broke and was returned/replaced by Google.
 
 * Updating
 ** Update script
