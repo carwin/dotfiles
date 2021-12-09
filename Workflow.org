@@ -49,6 +49,7 @@ to sort them in when I use the o option invoking that command.
 ;; @todo: org-todo-keyword-faces
 (setq org-todo-keyword-faces
 '(("NEXT" . (:foreground "orange red" :weight bold))
+  ("TODO" . (:foreground "medium sea green" :weight bold))
   ("WAIT" . (:foreground "HotPink2" :weight bold))
   ("BACK" . (:foreground "MediumPurple3" :weight bold))))
 (setq org-global-properties

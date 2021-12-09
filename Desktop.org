@@ -772,8 +772,9 @@ Tangle out all of the ~.zshrc~ source blocks defined above into the
 final file.
 
 #+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/config) "zsh/.zshrc")
-<<zshrc>>
-eval "$(starship init zsh)"
+# <<zshrc>>
+# eval "$(starship init zsh)"
+source ${ZDOTDIR:-$HOME}/slimzsh/slim.zsh
 #+end_src
 
 The following files should be pulled into the local filesystem via =git=

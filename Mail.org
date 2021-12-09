@@ -82,7 +82,9 @@ composition window to open in a new frame.
                   (mu4e-refile-folder  . "/Home/archive")
                   (mu4e-trash-folder   . "/Home/trash")
                   (mu4e-maildir-shortcuts .  (("/Home/inbox"         . ?i)
-                                              ("/Home/sent"          . ?s)
+                                              ("/Home/home"          . ?h)
+                                              ("/Home/shopping"      . ?s)
+                                              ("/Home/sent"          . ?S)
                                               ("/Home/quarantine"    . ?q)
                                               ("/Home/trash"         . ?t)
                                               ("/Home/drafts"        . ?d)
@@ -260,6 +262,11 @@ Create Slave
 Channel home-archive
 Master :home-remote:"Archives"
 Slave :home-local:archive
+Create Slave
+
+Channel home-home
+Master :home-remote:"Home"
+Slave :home-local:home
 Create Slave
 
 Channel home-shopping
