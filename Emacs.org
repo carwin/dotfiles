@@ -2108,7 +2108,7 @@ this before I even understood what Org mode was, it's my origin story.
   ;; :load-path "~/Projects/home/org-roam"  ;; For testing the latest changes.
   :after org
   :init
-  (setq org-roam-directory (file-truename (envpath "HOME" "/Notes/Roam"))
+  (setq org-roam-directory (file-truename (envpath "HOME" "Notes/Roam"))
         org-roam-db-gc-threshold most-positive-fixnum
         org-id-link-to-org-use-id 'create-if-interactive)
   ;; (add-to-list 'display-buffer-alist
@@ -2283,15 +2283,15 @@ Configure a replacemnt for the old =org-roam-server= that was used with roam v1.
 (use-package simple-httpd
   :after org-roam)
 
-(use-package org-roam-ui
-  :after org-roam
-  :load-path (envpath "HOME" "Projects/pkgs/org-roam-ui/")
-  :hook (after-init . org-roam-ui-mode)
-  :config
-  (setq org-roam-ui-sync-theme t
-        org-roam-ui-follow t
-        org-roam-ui-update-on-save t
-        org-roam-ui-open-on-start t))
+;; (use-package org-roam-ui
+;;   :after org-roam
+;;   :load-path (envpath "HOME" "Projects/pkgs/org-roam-ui/")
+;;   :hook (after-init . org-roam-ui-mode)
+;;   :config
+;;   (setq org-roam-ui-sync-theme t
+;;         org-roam-ui-follow t
+;;         org-roam-ui-update-on-save t
+;;         org-roam-ui-open-on-start t))
 #+end_src
 
 ** Tools
