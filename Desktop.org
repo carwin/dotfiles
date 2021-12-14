@@ -476,6 +476,66 @@ fnm env | source
 
 *** zsh
 
+| =zsh=     | @todo                             |
+| =slimzsh= | https://github.com/changs/slimzsh |
+
+Zsh is the preferred shell for this setup. Bash is fine, but doesn't
+have some of the completion features I like from Zsh. Fish is great,
+and handy for out-of-the-box configuration and features, but has some
+annoying compatibility issues (perhaps quirks is a better word) that
+make running Bash on the fly rather annoying. These quirks are easily
+overcome, but my personal opinion is that I shouldn't have to.
+
+To keep things simple and as bloat-free as possible, while still
+having nice prompt info and other QOL benefits, this configuration
+uses the =slimzsh= configuration.
+
+**** =aliases.zsh.local=
+
+Create a file just for handy user-defined aliases. This file, if
+tangled into the =slimzsh= configuration's directory, gets automatically
+sourced. For other configurations, adjust the tangle directive of the
+last block in this section to put it somewhere else and source the
+file manually.
+
+ - ~ls~ :: Automatically color the output of ~ls~.
+ - 7zultra :: Zip and compress a file or directory. This gets things pretty small.
+ - curlheaders :: Curl, with ~-I~ baked in.
+ - curlheadersproxy :: Curl, with ~-I~ baked in, but do it through a local proxy at =localhost:11080=.
+ - scrote :: Capture a selected area of the screen to the clipboard using =scrot=.
+ - webcam :: Turn on the webcam, sort of works like a mirror to check yourself before a meeting.
+ - dots :: Jump to the dotfiles directory.
+ - updots :: Update my dotfiles by running a script that tells Emacs to evaluate these Org files as a script.
+ - work :: Jump to the work projects directory.
+ - notes :: Jump to the ~$HOME/Notes~ directory.
+ - docs :: Jump to ~$HOME/Documents~.
+ - em :: Run =emacsclient=.
+ - emc :: The same as ~em~, but adds the ~-c~ parameter and runs it in the background.
+
+
+#+begin_src conf :noweb-ref zsh-aliases :noweb yes
+[[ $(uname -s) == 'Darwin' ]] && alias ls='gls --color=auto' || alias ls='ls --color=auto'
+alias 7zultra='7z a -t7z -m0=lzma2 -mx=0 -mfb=64 -md=32m -ms=on'
+alias curlheaders='curl -I'
+alias curlheadersproxy='curl --socks5 localhost:11080 -I'
+alias scrote='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/foo.png && rm ~/foo.png'
+alias webcam='mplayer tv:// -tv driver=v412:width=1920:height=1080:device=/dev/video0 -fps 15 -vf screenshot'
+alias dots='<<dotfiles-location()>>'
+alias updots='<<dotfiles-location()>>.bin/update-dotfiles'
+alias work='cd $HOME/Projects/work'
+alias notes='cd $HOME/Notes'
+alias docs='cd $HOME/Documents'
+alias em='emacsclient'
+alias emc='emacsclient -c &'
+# @todo: These only for macOS
+alias python='/usr/local/bin/pyenv exec'
+alias pip='/usr/local/bin/pip3'
+#+end_src
+
+#+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/config) "zsh/slimzsh/aliases.zsh.local")
+<<zsh-aliases>>
+#+end_src
+
 **** =.zshenv=
 create a ~/home/<user>/.zshenv~ file to point invocations of =zsh= to look
 for configuration files within ~$xdg_config_home~. this is non-standard,
@@ -512,7 +572,7 @@ shell.  this is useful for jumping to the dotfiles directory from a
 script.
 
 #+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/home) ".zshenv")
-# emulate sh -c 'source ~/.profile'
+emulate sh -c 'source ~/.profile'
 source $HOME/.profile
 ZDOTDIR=<<user-config-location()>>zsh/
 DOTDIR=<<dotfiles-location()>>
@@ -540,299 +600,16 @@ setopt aliases
 
 **** =.zshrc=
 
-=.zshrc= is where everything interesting happens. this file is sourced
+=.zshrc= is where everything interesting happens. This file is sourced
 on every interactive invocation of Zsh.
 
-First, load up the =zsh= plugin manager =antigen=.
-
-#+begin_src conf :noweb-ref zshrc
-zmodload zsh/zprof
-# source ${ZDOTDIR:-$HOME/.zsh}/custom/plugins/antigen/antigen.zsh
-#+end_src
-
-this configuration uses =oh-my-zsh= as a plugin backend, which i very
-much dislike. other options like =prezto= seem just as heavy as
-=oh-my-zsh= though.
-
-set a theme, and pull in any required plugins.
-
-| antigen bundle / theme           | desc.                                                                                | link |
-|----------------------------------+--------------------------------------------------------------------------------------+------|
-| =git=                              | comes with a lot of aliases, i mainly use the stash features.                        | [[https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/git][link]] |
-| =zdharma/fast-syntax-highlighting= | faster, more configurable syntax highlighting than zsh-users/zsh-syntax-highlighting | [[https://github.com/zdharma/fast-syntax-highlighting][link]] |
-| =spaceship-prompt=                 | a pretty nice prompt theme. to eventually be replaced with carwin's custom prompt.   | [[https://github.com/spaceship-prompt/spaceship-prompt][link]] |
-
-the =spaceship-prompt= comes with some built-in configurable options which can be found [[https://github.com/spaceship-prompt/spaceship-prompt/blob/master/docs/options.md][here]].
-
-#+begin_src conf :noweb-ref zshrc
-# antigen use oh-my-zsh
-#
-# antigen bundle git
-#
-# antigen bundle zdharma/fast-syntax-highlighting
-#
-# antigen theme spaceship-prompt/spaceship-prompt
-
-# antigen apply
-#+end_src
-
-setup =zsh= to make it easier to be lazy about changing directories and
-enable extended globbing.
-
-the extended globbing feature allows asterisks to be used in a number
-of handy ways. ~ls **/foo~ will recursively list ~foo~ within the current
-directory tree. ~ls ***/foo~ will do the same thing but also follow
-symlinks. there are many other interesting features provided by the
-=extended_glob=, and most of them look fairly similar to regular
-expressions. for instance, ~ls [^ab]*~ matches any file not starting
-with the letters ~a~ or ~b~.
-
-#+begin_src conf :noweb-ref zshrc
-setopt auto_cd # don't make me use `cd`. you know what i wanted.
-setopt no_case_glob # case insensitive globbing.
-setopt extended_glob
-#+end_src
-
-save =zsh= history to a ~.zhistory~ file, ignoring duplicate entries.
-
-#+begin_src conf :noweb-ref zshrc
-histfile=${ZDOTDIR:-$HOME}/.zhistory
-setopt extended_history # timestamp history lines
-savehist=5000
-histsize=2000
-setopt share_history # share history across sessions
-setopt append_history # just keep adding to history
-setopt inc_append_history # write all the time, don't wait for shell to close
-setopt hist_ignore_dups # do not store duplicates
-setopt hist_ignore_all_dups # ignore duplicate entries
-setopt histignorealldups    # ignore duplicate entries alternative syntax.
-setopt hist_expire_dups_first # expire duplicates first
-setopt hist_save_no_dups
-setopt hist_ignore_space
-setopt hist_find_no_dups # ignore duplicates when searching
-setopt hist_reduce_blanks # remove blank lines from history
-setopt hist_verify # be really sure when using !!
-#+end_src
-
-allow =zsh= to provide corrections to commands which have been mistyped, even when using the ~auto_cd~ opt set above.
-
-#+begin_src conf :noweb-ref zshrc
-# correction
-setopt correct
-setopt correct_all # correct when using auto_cd
-#+end_src
-
-configure =zsh='s auto-completion features.
-
-#+begin_src conf :noweb-ref zshrc
-autoload -Uz compinit && compinit
-
-# color dirs
-export ls_colors # i don't know why this is necessary here, but colors don't work without it.
-# zstyle ':completion:*' list-colors ${(s.:.)ls_colors}
-
-zstyle ':completion:*' auto-description 'specify: %d'
-zstyle ':completion:*' completer _expand _complete _correct _approximate
-zstyle ':completion:*' format 'completing %d'
-zstyle ':completion:*' group-name ''
-zstyle ':completion:*' menu select=2
-if [[ $(uname -s) == 'Darwin' ]]; then
-  eval "$(gdircolors -b)"
-else
-  eval "$(dircolors -b)"
-fi
-zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
-zstyle ':completion:*' list-colors ''
-zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
-zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
-zstyle ':completion:*' menu select=long
-zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
-zstyle ':completion:*' use-compctl false
-zstyle ':completion:*' verbose true
-
-zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
-zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
-#+end_src
-
-Define custom command aliases.
-
- - ~ls~ :: Automatically color the output of ~ls~.
- - 7zultra :: Zip and compress a file or directory. This gets things pretty small.
- - curlheaders :: Curl, with ~-I~ baked in.
- - curlheadersproxy :: Curl, with ~-I~ baked in, but do it through a local proxy at =localhost:11080=.
- - scrote :: Capture a selected area of the screen to the clipboard using =scrot=.
- - webcam :: Turn on the webcam, sort of works like a mirror to check yourself before a meeting.
- - dots :: Jump to the dotfiles directory.
- - updots :: Update my dotfiles by running a script that tells Emacs to evaluate these Org files as a script.
- - work :: Jump to the work projects directory.
- - notes :: Jump to the ~$HOME/Notes~ directory.
- - docs :: Jump to ~$HOME/Documents~.
- - em :: Run =emacsclient=.
- - emc :: The same as ~em~, but adds the ~-c~ parameter and runs it in the background.
-
-#+begin_src conf :noweb-ref zshrc :noweb yes
-[[ $(uname -s) == 'Darwin' ]] && alias ls='gls --color=auto' || alias ls='ls --color=auto'
-# alias ls='ls --color=auto'
-alias 7zultra='7z a -t7z -m0=lzma2 -mx=0 -mfb=64 -md=32m -ms=on'
-alias curlheaders='curl -I'
-alias curlheadersproxy='curl --socks5 localhost:11080 -I'
-alias scrote='scrot -s ~/foo.png && xclip -selection clipboard -t image/png ~/foo.png && rm ~/foo.png'
-alias webcam='mplayer tv:// -tv driver=v412:width=1920:height=1080:device=/dev/video0 -fps 15 -vf screenshot'
-alias dots='<<dotfiles-location()>>'
-alias updots='<<dotfiles-location()>>.bin/update-dotfiles'
-alias work='cd $HOME/Projects/work'
-alias notes='cd $HOME/Notes'
-alias docs='cd $HOME/Documents'
-alias em='emacsclient'
-alias emc='emacsclient -c &'
-# @todo: These only for macOS
-alias python='/usr/local/bin/python3'
-alias pip='/usr/local/bin/pip3'
-#+end_src
-
-Configure some system-dependent variables. Most of these are added to
-handle some quirky behavior within =WSL= instances.
-
-#+begin_src conf :noweb-ref zshrc
-
-if [[ -f "/proc/sys/kernel/osrelease" ]]; then
-  export GPG_TTY=$(tty)
-  # System dependent variables:
-  if [[ "$(< /proc/sys/kernel/osrelease)" == *microsoft* ]]; then
-    export $(dbus-launch)
-    export LIBGL_ALWAYS_INDIRECT=1
-    export WSL_VERSION=$(wsl.exe -l -v | grep -a '[*]' | sed 's/[^0-9]*//g')
-    export WSL_HOST=$(tail -1 /etc/resolv.conf | cut -d' ' -f2)
-    export DISPLAY=$(ipconfig.exe | grep IPv4 | head -1 | rev | awk '{print $1}' | rev | tr -d '\r'):0.0
-
-    # Handle pinentry for gpg password prompting in various scenarios.
-    # In Ubuntu-20.04 WSL2, I've essentially given up on getting pinentry
-    # in Emacs directly, opting instead for the pinentry-gtk2 package.
-    kill -0 $SSH_AGENT_PID &> /dev/null
-    if [[ $? -eq 1 ]]; then
-            eval $( gpg-agent \
-                --daemon \
-                --allow-emacs-pinentry \
-                --allow-loopback-pinentry \
-                --enable-ssh-support);
-        fi
-
-        # Start Docker daemon when logging in if not runnint
-        RUNNING=`ps aux | grep dockerd | grep -v grep`
-        if [ -z "$RUNNING" ]; then
-            sudo dockerd > /dev/null 2>&1 &
-            disown
-        fi
-  fi
-  # Linux
-else
-  # Darwin
-fi
-#+end_src
-
-Add a custom function for profiling Zsh startup which can sometimes
-get a bit bloated.
-
-#+begin_src bash :noweb-ref zshrc
-timezsh() {
-    shell=${1-$SHELL}
-    for i in $(seq 1 10); do
-        /usr/bin/time $SHELL -i -c exit;
-    done
-}
-#+end_src
-
-Load built-in =zsh= modules. ~url-quote-magic~ analyzes characters being
-typed in a command to decide if the character needs to be escaped.
-
-#+begin_src conf :noweb-ref zshrc
-autoload -U url-quote-magic
-#+end_src
-
-Source any custom =zsh= plugins.
-
-| base16-shell            | https://github.com/chriskempson/base16-shell         |
-
-=Base-16= is a plugin that essentially lets you choose a terminal theme
-from a command completion. Start with ~base16_~ and hit ~<Tab>~ to see the
-theme options.
-
-The settings are stored in ~$HOME/.base16_theme~. Remove that directory to
-go back to ~.Xresources~ styles or whatever other configuration the
-current terminal emulator uses (e.g.: ~$HOME/.config/termite/config~)
-
-#+begin_src conf :noweb-ref zshrc
-# source ${ZDOTDIR}/custom/plugins/base16-shell/base16-shell.plugin.zsh
-#+end_src
-
-The below line is commented out, generally, but are used to load the
-custom work-in-progress prompt defined below.
-
-#+begin_src conf :noweb-ref zshrc
-# source ${ZDOTDIR:-$HOME}/prompt
-#+end_src
-
-Tangle out all of the ~.zshrc~ source blocks defined above into the
-final file.
+Typically, this is where the majority of Zsh customization takes
+place, however, because we're opting to use the =slimzsh= configuration,
+all that needs to be done is to source its entry point.
 
 #+begin_src conf :noweb yes :tangle (concat (cy/system-settings-get 'user/config) "zsh/.zshrc")
-# <<zshrc>>
-# eval "$(starship init zsh)"
 source ${ZDOTDIR:-$HOME}/slimzsh/slim.zsh
 #+end_src
-
-The following files should be pulled into the local filesystem via =git=
-on any new system.
-
-For convenience, simply evaluate this block or the
-collection of ~:noweb-ref~ blocks that includes this one which is
-defined at the bottom of this file.
-
-#+begin_src sh :noweb yes :noweb-ref zsh-downloads
-mkdir -p <<user-config-location()>>zsh/custom/plugins
-git clone https://github.com/zsh-users/antigen.git <<user-config-location()>>zsh/custom/plugins/antigen
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git <<user-config-location()>>zsh/custom/plugins/zsh-syntax-highlighting
-git clone git@github.com:chriskempson/base16-shell.git <<user-config-location()>>zsh/custom/plugins/base16-shell
-#+end_src
-
-#+RESULTS:
-
-*Work In Progress*
-
-Carwin's custom =zsh= prompt.
-
-#+begin_src conf :tangle (concat (cy/system-settings-get 'user/config) "zsh/prompt")
-# Left prompt
-export PS1="%F{223}%n%F{224}@%F{211}%m %F{179}%~%b%F{255} › "
-
-# Right prompt
-autoload -Uz vcs_info
-precmd_vcs_info() { vcs_info }
-precmd_functions+=( precmd_vcs_info )
-setopt prompt_subst
-RPROMPT=\$vcs_info_msg_0_
-zstyle ':vcs_info:git:*' formats '%F{223}%b|%F{211}%r%f'
-zstyle ':vcs_info:*' enable git
-
-#+end_src
-
-#+begin_src conf
-This bit here came from the Archcraft repository, I'd like to have a much nicer shell...
-
-if [[ "$USER" == "root" ]]; then
-  PROMPT="%(?:%{$fg_bold[red]%}%{$fg_bold[yellow]%}%{$fg_bold[red]%} :%{$fg_bold[red]%} )"
-  PROMPT+='%{$fg[cyan]%}  %c%{$reset_color%} $(git_prompt_info)'
-else
-  PROMPT="%(?:%{$fg_bold[red]%}%{$fg_bold[green]%}%{$fg_bold[yellow]%} :%{$fg_bold[red]%} )"
-  PROMPT+='%{$fg[cyan]%}  %c%{$reset_color%} $(git_prompt_info)'
-fi
-
-ZSH_THEME_GIT_PROMPT_PREFIX="%{$fg_bold[blue]%}  git:(%{$fg[red]%}"
-ZSH_THEME_GIT_PROMPT_SUFFIX="%{$reset_color%} "
-ZSH_THEME_GIT_PROMPT_DIRTY="%{$fg[blue]%}) %{$fg[yellow]%}✗"
-ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg[blue]%})"
-#+end_src
-
 
 ** X Window System
 
