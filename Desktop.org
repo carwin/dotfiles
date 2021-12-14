@@ -162,7 +162,6 @@ yay -S \
     noto-fonts \
     npm \
     ntfs-3g \
-    nvm \
     org-protocol-emacsclient \
     p7zip \
     pass \
@@ -332,6 +331,8 @@ export PATH="$PATH:/opt/cuda/bin"
 
 Source the Node Version Manager (=nvm=) in much the same way as =rvm=,
 above.
+
+=fnm= replaces the usage of =nvm= found in older versions of this configuration.
 
 #+name: source-nvm-by-system-type
 #+begin_src emacs-lisp
@@ -516,6 +517,9 @@ source $HOME/.profile
 ZDOTDIR=<<user-config-location()>>zsh/
 DOTDIR=<<dotfiles-location()>>
 export PATH=/usr/local/bin/gnu-getopt/bin:$PATH
+
+# Evaluate the fnm Node.js version manager environment vars.
+eval "$(fnm env)"
 #+end_src
 
 **** =.zprofile=
@@ -6500,6 +6504,5 @@ and download any dependencies.
  - circleci / aws config?
  - Ngrok config?
  - ~pass~ documentation
- - ~nvm / rvm~ installation. Am I just using aur packages?
  - anything for docker / kubernetes?
  - Rust / rustup?
