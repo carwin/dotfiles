@@ -11,16 +11,71 @@ enough to be moved around between machines.
 :TOC: :include all :ignore this
 :END:
 
+* Early Init
+
+| =cy-system=   | [[file:Systems.org][./Systems.org]]  |
+
+The first thing to be done in the early init stage is the disabling of
+the built-in =package.el= load that usually happens. For package
+management, =straight.el= is invoked during the main ~init.el~ Bootstrap
+phase.
+
+Additionally, =cy-system= is imported in early init because every other
+configuration file depends on the settings and functions it provides.
+
+#+begin_src emacs-lisp :tangle (concat user-emacs-directory "early-init.el")
+(setq package-enable-at-startup nil)
+(require 'cy-system (concat user-emacs-directory "cy-system-settings.el"))
+#+end_src
+
 * Bootstrap
 
-| =cy-systems=                        | [[file:Systems.org][./Systems.org]]                                   |
 | =exec-path-from-shell=              | https://github.com/purcell/exec-path-from-shell |
 | =use-package=                       | @todo                                           |
 | =auto-package-update=               | @todo                                           |
 | =use-package-ensure-system-package= | @todo                                           |
 | =package=                           | Built-in                                        |
 
-Load paths from shell
+** Package Management
+
+Straight.el
+
+#+begin_src emacs-lisp
+(setq straight-base-dir (concat (cy/system-settings-get 'user/data) "emacspkgs/"))
+(setq straight-vc-git-default-protocol 'ssh)
+
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+#+end_src
+
+=straight.el= package manager & =use-package= together.
+
+#+begin_src emacs-lisp
+  (straight-use-package 'use-package)
+  (setq straight-use-package-by-default t)
+#+end_src
+
+Auto-update packages when Emacs starts.
+
+#+begin_src emacs-lisp
+(use-package auto-package-update
+  :config
+  (setq auto-package-update-delete-old-versions t
+        auto-package-update-interval 4)
+  (auto-package-update-maybe))
+#+end_src
+
+** Load paths from shell
 
 #+begin_src emacs-lisp
 (use-package exec-path-from-shell
@@ -33,17 +88,7 @@ Load paths from shell
     (exec-path-from-shell-initialize)))
 #+end_src
 
-Load settings for this particular system.
-
-#+begin_src emacs-lisp
-(load-file "~/.emacs.d/cy-system-settings.el")
-
-(cond
- ((string-equal system-type "darwin") ; macOS
-  (progn
-    (setq mac-option-modifier 'meta)
-    (setq mac-command-modifier 'super))))
-#+end_src
+** Emacs server / daemon
 
 Set Emacs to run as a server to be connected to via =emacsclient=.
 
@@ -54,48 +99,6 @@ Set Emacs to run as a server to be connected to via =emacsclient=.
   (server-start))
 #+end_src
 
-** Package Management
-
-#+begin_src emacs-lisp
-  (require 'package)
-  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                           ;;("melpa-stable" . "https://stable.melpa.org/packages/")
-                           ;; ("org" . "https://orgmode.org/elpa/")
-                           ("nongnu-elpa" . "https://elpa.nongnu.org/nongnu/")
-                           ("elpa" . "https://elpa.gnu.org/packages/")))
-
-  (package-initialize)
-
-  (unless package-archive-contents
-    (package-refresh-contents))
-
-  ;; Initialize use-package for non-Linux platforms
-  (unless (package-installed-p 'use-package)
-    (package-install 'use-package))
-
-  (require 'use-package)
-  (setq use-package-always-ensure t)
-#+end_src
-
-Auto-update packages when Emacs starts.
-
-#+begin_src emacs-lisp
-(use-package auto-package-update
-   :ensure t
-   :config
-   (setq auto-package-update-delete-old-versions t
-         auto-package-update-interval 4)
-   (auto-package-update-maybe))
-#+end_src
-
-Extend =use-package= to allow /ensuring/ that system packages are present,
-and, if not, attempt to install them.
-
-#+begin_src emacs-lisp
-(use-package use-package-ensure-system-package
-  :ensure t)
-#+end_src
-
 ** Secrets
 
 | =pass= | @todo |
@@ -103,8 +106,20 @@ and, if not, attempt to install them.
 Configure an interface for talking to the system's =pass= to manage secrets.
 
 #+begin_src emacs-lisp
-(use-package pass)
+  (use-package pass
+    :straight t)
 #+end_src
+
+
+Additionally, load system-specific settings from
+=.emacs.d/per-system-settings.el= and unpack relevant values.  These
+settings are configured in =./Systems.org= and tangled out to the
+directory specified above.
+
+#+begin_src emacs-lisp
+;; (require 'cy-system (concat user-emacs-directory "cy-system-settings.el"))
+#+end_src
+
 
 ** Better Default Settings
 
@@ -169,6 +184,16 @@ Avoid creating backup files. Don't regret this later.
 (setq create-lockfiles nil)
 ;; Avoid filename.ext~
 (setq make-backup-files nil)
+#+end_src
+
+When using macOS, stop Emacs from swapping Alt and Command.
+
+#+begin_src emacs-lisp
+(cond
+ ((string-equal system-type "darwin") ; macOS
+  (progn
+    (setq mac-option-modifier 'meta)
+    (setq mac-command-modifier 'super))))
 #+end_src
 
 ** Cache
@@ -237,12 +262,13 @@ Set up a definer function that can be used
 throughout the document to create new bindings off of the leader.
 
 #+begin_src emacs-lisp
-(use-package general
-  :config
-  (general-create-definer cy/leader-key-def
-    :keymaps `(normal insert visual emacs org-roam org-agenda term)
-    :prefix ","
-    :global-prefix "C-,"))
+  (use-package general
+    :straight t
+    :config
+    (general-create-definer cy/leader-key-def
+      :keymaps `(normal insert visual emacs org-roam org-agenda term)
+      :prefix ","
+      :global-prefix "C-,"))
 #+end_src
 
 Configure =evil-mode=, which emulates and manages Vim states and motions in Emacs.
@@ -251,39 +277,40 @@ Additionally, disable arrow keys. They're a crutch that facilitates avoidance of
 learning proper keystrokes for things.
 
 #+begin_src emacs-lisp
-(defun cy/dont-arrow-me-bro ()
-  (interactive)
-  (message "Arrow keys are bad, you're better than this."))
+  (defun cy/dont-arrow-me-bro ()
+    (interactive)
+    (message "Arrow keys are bad, you're better than this."))
 
-(setq evil-want-keybinding nil)
-(use-package evil
-  :ensure t
-  :init
-  (setq evil-want-integration t)
-  (setq evil-want-C-u-scroll t)
-  (setq evil-want-fine-undo 'fine)
-  (setq-default evil-shift-width tab-width)
-  :config
-  (evil-mode 1)
-  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
-  (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
-  ;; Use visual line motions even outside of visual-line-mode buffers
-  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
-  ;; Set the undo system Evil should use.
-  (evil-set-undo-system 'undo-redo)
-  ;; Disable arrow keys in normal and visual modes.
-  (define-key evil-normal-state-map (kbd "<left>") 'cy/dont-arrow-me-bro)
-  (define-key evil-normal-state-map (kbd "<down>") 'cy/dont-arrow-me-bro)
-  (define-key evil-normal-state-map (kbd "<up>") 'cy/dont-arrow-me-bro)
-  (define-key evil-normal-state-map (kbd "<right>") 'cy/dont-arrow-me-bro)
-  (evil-global-set-key 'motion (kbd "<left>") 'cy/dont-arrow-me-bro)
-  (evil-global-set-key 'motion (kbd "<down>") 'cy/dont-arrow-me-bro)
-  (evil-global-set-key 'motion (kbd "<up>") 'cy/dont-arrow-me-bro)
-  (evil-global-set-key 'motion (kbd "<right>") 'cy/dont-arrow-me-bro)
-  ;; Make sure we're in normal mode, not insert mode when we are in these Emacs modes.
-  (evil-set-initial-state 'messages-buffer-mode 'normal)
-  (evil-set-initial-state 'dashboard-mode 'normal))
+  (setq evil-want-keybinding nil)
+  (use-package evil
+    ;; :ensure t
+    :straight t
+    :init
+    (setq evil-want-integration t)
+    (setq evil-want-C-u-scroll t)
+    (setq evil-want-fine-undo 'fine)
+    (setq-default evil-shift-width tab-width)
+    :config
+    (evil-mode 1)
+    (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+    (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
+    ;; Use visual line motions even outside of visual-line-mode buffers
+    (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+    (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+    ;; Set the undo system Evil should use.
+    (evil-set-undo-system 'undo-redo)
+    ;; Disable arrow keys in normal and visual modes.
+    (define-key evil-normal-state-map (kbd "<left>") 'cy/dont-arrow-me-bro)
+    (define-key evil-normal-state-map (kbd "<down>") 'cy/dont-arrow-me-bro)
+    (define-key evil-normal-state-map (kbd "<up>") 'cy/dont-arrow-me-bro)
+    (define-key evil-normal-state-map (kbd "<right>") 'cy/dont-arrow-me-bro)
+    (evil-global-set-key 'motion (kbd "<left>") 'cy/dont-arrow-me-bro)
+    (evil-global-set-key 'motion (kbd "<down>") 'cy/dont-arrow-me-bro)
+    (evil-global-set-key 'motion (kbd "<up>") 'cy/dont-arrow-me-bro)
+    (evil-global-set-key 'motion (kbd "<right>") 'cy/dont-arrow-me-bro)
+    ;; Make sure we're in normal mode, not insert mode when we are in these Emacs modes.
+    (evil-set-initial-state 'messages-buffer-mode 'normal)
+    (evil-set-initial-state 'dashboard-mode 'normal))
 #+end_src
 
 Add keybindings for bits of Emacs which are not properly covered by =evil-mode=
@@ -295,7 +322,7 @@ using the =evil-collection= package.
     :init
     (setq evil-want-keybinding nil)
     (setq evil-collection-company-use-tng nil)
-    :ensure t
+    ;; :ensure t
     :custom
     (evil-collection-outline-bind-tab-p nil)
     :config
@@ -308,7 +335,7 @@ navigating some =org-mode= areas like the Agenda.
 
 #+begin_src emacs-lisp
 (use-package evil-org
-  :ensure t
+  ;; :ensure t
   :after org
   :hook (org-mode . (lambda () evil-org-mode))
   :config
@@ -376,7 +403,7 @@ my leader key.
 #+begin_src emacs-lisp
 (use-package which-key
   :init (which-key-mode)
-  :ensure t
+  ;; :ensure t
   :diminish which-key-mode
   :config
   (setq which-key-separator " "
@@ -461,29 +488,15 @@ represent.
          js2-mode))
 #+end_src
 
-** Import Sibling Dotfiles
+* Features
 
-| =cy-system=   | [[file:Systems.org][./Systems.org]]  |
 | =cy-workflow= | [[file:Workflow.org][./Workflow.org]] |
-| =cy-mail=     | [[file:Mail.org][./Mail.org]]     |
-| =cy-calendar= | [[file:Calendar.org][./Calendar.org]] |
 
-Provide agenda workflows, =mu4e= configuration, and calendar integration
-from sibling files.
-
-Additionally, load system-specific settings from
-=.emacs.d/per-system-settings.el= and unpack relevant values.  These
-settings are configured in =./Systems.org= and tangled out to the
-directory specified above.
+Import workflow and agenda configuration from =cy-workflow=.
 
 #+begin_src emacs-lisp
-(require 'cy-system (concat user-emacs-directory "cy-system-settings.el"))
 (require 'cy-workflow (concat user-emacs-directory "cy-workflow.el"))
-(require 'cy-mail (concat user-emacs-directory "cy-mail.el"))
-(require 'cy-calendar (concat user-emacs-directory "cy-calendar.el"))
 #+end_src
-
-* Features
 
 ** Buffers and Windows
 
@@ -571,7 +584,7 @@ Enable proper Unicode glyph support.
 
 #+begin_src emacs-lisp
 (use-package unicode-fonts
-  :ensure t
+  ;; :ensure t
   :custom
   (unicode-fonts-skip-font-groups '(low-quality-glyphs))
   (unicode-fonts-setup))
@@ -685,7 +698,7 @@ Configure and prettify the modeline(s).
 #+begin_src emacs-lisp
 ;; Run (all-the-icons-install-fonts) after this.
 (use-package doom-modeline
-  :ensure t
+  ;; :ensure t
   :init (doom-modeline-mode 1)
   :custom-face
   (mode-line ((t (:height 0.85))))
@@ -713,102 +726,103 @@ Configure preferred settings for =dired=, the primary built-in file browsing mec
 @todo: The current configuration works, but uses nested =use-package= statements. Fix it.
 
 #+begin_src emacs-lisp
-(use-package dired
-  :ensure nil
-  :defer 1
-  :commands (dired dired-jump)
-  :config
-  (setq dired-listing-switches "-agho --group-directories-first"
-        dired-omit-files "^\\.[^.].*"
-        dired-omit-verbose nil)
-  ;; On macOS systems, assume we have gls to use the BSD version of ls as gls.
-  (when (eq system-type 'darwin)
-    (setq insert-directory-program "/usr/local/bin/gls"))
-
-  (autoload 'dired-omit-mode "dired-x")
-
-  (add-hook 'dired-load-hook
-    (lambda ()
-     (interactive)
-     (dired-collapse)))
-
-  (add-hook 'dired-mode-hook
-    (lambda ()
-      (interactive)
-       (dired-omit-mode 1)
-       (expand-file-name default-directory)
-       (all-the-icons-dired-mode 1)
-       (hl-line-mode 1)))
-
- ;; @todo Had to run this once to get the icons.
- (use-package all-the-icons-dired
-   :hook (dired-mode . all-the-icons-dired-mode))
-
- (add-hook 'dired-mode-hook
-   (lambda ()
-    (interactive)
-    (dired-omit-mode 1)
-    (unless
-          (s-equals? "/gnu/store/" (expand-file-name default-directory))
-          (all-the-icons-dired-mode 1))
-    (hl-line-mode 1)))
-
-  (use-package dired-rainbow
-    :defer 2
+  (use-package dired
+    ;; :ensure nil
+    :straight (:type built-in)
+    :defer 1
+    :commands (dired dired-jump)
     :config
-    (dired-rainbow-define-chmod directory "#6cb2eb" "d.*")
-    (dired-rainbow-define html "#eb5286" ("css" "less" "sass" "scss" "htm" "html" "jhtm" "mht" "eml" "mustache" "xhtml"))
-    (dired-rainbow-define xml "#f2d024" ("xml" "xsd" "xsl" "xslt" "wsdl" "bib" "json" "msg" "pgn" "rss" "yaml" "yml" "rdata"))
-    (dired-rainbow-define document "#9561e2" ("docm" "doc" "docx" "odb" "odt" "pdb" "pdf" "ps" "rtf" "djvu" "epub" "odp" "ppt" "pptx"))
-    (dired-rainbow-define markdown "#ffed4a" ("org" "etx" "info" "markdown" "md" "mkd" "nfo" "pod" "rst" "tex" "textfile" "txt"))
-    (dired-rainbow-define database "#6574cd" ("xlsx" "xls" "csv" "accdb" "db" "mdb" "sqlite" "nc"))
-    (dired-rainbow-define media "#de751f" ("mp3" "mp4" "mkv" "MP3" "MP4" "avi" "mpeg" "mpg" "flv" "ogg" "mov" "mid" "midi" "wav" "aiff" "flac"))
-    (dired-rainbow-define image "#f66d9b" ("tiff" "tif" "cdr" "gif" "ico" "jpeg" "jpg" "png" "psd" "eps" "svg"))
-    (dired-rainbow-define log "#c17d11" ("log"))
-    (dired-rainbow-define shell "#f6993f" ("awk" "bash" "bat" "sed" "sh" "zsh" "vim"))
-    (dired-rainbow-define interpreted "#38c172" ("py" "ipynb" "rb" "pl" "t" "msql" "mysql" "pgsql" "sql" "r" "clj" "cljs" "scala" "js"))
-    (dired-rainbow-define compiled "#4dc0b5" ("asm" "cl" "lisp" "el" "c" "h" "c++" "h++" "hpp" "hxx" "m" "cc" "cs" "cp" "cpp" "go" "f" "for" "ftn" "f90" "f95" "f03" "f08" "s" "rs" "hi" "hs" "pyc" ".java"))
-    (dired-rainbow-define executable "#8cc4ff" ("exe" "msi"))
-    (dired-rainbow-define compressed "#51d88a" ("7z" "zip" "bz2" "tgz" "txz" "gz" "xz" "z" "Z" "jar" "war" "ear" "rar" "sar" "xpi" "apk" "xz" "tar"))
-    (dired-rainbow-define packaged "#faad63" ("deb" "rpm" "apk" "jad" "jar" "cab" "pak" "pk3" "vdf" "vpk" "bsp"))
-    (dired-rainbow-define encrypted "#ffed4a" ("gpg" "pgp" "asc" "bfe" "enc" "signature" "sig" "p12" "pem"))
-    (dired-rainbow-define fonts "#6cb2eb" ("afm" "fon" "fnt" "pfb" "pfm" "ttf" "otf"))
-    (dired-rainbow-define partition "#e3342f" ("dmg" "iso" "bin" "nrg" "qcow" "toast" "vcd" "vmdk" "bak"))
-    (dired-rainbow-define vc "#0074d9" ("git" "gitignore" "gitattributes" "gitmodules"))
-    (dired-rainbow-define-chmod executable-unix "#38c172" "-.*x.*"))
+    (setq dired-listing-switches "-agho --group-directories-first"
+          dired-omit-files "^\\.[^.].*"
+          dired-omit-verbose nil)
+    ;; On macOS systems, assume we have gls to use the BSD version of ls as gls.
+    (when (eq system-type 'darwin)
+      (setq insert-directory-program "/usr/local/bin/gls"))
 
-  (use-package dired-single
-    :ensure t
-    :defer t)
+    (autoload 'dired-omit-mode "dired-x")
 
-  (use-package dired-ranger
-    :defer t)
+    (add-hook 'dired-load-hook
+      (lambda ()
+       (interactive)
+       (dired-collapse)))
 
-  (use-package dired-collapse
-    :defer t)
+    (add-hook 'dired-mode-hook
+      (lambda ()
+        (interactive)
+         (dired-omit-mode 1)
+         (expand-file-name default-directory)
+         (all-the-icons-dired-mode 1)
+         (hl-line-mode 1)))
 
-  (evil-collection-define-key 'normal 'dired-mode-map
-    "h" 'dired-single-up-directory
-    "H" 'dired-omit-mode
-    "l" 'dired-single-buffer
-    "y" 'dired-ranger-copy
-    "X" 'dired-ranger-move
-    "p" 'dired-ranger-paste)) ;; End of use-package dired
+   ;; @todo Had to run this once to get the icons.
+   (use-package all-the-icons-dired
+     :hook (dired-mode . all-the-icons-dired-mode))
 
-(defun cy/dired-link (path)
-  (lexical-let ((target path))
-    (lambda () (interactive) (message "Path: %s" target) (dired target))))
+   (add-hook 'dired-mode-hook
+     (lambda ()
+      (interactive)
+      (dired-omit-mode 1)
+      (unless
+            (s-equals? "/gnu/store/" (expand-file-name default-directory))
+            (all-the-icons-dired-mode 1))
+      (hl-line-mode 1)))
 
-(cy/leader-key-def
-  "d"   '(:ignore t :which-key "dired")
-  "dd"  `(,(cy/dired-link (envpath "HOME" "Documents")) :which-key "Here")
-  "dh"  `(,(cy/dired-link (envpath "HOME" "")) :which-key "Home")
-  "di"  `(,(cy/dired-link (envpath "HOME" "Notes/Inbox.org")) :which-key "Inbox")
-  "dn"  `(,(cy/dired-link (envpath "HOME" "Notes")) :which-key "Notes")
-  "do"  `(,(cy/dired-link (envpath "HOME" "Downloads")) :which-key "Downloads")
-  "dp"  `(,(cy/dired-link (envpath "HOME" "Projects")) :which-key "Projects")
-  "dv"  `(,(cy/dired-link (envpath "HOME" "Videos")) :which-key "Videos")
-  "d."  `(,(cy/dired-link (cy/system-settings-get 'user/dots)) :which-key "dotfiles"))
+    (use-package dired-rainbow
+      :defer 2
+      :config
+      (dired-rainbow-define-chmod directory "#6cb2eb" "d.*")
+      (dired-rainbow-define html "#eb5286" ("css" "less" "sass" "scss" "htm" "html" "jhtm" "mht" "eml" "mustache" "xhtml"))
+      (dired-rainbow-define xml "#f2d024" ("xml" "xsd" "xsl" "xslt" "wsdl" "bib" "json" "msg" "pgn" "rss" "yaml" "yml" "rdata"))
+      (dired-rainbow-define document "#9561e2" ("docm" "doc" "docx" "odb" "odt" "pdb" "pdf" "ps" "rtf" "djvu" "epub" "odp" "ppt" "pptx"))
+      (dired-rainbow-define markdown "#ffed4a" ("org" "etx" "info" "markdown" "md" "mkd" "nfo" "pod" "rst" "tex" "textfile" "txt"))
+      (dired-rainbow-define database "#6574cd" ("xlsx" "xls" "csv" "accdb" "db" "mdb" "sqlite" "nc"))
+      (dired-rainbow-define media "#de751f" ("mp3" "mp4" "mkv" "MP3" "MP4" "avi" "mpeg" "mpg" "flv" "ogg" "mov" "mid" "midi" "wav" "aiff" "flac"))
+      (dired-rainbow-define image "#f66d9b" ("tiff" "tif" "cdr" "gif" "ico" "jpeg" "jpg" "png" "psd" "eps" "svg"))
+      (dired-rainbow-define log "#c17d11" ("log"))
+      (dired-rainbow-define shell "#f6993f" ("awk" "bash" "bat" "sed" "sh" "zsh" "vim"))
+      (dired-rainbow-define interpreted "#38c172" ("py" "ipynb" "rb" "pl" "t" "msql" "mysql" "pgsql" "sql" "r" "clj" "cljs" "scala" "js"))
+      (dired-rainbow-define compiled "#4dc0b5" ("asm" "cl" "lisp" "el" "c" "h" "c++" "h++" "hpp" "hxx" "m" "cc" "cs" "cp" "cpp" "go" "f" "for" "ftn" "f90" "f95" "f03" "f08" "s" "rs" "hi" "hs" "pyc" ".java"))
+      (dired-rainbow-define executable "#8cc4ff" ("exe" "msi"))
+      (dired-rainbow-define compressed "#51d88a" ("7z" "zip" "bz2" "tgz" "txz" "gz" "xz" "z" "Z" "jar" "war" "ear" "rar" "sar" "xpi" "apk" "xz" "tar"))
+      (dired-rainbow-define packaged "#faad63" ("deb" "rpm" "apk" "jad" "jar" "cab" "pak" "pk3" "vdf" "vpk" "bsp"))
+      (dired-rainbow-define encrypted "#ffed4a" ("gpg" "pgp" "asc" "bfe" "enc" "signature" "sig" "p12" "pem"))
+      (dired-rainbow-define fonts "#6cb2eb" ("afm" "fon" "fnt" "pfb" "pfm" "ttf" "otf"))
+      (dired-rainbow-define partition "#e3342f" ("dmg" "iso" "bin" "nrg" "qcow" "toast" "vcd" "vmdk" "bak"))
+      (dired-rainbow-define vc "#0074d9" ("git" "gitignore" "gitattributes" "gitmodules"))
+      (dired-rainbow-define-chmod executable-unix "#38c172" "-.*x.*"))
+
+    (use-package dired-single
+      ;; :ensure t
+      :defer t)
+
+    (use-package dired-ranger
+      :defer t)
+
+    (use-package dired-collapse
+      :defer t)
+
+    (evil-collection-define-key 'normal 'dired-mode-map
+      "h" 'dired-single-up-directory
+      "H" 'dired-omit-mode
+      "l" 'dired-single-buffer
+      "y" 'dired-ranger-copy
+      "X" 'dired-ranger-move
+      "p" 'dired-ranger-paste)) ;; End of use-package dired
+
+  (defun cy/dired-link (path)
+    (lexical-let ((target path))
+      (lambda () (interactive) (message "Path: %s" target) (dired target))))
+
+  (cy/leader-key-def
+    "d"   '(:ignore t :which-key "dired")
+    "dd"  `(,(cy/dired-link (envpath "HOME" "Documents")) :which-key "Here")
+    "dh"  `(,(cy/dired-link (envpath "HOME" "")) :which-key "Home")
+    "di"  `(,(cy/dired-link (envpath "HOME" "Notes/Inbox.org")) :which-key "Inbox")
+    "dn"  `(,(cy/dired-link (envpath "HOME" "Notes")) :which-key "Notes")
+    "do"  `(,(cy/dired-link (envpath "HOME" "Downloads")) :which-key "Downloads")
+    "dp"  `(,(cy/dired-link (envpath "HOME" "Projects")) :which-key "Projects")
+    "dv"  `(,(cy/dired-link (envpath "HOME" "Videos")) :which-key "Videos")
+    "d."  `(,(cy/dired-link (cy/system-settings-get 'user/dots)) :which-key "dotfiles"))
 #+end_src
 
 Setup =deft= as a nice alternative way to browse files, specifically
@@ -849,7 +863,7 @@ workspaces.
 
 #+begin_src emacs-lisp
   (use-package treemacs
-    :ensure t
+    ;; :ensure t
     :defer t
     :init
     (with-eval-after-load 'winum
@@ -922,20 +936,23 @@ workspaces.
 
   (use-package treemacs-evil
     :after (treemacs evil)
-    :ensure t)
+    ;; :ensure t)
+  )
 
   (use-package treemacs-projectile
     :after (treemacs projectile)
-    :ensure t)
+    ;; :ensure t)
+  )
 
   (use-package treemacs-icons-dired
     :after (treemacs dired)
-    :ensure t
+    ;; :ensure t
     :config (treemacs-icons-dired-mode))
 
   (use-package treemacs-magit
     :after (treemacs magit)
-    :ensure t)
+    ;; :ensure t)
+  )
 #+end_src
 
 Set leader based keybindings for =neotree=. The key should be a sub-key of the general UI Toggles binding of =<leader>-t=, i.e.: /toggle/-> /tree/.
@@ -1047,7 +1064,7 @@ amount of tangling and script running that happens throughout.
 
 #+begin_src emacs-lisp
 (use-package super-save
-  :ensure t
+  ;; :ensure t
   :defer 1
   :diminish super-saver-mode
   :config
@@ -1254,7 +1271,7 @@ Set up a dashboard to use as a starting point when Emacs' launches without a rec
 
 #+begin_src emacs-lisp
 (use-package dashboard
-  :ensure t
+  ;; :ensure t
   ;;:mode ("\\*dashboard*\\" . dashboard-mode)
   ;;:interpreter ("dashboard" . dashboard-mode)
   :config
@@ -1445,7 +1462,7 @@ Second, register the Docker client(s).
 
 #+begin_src emacs-lisp
 (use-package docker
-  :ensure t
+  ;; :ensure t
   :bind ("C-c d" . docker))
 
 (defvar lsp-docker-client-packages
@@ -1553,7 +1570,7 @@ Aggressively indent all the things.
 
 #+begin_src emacs-lisp
 (use-package css-mode
-  :ensure nil
+  ;; :ensure nil
   :custom
   (css-indent-offset 2))
 #+end_src
@@ -1595,7 +1612,7 @@ Configure the js-mode
 (use-package js2-mode
   :mode (rx ".js" eos)
   :config
-  (add-hook 'js-mode-hook 'eglot-ensure)
+  ;; (add-hook 'js-mode-hook 'eglot-ensure)
   (add-hook 'js2-mode-hook #'cy/set-js-indentation)
   (add-hook 'js2-minor-mode-hook #'cy/set-js-indentation)
   (add-hook 'js2-mode-hook #'cy/set-js-indentation)
@@ -1653,7 +1670,8 @@ This will install the typescript-language-server and the TypeScript compiler pac
 
   ;; Improved help in Emacs.
   (use-package helpful
-    :ensure t)
+    ;; :ensure t)
+  )
     ;; :custom
     ;; (counsel-describe-function-function #'helpful-callable)
     ;; (counsel-describe-variable-function #'helpful-variable)
@@ -1705,7 +1723,7 @@ I do a ton of PHP work, but oddly don't have much configuration for it here. I s
                             (setq display-line-numbers 'absolute)))
 
 (use-package php-mode
-  :ensure t
+  ;; :ensure t
   :hook (php-mode-hook 'php-enable-drupal-coding-style))
 
 (eval-after-load 'php-mode
@@ -1773,9 +1791,11 @@ You can use pyvenv package to use virtualenv environments in Emacs. The pyvenv-a
 ;; 1. Start the server with `httpd-start'
 ;; 2. Use `impatient-mode' on any buffer
 (use-package impatient-mode
-  :ensure t)
+  ;; :ensure t)
+)
 (use-package skewer-mode
-  :ensure t)
+  ;; :ensure t)
+)
 #+end_src
 
 ** YAML
@@ -1809,7 +1829,7 @@ Assuming the command =multimarkdown= is available to the system, Markdown can be
 
 #+begin_src emacs-lisp
 (use-package markdown-mode
-  :ensure t
+  ;; :ensure t
   :commands (markdown-mode gfm-mode)
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
@@ -1829,7 +1849,7 @@ With this function defined, impatient mode needs to be instructed to use it via:
 For =markdown-preview-mode= to work, the =websocket.el= dependency is required. This package is not part of melpa/elpa and needs to be installed manually via ~M-x package-install-file <path-to-zip>~. =websocket.el= can be found here: https://github.com/ahyatt/emacs-websocket.
 
 #+begin_src emacs-lisp
-(use-package markdown-preview-mode)
+;; (use-package markdown-preview-mode)
 #+end_src
 
 ** Rust
@@ -1880,15 +1900,20 @@ This is a newish section. Expect changes.
 
 | =dockerfile-mode= | https://github.com/spotify/dockerfile-mode |
 
-Add syntax highlighting for Dockerfiles and allow the building of images from the buffer via =(C-c C-b)=.
+Add syntax highlighting for Dockerfiles and allow the building of
+images from the buffer via =(C-c C-b)=.
 
 #+begin_src emacs-lisp
-(use-package dockerfile-mode)
+(use-package dockerfile-mode
+  :straight t)
 #+end_src
 
 ** Org Mode
 
-| =org=       | Built-in                             |
+| =org=         | Built-in                             |
+| =org-contrib= | https://git.sr.ht/~bzg/org-contrib   |
+|             | - =org-contacts=                       |
+|             | - =org-toc=                          |
 | =org-roam=  | https://github.org/org-roam/org-roam |
 | =org-tempo= | @todo                                |
 
@@ -1896,7 +1921,7 @@ Set up =org='s basic configuration, then expand on it in other sections.
 
 #+begin_src emacs-lisp
 (use-package org
-  :ensure org-contrib
+  :straight (org :includes (org-clock))
   :bind
   (:map org-mode-map
         ("<C-return>" . nil))
@@ -1945,6 +1970,14 @@ Set up =org='s basic configuration, then expand on it in other sections.
   (modify-syntax-entry ?' "'" org-mode-syntax-table))
 #+end_src
 
+Pull in =org-contrib= to provide useful packages not included in their
+own repositories.
+
+#+begin_src emacs-lisp
+(use-package org-contrib
+ :straight (org-contrib :includes (org-contacts)))
+#+end_src
+
 Display inline images in =Org= files by default.
 
 #+begin_src emacs-lisp
@@ -1984,16 +2017,6 @@ keystrokes. It's much nicer to collect them all under =<leader>-c= for
 Define a couple functions for managing different types of captures:
 
 #+begin_src emacs-lisp
-;; (defun cy/capture (choice)
-;;   (lexical-let ((key choice))
-;;     (lambda ()
-;;       (interactive)
-;;       (message "choose: %s" key)
-;;       (let ((org-roam-directory (expand-file-name org-roam-dailies-directory org-roam-directory)))
-     ;; @TODO
-
-;; move this
-
 (defun cy/capture-roam (choice)
   "Capture template shortcuts from org-roam-capture"
   (lexical-let ((key choice))
@@ -2031,8 +2054,11 @@ When using a macOS sytem, I often use a launcher application called
 =Alfred=. The following allows for quickly calling captures from Alfred.
 
 #+begin_src emacs-lisp
+;; (if (eq system-type 'darwin)
+  ;; (load (concat (cy/system-settings-get 'user/dots) "alfred-org-capture/el/alfred-org-capture.el")))
 (if (eq system-type 'darwin)
-  (load (concat (cy/system-settings-get 'user/dots) "alfred-org-capture/el/alfred-org-capture.el")))
+    (use-package alfred-org-capture
+      :straight (:type git :host github :repo "jjasghar/alfred-org-capture")))
 #+end_src
 
 Make =org-mode= header stars look prettier.
@@ -2104,7 +2130,7 @@ this before I even understood what Org mode was, it's my origin story.
 #+begin_src emacs-lisp
 (setq org-roam-v2-ack t) ;; Tell org-roam I know what I'm doing.
 (use-package org-roam
-  :ensure t
+  ;; :ensure t
   ;; :load-path "~/Projects/home/org-roam"  ;; For testing the latest changes.
   :after org
   :init
@@ -2306,13 +2332,25 @@ Force a page break after table of contents
 
 * Applications
 
+| =cy-mail=     | [[file:Mail.org][./Mail.org]]     |
+| =cy-calendar= | [[file:Calendar.org][./Calendar.org]] |
+
+Provide =mu4e= configuration and calendar integration
+from sibling files.
+
+#+begin_src emacs-lisp
+(require 'cy-mail (concat user-emacs-directory "cy-mail.el"))
+(require 'cy-calendar (concat user-emacs-directory "cy-calendar.el"))
+#+end_src
+
 ** Terminal
 
 | =vterm= | https://github.com/akermu/emacs-libvterm |
 
 #+begin_src emacs-lisp
 (use-package vterm
-  :ensure t)
+  ;; :ensure t)
+)
 #+end_src
 
 ** Calendar

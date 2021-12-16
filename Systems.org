@@ -13,7 +13,7 @@
   - [[#enswell][enswell]]
   - [[#archived-machine-configurations][Archived Machine Configurations]]
     - [[#punchy][punchy]]
-  - [[#cutman][cutman]]
+    - [[#cutman][cutman]]
 - [[#updating][Updating]]
   - [[#update-script][Update script]]
   - [[#tangle-dotfiles][Tangle Dotfiles]]
@@ -44,6 +44,7 @@ the declared overrides are mashed together on a per-system basis using
        `((desktop/dpi . 180)
          (user/home . ,(envpath "HOME" ""))
          (user/config . ,(envpath "HOME" ".config/"))
+         (user/data . ,(envpath "HOME" ".local/share/"))
          (user/fonts . ,(envpath "HOME" ".local/fonts/"))
          (user/notes . ,(envpath "HOME" "Notes/"))
          (user/dots . ,(envpath "HOME" ".dotfiles/"))
@@ -181,9 +182,10 @@ thing has pointed out a number of flaws in my setup.
 #+begin_src emacs-lisp :noweb-ref system-settings
 (when (equal system-name "blank.local")
   `((desktop/dpi . 90)
-    (user/config . "/Users/carwin/.config/")
-    (user/fonts . "/Users/carwin/Library/Fonts/")
-    (user/dots . "/Users/carwin/Projects/dotfiles/")
+    (user/config . ,(envpath "HOME" ".config/"))
+    (user/data   . ,(envpath "HOME" ".local/share/"))
+    (user/fonts  . ,(envpath "HOME" "Library/Fonts/"))
+    (user/dots   . ,(envpath "HOME" ".dotfiles/"))
     (user/dots/output . "/Users/carwin/Projects/dotfiles/tangled/")
 
     ;; (config/dir . ,(shell-command-to-string "source ~/.profile && printf %s \"$XDG_CONFIG_HOME\""))
@@ -228,7 +230,7 @@ annoying.
     (emacs/default-face-size . 100)))
 #+end_src
 
-** cutman
+*** cutman
 
 =cutman= was a Pixel 5 phone that broke and was returned/replaced by Google.
 

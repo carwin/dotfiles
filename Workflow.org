@@ -79,6 +79,14 @@ views.
    ("followup" . ?f)))
 #+end_src
 
+* Asana
+
+#+begin_src emacs-lisp
+(use-package emacs-asana
+  :straight (:type git :host github :repo "lmartel/emacs-asana")
+  :custom (global-asana-mode 1)
+  :config (setq asana-keymap-prefix "C-c C-a"))
+#+end_src
 * GTasks Integration
 
 Integration with Google Tasks works pretty well thanks to the
@@ -188,8 +196,8 @@ it doesn't seem to pull from =mu4e=, although it =mu4e= will read from it.
 
 #+begin_src emacs-lisp
 (use-package org-contacts
-  :ensure nil
-  :after org
+  :straight org-contrib
+  :after org-contrib
   :custom (org-contacts-files '("~/Notes/Contacts.org")))
 #+end_src
 
