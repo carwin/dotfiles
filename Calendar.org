@@ -12,12 +12,11 @@
   (setq org-gcal-client-id (password-store-get "org-gcal/gcal-client-id")
         org-gcal-client-secret (password-store-get "org-gcal/gcal-client-secret")
         org-gcal-remove-api-cancelled-events t
+        org-gcal-auto-archive nil
         org-gcal-update-cancelled-events-with-todo t
         org-gcal-fetch-file-alist '(("carwinyoung@gmail.com" .  "~/Notes/Calendar/Personal.org")
                                     ("carwin.young@snyk.io" . "~/Notes/Calendar/Snyk.org"))))
 #+end_src
-        org-gcal-fetch-file-alist '(("carwinyoung@gmail.com" .  "~/Notes/Calendar/Personal.org")
-                                    ("carwin.young@snyk.io" . "~/Notes/Calendar/Snyk.org"))))
 
 Configure calendar bindings off the =<leader>= key.
 
@@ -31,7 +30,7 @@ Set =org-gcal= to update when entering agenda mode and when finalizing captured 
 
 #+begin_src emacs-lisp
 (add-hook 'org-agenda-mode-hook (lambda () (org-gcal-fetch) ))
-(add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-fetch) ))
+;; (add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-fetch) ))
 #+end_src
 
 Provide =cy-calendar= so it can be required by =./Emacs.org=.

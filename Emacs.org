@@ -1,5 +1,5 @@
-#+TITLE:   Carwin's Emacs settings file
 #+AUTHOR:  Carwin Young
+#+TITLE:   Carwin's Emacs settings file
 #+EMAIL:   cy@carw.in
 #+PROPERTY: header-args:emacs-lisp :tangle ~/.emacs.d/init.el :mkdirp yes
 
@@ -13,35 +13,31 @@ enough to be moved around between machines.
 
 * Early Init
 
-| =cy-system=   | [[file:Systems.org][./Systems.org]]  |
-
 The first thing to be done in the early init stage is the disabling of
 the built-in =package.el= load that usually happens. For package
 management, =straight.el= is invoked during the main ~init.el~ Bootstrap
 phase.
 
-Additionally, =cy-system= is imported in early init because every other
-configuration file depends on the settings and functions it provides.
-
 #+begin_src emacs-lisp :tangle (concat user-emacs-directory "early-init.el")
 (setq package-enable-at-startup nil)
-(require 'cy-system (concat user-emacs-directory "cy-system-settings.el"))
 #+end_src
+
 
 * Bootstrap
 
-| =exec-path-from-shell=              | https://github.com/purcell/exec-path-from-shell |
-| =use-package=                       | @todo                                           |
-| =auto-package-update=               | @todo                                           |
-| =use-package-ensure-system-package= | @todo                                           |
-| =package=                           | Built-in                                        |
+| =exec-path-from-shell= | https://github.com/purcell/exec-path-from-shell |
+| =straight=             | @todo                                           |
+| =use-package=          | @todo                                           |
+| =auto-package-update=  | @todo                                           |
+| =cy-system=            | [[file:Systems.org][./Systems.org]]                                   |
+| =org=                  | @todo                                           |
 
 ** Package Management
 
 Straight.el
 
 #+begin_src emacs-lisp
-(setq straight-base-dir (concat (cy/system-settings-get 'user/data) "emacspkgs/"))
+(setq straight-base-dir "~/.local/share/emacspkgs/")
 (setq straight-vc-git-default-protocol 'ssh)
 
 (defvar bootstrap-version)
@@ -67,12 +63,90 @@ Straight.el
 
 Auto-update packages when Emacs starts.
 
+Set Package archives.
+
 #+begin_src emacs-lisp
-(use-package auto-package-update
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                         ("nongnu-elpa" . "https://elpa.nongnu.org/nongnu/")
+                         ("elpa" . "https://elpa.gnu.org/packages")))
+
+;; (use-package auto-package-update
+;;   :config
+;;   (setq auto-package-update-delete-old-versions t
+;;         auto-package-update-interval 4)
+;;   (auto-package-update-maybe))
+#+end_src
+
+#+begin_src emacs-lisp
+(straight-use-package 'deferred)
+(straight-use-package 'request-deferred)
+#+end_src
+
+** Load =org-mode= early
+
+The =cy-systems= package requires a couple of Org & babel functions, and
+nearly everything else depends on that package for per-system
+configuration. To handle this, =cy-systems= needs to be loaded quite
+early in the init process and must come after Org. This is important
+because if not done this way, the built-in version of Org will be
+evaluated rather than the latest, which causes all sorts of issues.
+
+#+begin_src emacs-lisp
+(use-package org
+  :straight t
+  :bind
+  (:map org-mode-map
+        ("<C-return>" . nil))
+  :custom
+  (org-indent-mode)
+  (org-adapt-indentation nil)
+  (org-confirm-babel-evaluate nil)
+  (org-cycle-separator-lines 0)
+  (org-descriptive-links t)
+  (org-edit-src-content-indentation 0)
+  (org-edit-src-persistent-message nil)
+  (org-fontify-done-headline t)
+  (org-fontify-quote-and-verse-blocks t) ;; Relates to Tab in source block edit mode(s).
+  (org-image-actual-width nil) ;; Useful for inline images that are huge.
+  (org-return-follows-link t) ;; @todo - this only sort of works with evil, and only in Evil's insert mode.
+  (org-src-tab-acts-natively t)
+  (org-src-window-setup 'current-window)
+  (org-startup-folded 'content)
+  (org-startup-truncated nil)
+  (org-support-shift-select 'always)
+  :custom-face
+  (org-ellipsis ((t (:foreground "#5396f8" :underline nil))))
   :config
-  (setq auto-package-update-delete-old-versions t
-        auto-package-update-interval 4)
-  (auto-package-update-maybe))
+  (setq org-hide-leading-stars nil)
+  (setq org-ellipsis " ▾"
+        org-blank-before-new-entry '((heading . t) (plain-list-item . nil))
+        org-hide-block-startup nil
+        org-hide-emphasis-markers t)
+  (setq org-modules
+        '(org-habit
+          ol-bookmark
+          ol-bibtex
+          org-refile))
+  (setq org-refile-targets '((nil :maxlevel . 1)
+                             (org-agenda-files :maxlevel . 1)))
+  (require 'ob-shell)
+  (add-to-list 'org-babel-load-languages '((shell . t)
+                                           (emacs-lisp . t)
+                                           (php . t)
+                                           (css . t)
+                                           (sass . t)
+                                           (js . t)
+                                           (makefile . t)
+                                           (python . t)))
+  (push '("conf-unix" . conf-unix) org-src-lang-modes)
+  (modify-syntax-entry ?' "'" org-mode-syntax-table))
+
+#+end_src
+
+With Org loaded, the per-system settings in =cy-system= can be loaded:
+
+#+begin_src emacs-lisp
+(require 'cy-system (concat user-emacs-directory "cy-system-settings.el"))
 #+end_src
 
 ** Load paths from shell
@@ -498,6 +572,16 @@ Import workflow and agenda configuration from =cy-workflow=.
 (require 'cy-workflow (concat user-emacs-directory "cy-workflow.el"))
 #+end_src
 
+** HACKY
+
+#+begin_src emacs-lisp
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+(use-package f
+  :straight (f :type git :host github :repo "rejeep/f.el"))
+(use-package deferred
+  :straight t)
+#+end_src
+
 ** Buffers and Windows
 
 | =winner=       | Built-in                                |
@@ -524,7 +608,7 @@ Define a toggle function that can be called to turn transparency on and off.
     (set-frame-parameter
      nil 'alpha
      (if (eql (cond ((numberp alpha) alpha)
-                    ((numberp (cdr alpha)) (cdr alpha))
+                    ((numberp (cd ralpha)) (cdr alpha))
                     ;; Also handle undocumented (<active> <inactive>) form.
                     ((numberp (cadr alpha)) (cadr alpha)))
               100)
@@ -968,6 +1052,13 @@ Set leader based keybindings for =neotree=. The key should be a sub-key of the g
 | =marginalia= | https://github.com/minad/marginalia |
 | =corfu=      | https://github.com/minad/corfu      |
 | =consult=    | consult                             |
+
+HELM?
+#+begin_src emacs-lisp
+(use-package helm
+  :straight t)
+#+end_src
+/HELM?
 
 Provide various commands to quickly select items from lists of candidates with completion. Replace =counsel=.
 
@@ -1705,36 +1796,6 @@ This will install the typescript-language-server and the TypeScript compiler pac
 (add-to-list 'auto-mode-alist '("\\.*\\.json\\'" . json-mode))
 #+end_src
 
-** PHP
-
-I do a ton of PHP work, but oddly don't have much configuration for it here. I still fall back to IntelliJ, but it would be nice to some day move entirely into Emacs.
-
-#+begin_src emacs-lisp
-(add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.html\\.twig\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.php\\'" . php-mode))
-(add-to-list 'auto-mode-alist '("\\.module\\'" . php-mode))
-
-(add-hook 'php-mode-hook '(lambda ()
-                            (setq c-basic-offset 2)))
-(add-hook 'php-mode-hook '(lambda ()
-                            (setq display-line-numbers 'absolute)))
-
-(use-package php-mode
-  ;; :ensure t
-  :hook (php-mode-hook 'php-enable-drupal-coding-style))
-
-(eval-after-load 'php-mode
-  '(progn
-     (setq php-mode-coding-style 'drupal)
-     ))
-
-(use-package drupal-mode
-  :after (php-mode))
-#+end_src
-
 ** Python
 
 =lsp-mode= and dap-mode again, this time for Python.
@@ -1919,63 +1980,15 @@ images from the buffer via =(C-c C-b)=.
 
 Set up =org='s basic configuration, then expand on it in other sections.
 
-#+begin_src emacs-lisp
-(use-package org
-  :straight (org :includes (org-clock))
-  :bind
-  (:map org-mode-map
-        ("<C-return>" . nil))
-  :custom
-  (org-indent-mode)
-  (org-adapt-indentation nil)
-  (org-confirm-babel-evaluate nil)
-  (org-cycle-separator-lines 0)
-  (org-descriptive-links t)
-  (org-edit-src-content-indentation 0)
-  (org-edit-src-persistent-message nil)
-  (org-fontify-done-headline t)
-  (org-fontify-quote-and-verse-blocks t) ;; Relates to Tab in source block edit mode(s).
-  (org-image-actual-width nil) ;; Useful for inline images that are huge.
-  (org-return-follows-link t) ;; @todo - this only sort of works with evil, and only in Evil's insert mode.
-  (org-src-tab-acts-natively t)
-  (org-src-window-setup 'current-window)
-  (org-startup-folded 'content)
-  (org-startup-truncated nil)
-  (org-support-shift-select 'always)
-  :custom-face
-  (org-ellipsis ((t (:foreground "#5396f8" :underline nil))))
-  :config
-  (setq org-hide-leading-stars nil)
-  (setq org-ellipsis " ▾"
-        org-blank-before-new-entry '((heading . t) (plain-list-item . nil))
-        org-hide-block-startup nil
-        org-hide-emphasis-markers t)
-  (setq org-modules
-        '(org-habit
-          ol-bookmark
-          ol-bibtex
-          org-refile))
-  (setq org-refile-targets '((nil :maxlevel . 1)
-                            (org-agenda-files :maxlevel . 1)))
-  (require 'ob-shell)
-  (add-to-list 'org-babel-load-languages '((shell . t)
-                                          (emacs-lisp . t)
-                                          (php . t)
-                                          (css . t)
-                                          (sass . t)
-                                          (js . t)
-                                          (makefile . t)
-                                          (python . t)))
-  (push '("conf-unix" . conf-unix) org-src-lang-modes)
-  (modify-syntax-entry ?' "'" org-mode-syntax-table))
-#+end_src
 
 Pull in =org-contrib= to provide useful packages not included in their
 own repositories.
 
 #+begin_src emacs-lisp
+(use-package org-clock
+  :straight nil)
 (use-package org-contrib
- :straight (org-contrib :includes (org-contacts)))
+  :straight t)
 #+end_src
 
 Display inline images in =Org= files by default.
@@ -1989,7 +2002,9 @@ Display inline images in =Org= files by default.
       (org-redisplay-inline-images))))
 #+end_src
 
-Rebind =S-<return>= to make it easier to continue lists or headings while in =evil='s insert mode because forwarded X sessions of Emacs can't always capture the =M-= key bindings properly in all cases.
+Rebind =S-<return>= to make it easier to continue lists or headings
+while in =evil='s insert mode because forwarded X sessions of Emacs
+can't always capture the =M-= key bindings properly in all cases.
 
 #+begin_src emacs-lisp
 (define-key org-mode-map (kbd "S-<return>") nil)
@@ -2058,7 +2073,11 @@ When using a macOS sytem, I often use a launcher application called
   ;; (load (concat (cy/system-settings-get 'user/dots) "alfred-org-capture/el/alfred-org-capture.el")))
 (if (eq system-type 'darwin)
     (use-package alfred-org-capture
-      :straight (:type git :host github :repo "jjasghar/alfred-org-capture")))
+      :straight (
+                 :type git
+                 :host github
+                 :repo "carwin/alfred-org-capture"
+                 :files (:defaults "el/*"))))
 #+end_src
 
 Make =org-mode= header stars look prettier.
@@ -2083,18 +2102,12 @@ Now characters won't disappear for stuff like === and =*= text.
   :hook (org-mode . org-appear-mode))
 #+end_src
 
-** Vimrc Mode
-This is more or less entirely used for highlighting =vimrc= files.
-
-#+begin_src emacs-lisp
-(use-package vimrc-mode)
-#+end_src
-
 *** Structure Templates
 
-Org Mode's structure templates feature enables you to quickly insert code blocks
-into your org files in combination with =org-tempo= by typing a ~<~ followed by
-the template name (e.g.: ~el~, ~py~) and pressing ~TAB~.
+Org Mode's structure templates feature enables you to quickly insert
+code blocks into your org files in combination with =org-tempo= by
+typing a ~<~ followed by the template name (e.g.: ~el~, ~py~) and pressing
+~TAB~.
 
 #+begin_src emacs-lisp
 ;; This is needed as of Org 9.2
@@ -2111,7 +2124,10 @@ the template name (e.g.: ~el~, ~py~) and pressing ~TAB~.
 
 Update any Table of Content drawers on buffer save.
 
-It's nice to have a table of contents section for long literate config files (like this one) and for really long documents and long-running notes about various topics that only continue to grow. =org-make-toc= can do this.
+It's nice to have a table of contents section for long literate config
+files (like this one) and for really long documents and long-running
+notes about various topics that only continue to grow. =org-make-toc=
+can do this.
 
 #+begin_src emacs-lisp
 (use-package org-make-toc
@@ -2126,6 +2142,88 @@ this before I even understood what Org mode was, it's my origin story.
 
   ;; (set-face-attribute 'org-roam-link nil :foreground "#ee9419")
   ;; (set-face-attribute 'org-roam-link-invalid nil :foreground "#fe4000")
+
+#+begin_src emacs-lisp
+(defvar cy/org-roam-project-template
+  '("p" "project" plain "** TODO %?"
+    :if-new (file+head+olp "%<%Y%m%d%H%M%S>-${slug}.org"
+                           "#+title: ${title}\n#+category: ${title}\n#+filetags: Project\n"
+                           ("Tasks"))))
+#+end_src
+
+Function to filter roam content by tag
+
+#+begin_src emacs-lisp
+(defun cy/org-roam-filter-by-tag (tag-name)
+  (lambda (node)
+    (member tag-name (org-roam-node-tags node))))
+#+end_src
+
+Function to list notes by tag
+
+#+begin_src emacs-lisp
+(defun cy/org-roam-list-notes-by-tag (tag-name)
+  (mapcar #'org-roam-node-file
+          (seq-filter
+           (cy/org-roam-filter-by-tag tag-name)
+           (org-roam-node-list))))
+#+end_src
+
+Enable immediate roam capture
+
+#+begin_src emacs-lisp
+(defun cy/org-roam-node-insert-immediate (arg &rest args)
+  (interactive "P")
+  (let ((args (cons arg args))
+        (org-roam-capture-templates (list (append (car org-roam-capture-templates)
+                                                  '(:immediate-finish t)))))
+    (apply #'org-roam-node-insert args)))
+#+end_src
+
+#+begin_src emacs-lisp
+(defun dw/org-roam-goto-month ()
+  (interactive)
+  (org-roam-capture- :goto (when (org-roam-node-from-title-or-alias (format-time-string "%Y-%B")) '(4))
+                     :node (org-roam-node-create)
+                     :templates '(("m" "month" plain "\n* Goals\n\n%?* Summary\n\n"
+                                   :if-new (file+head "%<%Y-%B>.org"
+                                                      "#+title: %<%Y-%B>\n#+filetags: Project\n")
+                                   :unnarrowed t))))
+#+end_src
+
+#+begin_src emacs-lisp
+(defun dw/org-roam-goto-year ()
+  (interactive)
+  (org-roam-capture- :goto (when (org-roam-node-from-title-or-alias (format-time-string "%Y")) '(4))
+                     :node (org-roam-node-create)
+                     :templates '(("y" "year" plain "\n* Goals\n\n%?* Summary\n\n"
+                                   :if-new (file+head "%<%Y>.org"
+                                                      "#+title: %<%Y>\n#+filetags: Project\n")
+                                   :unnarrowed t))))
+#+end_src
+
+#+begin_src emacs-lisp
+(defun dw/org-roam-capture-task ()
+  (interactive)
+  ;; Add the project file to the agenda after capture is finished
+  (add-hook 'org-capture-after-finalize-hook #'my/org-roam-project-finalize-hook)
+
+  ;; Capture the new task, creating the project file if necessary
+  (org-roam-capture- :node (org-roam-node-read
+                            nil
+                            (my/org-roam-filter-by-tag "Project"))
+                     :templates (list dw/org-roam-project-template)))
+#+end_src
+
+Refresh org roam agenda list
+
+#+begin_src emacs-lisp
+(defun cy/org-roam-refresh-agenda-list ()
+  (interactive)
+  (setq org-agenda-files (cy/org-roam-list-notes-by-tag "Project")))
+#+end_src
+
+General Roam config.
 
 #+begin_src emacs-lisp
 (setq org-roam-v2-ack t) ;; Tell org-roam I know what I'm doing.
@@ -2318,6 +2416,14 @@ Configure a replacemnt for the old =org-roam-server= that was used with roam v1.
 ;;         org-roam-ui-follow t
 ;;         org-roam-ui-update-on-save t
 ;;         org-roam-ui-open-on-start t))
+#+end_src
+
+
+** Vimrc Mode
+This is more or less entirely used for highlighting =vimrc= files.
+
+#+begin_src emacs-lisp
+(use-package vimrc-mode)
 #+end_src
 
 ** Tools
