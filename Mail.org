@@ -1,0 +1,274 @@
+#+title: Mail Configuration
+#+author: Carwin Young
+#+property: header-args:emacs-lisp :mkdirp yes :lexical t
+
+Configure =mu4e=, my favorite email client.
+
+#+begin_src emacs-lisp :noweb yes :tangle (expand-file-name "~mail.el" ~eusr-custom-lisp-directory) :mkdirp yes
+;;; ~mail.el -*- lexical-binding: t; -*-
+<<mail-mu4e-paths>>
+<<mail-mu4e-configuration>>
+<<pkg-org-msg>>
+<<mail-contexts>>
+<<mail-org-msg-configuration>>
+<<mail-sending-configuration>>
+<<contacts>>
+
+(provide '~mail)
+#+end_src
+
+The =mu4e= package ships with the system package =mu= on Arch Linux
+systems. This is likely the same for other *nix systems as well.
+Typically, Emacs has no context for where the necessary =mu4e= files
+reside.
+
+Firstly, ensure that Emacs knows about the location on the system of
+the =mu4e= directory and its related ~.el~ files.
+
+#+begin_src emacs-lisp :noweb-ref mail-mu4e-paths
+(add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu4e")
+(add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu/mu4e")
+(add-to-list 'load-path "/usr/share/emacs/site-lisp/mu4e")
+#+end_src
+
+#+begin_src emacs-lisp :noweb-ref mail-mu4e-configuration
+    ;;; :email mu4e
+;; (use-package-ensure-system-package-exists? 'meson)
+(setq mu4e-mu-binary (shell-command-to-string "bash -c 'printf %s \"$(which mu)\"'"))
+(use-package mu4e
+  :load-path "/usr/local/share/emacs/site-lisp/mu/mu4e"
+  :straight nil
+  :custom
+  `(setq mu4e-mu-binary ,(shell-command-to-string "bash -c 'printf %s \"$(which mu)\"'"))
+  :config
+  ;; Custom functions
+  ;; ----------------
+  (defun cy:work-sig ()
+    "Provides the path to email signature for work mail."
+    (shell-command-to-string "cat ~/Mail/Work/signature.sig"))
+  (defun cy:home-sig ()
+    "Provides the path to email signature for personal mail."
+    (shell-command-to-string "cat ~/Mail/Home/signature.sig"))
+
+  ;; Mail Settings
+  ;; -------------
+  (setq mu4e-change-filenames-when-moving t ;; This is set to 't' to avoid mail syncing issues when using mbsync
+	;; Refresh mail using isync every X minutes
+	mu4e-update-interval (* 15 60)
+	mu4e-compose-in-new-frame nil
+	mu4e-view-show-images t
+	gnus-unbuttonized-mime-types nil    ;; Indicate mime type in message headers
+	mu4e-split-view 'vertical
+	mu4e-headers-visible-columns 80     ;; How wide the vertical split pane should be
+	mu4e-get-mail-command "mbsync -a"
+	mu4e-compose-complete-addresses nil
+	mu4e-maildir "~/Mail")
+
+  (with-eval-after-load "mm-decode"
+    (add-to-list 'mm-discouraged-alternatives "text/html")
+    (add-to-list 'mm-discouraged-alternatives "text/richtext"))
+  (when (fboundp 'imagemagick-register-types) ;; Use imagemagick if we got it.
+    (imagemagick-register-types)))
+#+end_src
+
+#+begin_src emacs-lisp :noweb-ref pkg-org-msg
+(use-package org-msg)
+#+end_src
+
+#+begin_src emacs-lisp :noweb-ref mail-contexts
+(setq cy/org-msg-home-signature  "-- Carwin")
+(setq cy/org-msg-work-signature  "
+
+    -- Carwin
+
+
+    ,#+begin_signature
+    --
+    ,#+INCLUDE: ~/Mail/Work/signature.sig export html
+    ,#+end_signature")
+
+
+(defun cy/org-msg-sig (type)
+  (if (string-equal "Home" type)
+      (setq org-msg-signature cy/org-msg-home-signature)
+    (setq org-msg-signature cy/org-msg-work-signature)))
+
+(with-eval-after-load "mu4e"
+  ;; (require 'ebdb-mu4e)
+  ;; Account Contexts
+  ;; ----------------
+  (setq mu4e-contexts
+	`(,(make-mu4e-context ;; Personal account
+	    :name "Personal"
+	    :match-func
+	    (lambda (msg)
+	      (when msg
+		(string-prefix-p "/Home" (mu4e-message-field msg :maildir))))
+	    :vars `((user-mail-address . "cy@carw.in")
+		    (user-full-name    . "Carwin Young")
+		    (mu4e-compose-signature . cy:home-sig)
+		    (mu4e-drafts-folder  . "/Home/drafts")
+		    (mu4e-sent-folder    . "/Home/sent")
+		    (mu4e-refile-folder  . "/Home/archive")
+		    (mu4e-trash-folder   . "/Home/trash")
+		    (org-msg-signature   . ,cy/org-msg-home-signature)
+		    (mu4e-maildir-shortcuts .  (("/Home/inbox"         . ?i)
+						("/Home/home"          . ?h)
+						("/Home/shopping"      . ?s)
+						("/Home/sent"          . ?S)
+						("/Home/quarantine"    . ?q)
+						("/Home/trash"         . ?t)
+						("/Home/drafts"        . ?d)
+						("/Home/archive"       . ?a)))))
+	  ,(make-mu4e-context
+	    :name "Work"
+	    :match-func
+	    (lambda (msg)
+	      ;; (setq org-msg-signature "\n\n#+begin_signature\nAll the best,\\\\\n@@html:<b>@@Carwin@@html:</b>@@\n#+end_signature")
+
+	      (when msg
+		(string-prefix-p "/Work" (mu4e-message-field msg :maildir))))
+
+	    :vars `((user-mail-address . "carwin.young@snyk.io")
+		    (user-full-name . "Carwin Young")
+		    (mu4e-compose-signature . cy:work-sig)
+		    (mu4e-drafts-folder . "/Work/drafts")
+		    (mu4e-sent-folder   . "/Work/sent")
+		    (mu4e-refile-folder . "/Work/archive")
+		    (mu4e-trash-folder  . "/Work/trash")
+		    (org-msg-signature  . ,cy/org-msg-work-signature)
+		    (mu4e-maildir-shortcuts . (("/Work/inbox"   . ?i)
+					       ("/Work/sent"    . ?s)
+					       ("/Work/trash"   . ?t)
+					       ("/Work/drafts"  . ?d)
+					       ("/Work/archive" . ?a))))))))
+#+end_src
+
+#+begin_src emacs-lisp :noweb-ref mail-org-msg-configuration
+(with-eval-after-load 'org-msg
+  (setq +org-msg-accent-color "#461d9e"
+	org-msg-greeting-fmt "\nHi%s,\n\n")
+  (setq org-msg-options "html-postamble:nil H:5 num:nil ^:{} toc:nil author:nil email:nil \\n:t"
+	org-msg-startup "hidestars indent inlineimages"
+	;; org-msg-greeting-fmt "\nHi %s,\n\n"
+	org-msg-greeting-name-limit 3
+	org-msg-default-alternatives '((new            . (text html))
+				       (reply-to-html  . (text html))
+				       (reply-to-text  . (text)))
+	org-msg-recipient-names '(("cy@carw.in" . "Carwin")
+				  ("karojayo@gmail.com" . "Kaelin")
+				  ("Mills00013@gmail.com" . "Miles")
+				  ("seanstar12@gmail.com" . "Sean")
+				  ("jackinloadup@gmail.com" . "Lucas"))
+	org-msg-convert-citation t)
+
+  `(progn
+     ;; Links
+     (let ((cur (cdr (alist-get 'a org-msg-enforce-css))))
+       (setcar cur (assq-delete-all 'color (car cur)))
+       (push (cons 'color "#145deb") (cadr (alist-get 'a org-msg-enforce-css)))
+       (setcar cur (assq-delete-all 'font-size (car cur)))
+       (setcar cur (assq-delete-all 'text-decoration (car cur))))))
+#+end_src
+
+#+begin_src emacs-lisp :noweb-ref mail-sending-configuration
+    ;;;; Sending mail
+(if (eq system-type 'darwin)
+    (setq sendmail-program "/usr/local/bin/msmtp")
+  (setq sendmail-program "/usr/bin/msmtp"))
+
+(setq message-sendmail-f-is-evil t
+      message-sendmail-extra-arguments '("--read-envelope-from")
+      send-mail-function 'smtpmail-send-it
+      message-send-mail-function 'message-send-mail-with-sendmail)
+
+(defun cy:set-msmtp-account ()
+  (if (message-mail-p)
+      (save-excursion
+	(let*
+	    ((from (save-restriction
+		     (message-narrow-to-headers)
+		     (message-fetch-field "from")))
+	     (account
+	      (cond
+	       ((string-match "carwin.young@snyk.io" from) "Work")
+	       ((string-match "cy@carw.in" from) "Home"))))
+	  (setq message-sendmail-extra-arguments (list '"-a" account))))))
+
+(add-hook 'message-send-mail-hook 'cy:set-msmtp-account)
+
+(setq message-sendmail-f-is-evil t
+      sendmail-program "msmtp"
+      message-sendmail-extra-arguments '("--read-envelope-from")
+      send-mail-function 'smtpmail-send-it
+      message-send-mail-function 'message-send-mail-with-sendmail)
+#+end_src
+
+#+begin_src emacs-lisp :noweb-ref contacts
+(use-package bbdb
+  :config
+  (setq bbdb-file (expand-file-name ".bbdb" org-directory)
+        bbdb-default-country "USA"
+        bbdb-phone-style 'nanp
+        bbdb-mua-pop-up 'horiz
+        bbdb-pop-up-window-size 30)
+  (bbdb-initialize 'mu4e 'message))
+
+(use-package gnorb)
+
+(with-eval-after-load "evil"
+  (evil-define-key 'motion bbdb-mode-map
+    "\C-k"       'bbdb-delete-field-or-record
+    "\C-x\C-s"   'bbdb-save
+    "\C-x\C-t"   'bbdb-transpose-fields
+    "\d"         'bbdb-prev-field ; DEL
+    "\M-d"       'bbdb-dial
+    "\t"         'bbdb-next-field ; TAB
+    "+"          'bbdb-append-display
+    "*"          'bbdb-do-all-records
+    ";"          'bbdb-edit-foo
+    "?"          'bbdb-help
+    "!"          'bbdb-search-invert
+    "="          'delete-other-windows
+    "a"          'bbdb-add-mail-alias
+    "A"          'bbdb-mail-aliases
+    "C"          'bbdb-copy-records-as-kill
+    "c"          'bbdb-create
+    "d"          'bbdb-delete-field-or-record
+    "e"          'bbdb-edit-field
+    "h"          'bbdb-info
+    "i"          'bbdb-insert-field
+    "J"          'bbdb-next-field
+    "j"          'bbdb-next-record
+    "K"          'bbdb-prev-field
+    "k"          'bbdb-prev-record
+    "m"          'bbdb-mail
+    "M"          'bbdb-mail-address
+    "N"          'bbdb-next-field
+    "n"          'bbdb-next-record
+    "o"          'bbdb-omit-record
+    "P"          'bbdb-prev-field
+    "p"          'bbdb-prev-record
+    "s"          'bbdb-save
+    "T"          'bbdb-display-records-completely
+    "t"          'bbdb-toggle-records-layout
+    "u"          'bbdb-browse-url
+
+    ;; Search
+    ;; keys
+    "b"          'bbdb
+    "/1"         'bbdb-display-records
+    "/n"         'bbdb-search-name
+    "/o"         'bbdb-search-organization
+    "/p"         'bbdb-search-phone
+    "/a"         'bbdb-search-address
+    "/m"         'bbdb-search-mail
+    "/N"         'bbdb-search-xfields
+    "/x"         'bbdb-search-xfields
+    "/c"         'bbdb-search-changed
+    "/d"         'bbdb-search-duplicates
+    "\C-xnw"     'bbdb-display-all-records
+    "\C-xnd"     'bbdb-display-current-record
+    )
+  (evil-set-initial-state 'bbdb-mode 'motion))
+#+end_src

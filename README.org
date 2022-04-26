@@ -1,0 +1,11 @@
+#+title: Carwin's Dotfiles
+#+author: Carwin Young <emacs@carw.in>
+
+* ~dotfiles~
+
+These are my dotfiles. Nearly everything is configured via Emacs and the very handy ~org-babel-tangle~
+feature from =ob.el=.
+
+There have been many many complicated iterations of this configuration, over time, I expect the
+relatively simple setup presented here to bloat as other features get cherry-picked back into the
+setup.
